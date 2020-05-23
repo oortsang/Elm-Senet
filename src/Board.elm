@@ -121,7 +121,6 @@ initBoard =
 
 
 
-
 ------ Checking for legal moves ------
 
 -- can a given pawn move to square m?
@@ -129,24 +128,46 @@ isLegal : Board -> Pawn -> Int -> Bool
 isLegal board p m =
   let
     n = p.square
+    currSquare = squareType n
     mdest = BT.getElem m board
     skippedHappiness =
       n < 25 && m > 25
     attemptedLeave =
       m >= 30
+    legalBySquareType =
+      case currSquare of
+        Spec Happy ->
+          True
+        Spec Water ->
+          True
+        Spec Truths ->
+          m == 30 -- need to leave exactly here
+        Spec Reatoum ->
+          m == 30 -- need to leave exactly here
+        Spec Horus ->
+          True
+        _ ->
+          True
   in
-    if attemptedLeave then
-      -- fill in the actual rules later
+    if not legalBySquareType then
+      -- Move is illegal based on current square type
       False
     else if skippedHappiness then
-      -- not allowed to jump over this square
+      -- Don't skip happiness day!
       False
+    else if attemptedLeave then
+      -- Attempts to leave will result in (mdest == Nothing).
+      -- We've already checked boundary conditions
+      -- in legalBySquareType.
+      True
     else
+      -- check the destination square
       case mdest of
         Nothing ->
-          let _ = Debug.log "Yikes, out-of-bounds m" m in
-          False -- I don't think this is possible since m < 29
+          let _ = Debug.log "Yikes, out-of-bounds m not handled..." m in
+          False
         Just (Free) ->
           True
         Just (Occ q) ->
+          -- only possible if the garget is from the other player
           p.color /= q.color
