@@ -342,6 +342,7 @@ makeMove p roll gs =
   let
     n = p.square
     m = n + roll
+    -- in some versions rolls of 1,4,5 let you play again
     js = switchTurn gs
 
     -- Conditionals
@@ -351,6 +352,21 @@ makeMove p roll gs =
       n < 25 && m > 25
     attemptedLeave =
       m >= 30
+
+    -- Helper functions
+    moveTo dest =
+      case dest of
+        Free ->
+          -- swap pawn on n with empty m
+          pawnSwap p m js
+        Occ destCol ->
+          -- swap with enemy pawn on m
+          if p.color /= destCol then
+            pawnSwap p m js
+          else
+            let _ = Debug.log "same color! (p, destCol)" (p, destCol) in
+            Nothing
+    -- maybe another to help handle house of water
   in
     if p.color /= gs.turn then
       let
@@ -375,12 +391,10 @@ makeMove p roll gs =
         Nothing ->
           let _ = Debug.log "Yikes, out-of-bounds m not handled..." m in
           Nothing
-        Just (Free) ->
-          -- swap pawn on n with empty m
-          pawnSwap p m js
-        Just (Occ destCol) ->
-          if p.color /= destCol then
-            pawnSwap p m js
-          else
-            let _ = Debug.log "same color! (p, destCol)" (p, destCol) in
-            Nothing
+        Just dest ->
+          -- decide whether to handle sliding back here or not...
+          case squareType m of
+            Spec Water ->
+              moveTo dest
+            _ ->
+              moveTo dest
