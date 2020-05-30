@@ -105,6 +105,12 @@ initPawnCount = 7
 -- Pawn will remember its square (for convenience)
 type alias Pawn = { color: Player, square: Int }
 
+getSquareColor : SquareState -> Maybe Player
+getSquareColor p =
+  case p of
+    Free -> Nothing
+    Occ col -> Just col
+
 
 ------ Board String Representation ------
 -- Intended for debugging/command-line purposes
@@ -165,7 +171,7 @@ initBoard =
 
 initGame : GameState
 initGame =
-  { turn = White
+  { turn = Black
   , whitePawns =
       List.map
         (\i -> { color = White, square = 2*i })
@@ -252,14 +258,15 @@ isLegal board p roll =
 
 -- helper function to swap pawn positions
 -- should work fine if the destination is empty
-pawnSwapHelper :  Pawn -> Int -> Board -> Maybe Board
-pawnSwapHelper p qn board =
-  BT.swap p.square qn board
+pawnSwapHelper :  Int -> Int -> Board -> Maybe Board
+pawnSwapHelper pn qn board =
+  BT.swap pn qn board
+
 
 -- helper function to swap pawn positions
 -- but also updates the game state
-pawnSwap : Pawn -> Int -> GameState -> Maybe GameState
-pawnSwap p qn gs =
+pawnSwap : Int -> Int -> GameState -> Maybe GameState
+pawnSwap pn qn gs =
   case BT.getElem qn gs.board of
     Nothing ->
       Nothing
@@ -274,8 +281,14 @@ pawnSwap p qn gs =
           List.map (replaceHelper old new)
 
         -- components
-        maybeBoard = pawnSwapHelper p qn gs.board
-        js = updateList p.color (replace p.square qn) gs
+        maybeBoard = pawnSwapHelper pn qn gs.board
+        js =
+          case Maybe.andThen getSquareColor (getElem pn gs.board) of
+            Just col ->
+              updateList col (replace pn qn) gs
+            Nothing ->
+              let _ = Debug.log "Oops, invalid pawnSwap?" () in
+              gs
         hs = Maybe.map (\b -> { js | board = b }) maybeBoard
         -- _ = Debug.log "New Board" (BT.toList js.board)
       in
@@ -285,7 +298,7 @@ pawnSwap p qn gs =
           Occ destCol ->
             -- does not enforce different colors
             Maybe.map
-              (\game ->  updateList destCol (replace qn p.square) game)
+              (\game ->  updateList destCol (replace qn pn) game)
               hs
 
 
@@ -335,8 +348,8 @@ easyMove n m =
      makeMove {color=gs.turn, square=n} (m-n) gs)
 
 -- makes the move and updates the game state
--- TODO: House of water backward behavior
--- TODO: squares 27-29 sliding back to house of water
+-- Handle elsewhere: House of water backward behavior
+-- Handle elsewhere: squares 27-29 sliding back to house of water
 makeMove : Pawn -> Int -> GameState -> Maybe GameState
 makeMove p roll gs =
   let
@@ -354,20 +367,37 @@ makeMove p roll gs =
       m >= 30
 
     -- Helper functions
-    moveTo dest =
-      case dest of
+    -- moveTo square m, which has state dest
+    moveTo destState =
+      case destState of
         Free ->
           -- swap pawn on n with empty m
-          pawnSwap p m js
+          pawnSwap n m js
         Occ destCol ->
           -- swap with enemy pawn on m
           if p.color /= destCol then
-            pawnSwap p m js
+            pawnSwap n m js
           else
             let _ = Debug.log "same color! (p, destCol)" (p, destCol) in
             Nothing
-    -- maybe another to help handle house of water
+    -- Move to rebirth square
+    moveToRebirth =
+      let
+        -- int -> Maybe int
+        lastFreeBy sq =
+          case BT.getElem sq js.board of
+            Nothing   -> Nothing
+            Just Free -> Just sq
+            _         -> lastFreeBy (sq-1)
+        -- last unoccupied square not after house of water
+        dest = lastFreeBy 14
+      in
+        \() ->
+          Maybe.andThen
+            (\d -> pawnSwap n d js)
+            dest
   in
+    -- Check if it's your turn
     if p.color /= gs.turn then
       let
         _ = Debug.log
@@ -375,18 +405,25 @@ makeMove p roll gs =
           (p, gs.turn)
       in
       Nothing
+    -- If destination is illegal just by square type
+    -- meant for checking the last few squares
+    -- send back to rebirth
     else if not legalSqType then
       let _ = Debug.log "legalSqType" legalSqType in
-      Nothing
+      -- Nothing -- <- if we don't want sliding back
+      moveToRebirth ()  -- <- if we want sliding back
+    -- Enforce landing on house of happiness
     else if skippedHappiness then
       let _ = Debug.log "skippedHappiness" skippedHappiness in
       Nothing
+    -- Let the pawn leave the board
     else if attemptedLeave then
       -- attempt to leave board is legitimate since we checked earlier
       Just (removePawn p js)
+    -- Check for collisions and swap
     else
-      -- swap with destination square if appropriate
-      -- TODO: Check (squareType m)
+      -- TODO: Check (squareType m) for house of water
+      -- Check destination square (js for switched turn)
       case (BT.getElem m js.board) of
         Nothing ->
           let _ = Debug.log "Yikes, out-of-bounds m not handled..." m in
@@ -395,6 +432,7 @@ makeMove p roll gs =
           -- decide whether to handle sliding back here or not...
           case squareType m of
             Spec Water ->
-              moveTo dest
+              -- moveTo dest
+              moveToRebirth () -- house of rebirth
             _ ->
               moveTo dest
