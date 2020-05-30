@@ -117,6 +117,7 @@ getSquareColor p =
 boardToString : Board -> String
 boardToString board =
   let
+    blankRep : SquareType -> Char
     blankRep sq =
       case sq of
         Reg          -> '.'
@@ -126,10 +127,12 @@ boardToString board =
         Spec Truths  -> '3'
         Spec Reatoum -> '2'
         Spec Horus   -> '.'
+    pawnRep : Player -> Char
     pawnRep p =
       case p of
         White -> 'P'
         Black -> 'Q'
+    rep : Int  -> Char
     rep n =
       case (BT.getElem n board) of
         Nothing      -> '.'
@@ -368,6 +371,7 @@ makeMove p roll gs =
 
     -- Helper functions
     -- moveTo square m, which has state dest
+    moveTo : SquareState -> Maybe GameState
     moveTo destState =
       case destState of
         Free ->
@@ -381,9 +385,10 @@ makeMove p roll gs =
             let _ = Debug.log "same color! (p, destCol)" (p, destCol) in
             Nothing
     -- Move to rebirth square
+    moveToRebirth : () -> Maybe GameState
     moveToRebirth =
       let
-        -- int -> Maybe int
+        lastFreeBy : Int -> Maybe Int
         lastFreeBy sq =
           case BT.getElem sq js.board of
             Nothing   -> Nothing
@@ -393,9 +398,7 @@ makeMove p roll gs =
         dest = lastFreeBy 14
       in
         \() ->
-          Maybe.andThen
-            (\d -> pawnSwap n d js)
-            dest
+          Maybe.andThen (\d -> pawnSwap n d js) dest
   in
     -- Check if it's your turn
     if p.color /= gs.turn then
