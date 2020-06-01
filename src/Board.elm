@@ -353,20 +353,34 @@ switchTurn gs =
 -- for command-line purposes
 easyMove : Int -> Int -> Maybe GameState -> Maybe GameState
 easyMove n m =
+  Maybe.map switchTurn <|
   Maybe.andThen
-   (\gs ->
-     makeMove {color=gs.turn, square=n} (m-n) gs)
+    (\gs ->
+       playPawn {color=gs.turn, square=n} (m-n) gs)
 
--- makes the move and updates the game state
--- Handle elsewhere: House of water backward behavior
--- Handle elsewhere: squares 27-29 sliding back to house of water
+
 makeMove : Pawn -> Int -> GameState -> Maybe GameState
 makeMove p roll gs =
+  let
+    -- TODO: check for pawns in the end zone
+    -- and send them back
+    sendBack gs =
+      Debug.todo "check for pawns other than p"
+    mgs = playPawn p roll gs
+  in
+    switchTurn <| sendBack gs
+
+
+-- makes the move and updates the game state
+-- Handle elsewhere: squares 27-29 sliding back to house of water
+playPawn : Pawn -> Int -> GameState -> Maybe GameState
+playPawn p roll gs =
   let
     n = p.square
     m = n + roll
     -- in some versions rolls of 1,4,5 let you play again
-    js = switchTurn gs
+    -- js = switchTurn gs
+    js = gs
 
     -- Conditionals
     legalSqType =
