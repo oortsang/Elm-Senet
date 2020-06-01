@@ -120,7 +120,7 @@ view model =
     (l1, l2, l3) = boardToStrings model.gs.board
     txtBoard =
       Html.div [centering, monospace]
-        [ Html.text "Temporary ASCII Board (P=White; B=Black)"
+        [ Html.text "Temporary ASCII Board (P=White; Q=Black)"
         , newline
         , Html.text l1
         , newline

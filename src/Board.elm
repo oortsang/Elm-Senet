@@ -352,11 +352,12 @@ switchTurn gs =
 
 -- for command-line purposes
 easyMove : Int -> Int -> Maybe GameState -> Maybe GameState
-easyMove n m =
+easyMove n m mgs =
   Maybe.map switchTurn <|
   Maybe.andThen
     (\gs ->
        playPawn {color=gs.turn, square=n} (m-n) gs)
+    mgs
 
 
 makeMove : Pawn -> Int -> GameState -> Maybe GameState
@@ -364,11 +365,11 @@ makeMove p roll gs =
   let
     -- TODO: check for pawns in the end zone
     -- and send them back
-    sendBack gs =
+    sendBack js =
       Debug.todo "check for pawns other than p"
     mgs = playPawn p roll gs
   in
-    switchTurn <| sendBack gs
+    Maybe.map switchTurn <| sendBack gs
 
 
 -- makes the move and updates the game state
