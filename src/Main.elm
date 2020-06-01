@@ -12,6 +12,7 @@ import BoardTree as BT exposing (..)
 import Browser
 import Browser.Events
 import Html exposing (Html)
+import Html.Attributes
 import Random exposing (Generator)
 
 main : Program Flags Model Msg
@@ -111,4 +112,27 @@ tryPlay n model =
 -- VIEW
 view : Model -> Html Msg
 view model =
-  Html.div [] [Html.h3 [] [Html.text "Senet! Functionality coming soon..."]]
+  let
+    newline = Html.br [] []
+    centering = Html.Attributes.align "center"
+    monospace = Html.Attributes.style "font-family" "monospace"
+
+    (l1, l2, l3) = boardToStrings model.gs.board
+    txtBoard =
+      Html.div [centering, monospace]
+        [ Html.text "Temporary ASCII Board (P=White; B=Black)"
+        , newline
+        , Html.text l1
+        , newline
+        , Html.text l2
+        , newline
+        , Html.text l3
+        ]
+  in
+    Html.div
+      []
+      [ Html.h3
+          [ centering ]
+          [ Html.text "Senet! Functionality coming soon..." ]
+      , txtBoard
+      ]

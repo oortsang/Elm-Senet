@@ -114,8 +114,8 @@ getSquareColor p =
 
 ------ Board String Representation ------
 -- Intended for debugging/command-line purposes
-boardToString : Board -> String
-boardToString board =
+boardToStrings : Board -> (String, String, String)
+boardToStrings board =
   let
     blankRep : SquareType -> Char
     blankRep sq =
@@ -147,8 +147,15 @@ boardToString board =
     _ = Debug.log "Row 2" (line nums2)
     _ = Debug.log "Row 3" (line nums3)
   in
-    (line nums1) ++ "\n" ++ (line nums2) ++ "\n" ++ (line nums3)
+    (line nums1, line nums2, line nums3)
 
+boardToString : Board -> String
+boardToString b =
+  let
+    (l1, l2, l3) = boardToStrings b
+  in
+    l1 ++ "\n" ++ l2 ++ "\n" ++ l3
+      
 -- debugging purposes
 printBoard : Maybe GameState -> Maybe String
 printBoard = Maybe.map (\g -> boardToString g.board)
