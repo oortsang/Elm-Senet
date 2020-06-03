@@ -18,10 +18,6 @@
 
 module BoardTree exposing (Tree, fromList, toList, setElem, getElem, swap)
 
--- import Board as B
--- import List
--- import Maybe
-
 -- comparable is for the index
 -- a is for the contents in the leaf nodes
 type Tree a
@@ -115,11 +111,8 @@ swap i j t =
         my = getElem j t
         -- wrapper for the Maybes involved with setting the element
         setter k mw ms =
-          Maybe.andThen
-            (\s ->
-              Maybe.andThen
-                (\w -> setElem k w s)
-                mw
-            ) ms
+          ms |> Maybe.andThen (\s ->
+          mw |> Maybe.andThen (\w ->
+          setElem k w s))
       in
         Just t |> setter j mx |> setter i my
