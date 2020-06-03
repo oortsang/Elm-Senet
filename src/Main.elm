@@ -16,6 +16,7 @@ module Main exposing (..)
 
 -- From our project
 import Board exposing (..)
+import Logic exposing (..)
 import BoardTree as BT exposing (..)
 
 -- For html-side
@@ -206,7 +207,7 @@ svgSquare length gs n i j =
     x = j*length + rlen//2
     y = i*length + rlen//2
     sqRect =
-      Svg.rect
+      [ Svg.rect
         [ SA.x      <| Debug.toString x
         , SA.y      <| Debug.toString y
         , SA.width  <| Debug.toString slen
@@ -225,10 +226,11 @@ svgSquare length gs n i j =
         ,  SE.onClick (Click n)
         ]
         []
+      ]
     piece mp =
       case mp of
         Just p ->
-          Svg.circle
+          [ Svg.circle
             [ SA.cx <| Debug.toString (x+slen//2)
             , SA.cy <| Debug.toString (y+slen//2)
             , SA.r  <| Debug.toString (2*slen//7)
@@ -240,14 +242,13 @@ svgSquare length gs n i j =
             ,  SE.onClick (Click n)
             ]
             []
+          ]
         Nothing ->
-          Svg.svg [] []
+          []
     maybePawn = getPawn n gs
   in
     Svg.svg []
-      [ sqRect
-      , piece maybePawn
-      ]
+      (sqRect ++ piece maybePawn)
 
 -- make svg table
 svgBoard : Model -> Html.Html Msg
@@ -268,9 +269,6 @@ svgBoard model =
     Svg.svg [ SA.viewBox "-50 -50 1100 400"]
       (  [Svg.rect [SA.x "-10", SA.y "-10", SA.width "1020", SA.height "320", SA.fill "gray"] []]
       ++ line1 ++ line2 ++ line3
-      -- ++ [ Svg.circle [SA.cx "0",    SA.cy "0",   SA.r "10", SA.fill "green"][]
-      --    , Svg.circle [SA.cx "1000", SA.cy "300", SA.r "10", SA.fill "red"][]
-      --    ]
       )
 
 txtBoard : Model -> Html Msg
