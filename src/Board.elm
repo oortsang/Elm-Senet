@@ -155,7 +155,7 @@ boardToString b =
     (l1, l2, l3) = boardToStrings b
   in
     l1 ++ "\n" ++ l2 ++ "\n" ++ l3
-      
+
 -- debugging purposes
 printBoard : Maybe GameState -> Maybe String
 printBoard = Maybe.map (\g -> boardToString g.board)
@@ -340,6 +340,13 @@ removePawn p gs =
         , board = newBoard
         }
 
+-- help find an open spot for a pawn moving to the house of rebirth
+lastFreeBy : Int -> GameState -> Maybe Int
+lastFreeBy sq gs =
+  case BT.getElem sq gs.board of
+    Nothing   -> Nothing
+    Just Free -> Just sq
+    _         -> lastFreeBy (sq-1) gs
 
 -- helper to switch the turn to the opposite player
 switchTurn : GameState -> GameState
@@ -353,35 +360,77 @@ switchTurn gs =
 -- for command-line purposes
 easyMove : Int -> Int -> Maybe GameState -> Maybe GameState
 easyMove n m mgs =
-  Maybe.map switchTurn <|
+  -- Maybe.map switchTurn <| -- happens in makeMove
   Maybe.andThen
     (\gs ->
-       playPawn {color=gs.turn, square=n} (m-n) gs)
+       makeMove {color=gs.turn, square=n} (m-n) gs)
+       -- playPawn {color=gs.turn, square=n} (m-n) gs)
     mgs
 
-
+-- Makes the move for one pawn and takes care of pawns
+-- on squares 27-29 sliding back to rebirth (if they were
+-- not given a roll that would let them leave the board)
 makeMove : Pawn -> Int -> GameState -> Maybe GameState
 makeMove p roll gs =
   let
-    -- TODO: check for pawns in the end zone
-    -- and send them back
+    -- Decide whether to end the turn
+    -- Could check the roll to decide whether to switch turns
+    -- (currently skipped but left as an option)
+    -- At the moment, I think evaluating later makes more sense
+    -- (hence the lazy eval)
+    endOrContinueTurn : () -> GameState -> GameState
+    endOrContinueTurn =
+      \() ->
+        switchTurn
+
+    -- Check for pawns in the end zone and send them back.
+    -- checkSquare: compares square sq in gs and js,
+    -- and if a pawn with the same color as p has stayed
+    -- in place, it gets kicked back to rebirth
+    checkSquare : Int -> GameState -> GameState
+    checkSquare sq js =
+      let getsq g = BT.getElem sq g.board in
+      case (getsq gs, getsq js) of
+        (Just (Occ c1), Just (Occ c2)) ->
+          if (c1==c2) && (c1 == p.color) then
+            -- boot pawn on square sq to the
+            -- the last open spot before rebirth
+            lastFreeBy 14 js |>
+              Maybe.andThen (\lf ->
+              pawnSwap sq lf js) |>
+              Maybe.withDefault js
+          else
+            js
+        _ ->
+          js
+    sendBack : GameState -> GameState
     sendBack js =
-      Debug.todo "check for pawns other than p"
-    mgs = playPawn p roll gs
+      js
+        |> checkSquare 27
+        |> checkSquare 28
+        |> checkSquare 29
   in
-    Maybe.map switchTurn <| sendBack gs
+    -- Logic order:
+    --   1. Let the roll play out (playPawn)
+    --   2. Demote pawns that were originally in the end zone
+    --      (pawns of the current player) that have not left
+    --   3. End the turn (maybe check the roll first)
+    gs
+      |> playPawn p roll
+      |> Maybe.map sendBack
+      |> Maybe.map (endOrContinueTurn ())
 
 
--- makes the move and updates the game state
+-- Moves one pawn and updates the game state
 -- Handle elsewhere: squares 27-29 sliding back to house of water
+-- Note: The motivation behind taking p as a pawn rather than the
+--       an int is that the AI would have easy access to pawn data
+--       and makes more requests than the human user
 playPawn : Pawn -> Int -> GameState -> Maybe GameState
 playPawn p roll gs =
   let
     n = p.square
     m = n + roll
-    -- in some versions rolls of 1,4,5 let you play again
-    -- js = switchTurn gs
-    js = gs
 
     -- Conditionals
     legalSqType =
@@ -398,29 +447,22 @@ playPawn p roll gs =
       case destState of
         Free ->
           -- swap pawn on n with empty m
-          pawnSwap n m js
+          pawnSwap n m gs
         Occ destCol ->
           -- swap with enemy pawn on m
           if p.color /= destCol then
-            pawnSwap n m js
+            pawnSwap n m gs
           else
             let _ = Debug.log "same color! (p, destCol)" (p, destCol) in
             Nothing
     -- Move to rebirth square
     moveToRebirth : () -> Maybe GameState
     moveToRebirth =
-      let
-        lastFreeBy : Int -> Maybe Int
-        lastFreeBy sq =
-          case BT.getElem sq js.board of
-            Nothing   -> Nothing
-            Just Free -> Just sq
-            _         -> lastFreeBy (sq-1)
-        -- last unoccupied square not after house of water
-        dest = lastFreeBy 14
-      in
-        \() ->
-          Maybe.andThen (\d -> pawnSwap n d js) dest
+      \() ->
+        -- last unoccupied square before 14
+        (lastFreeBy 14 gs)  |>
+          Maybe.andThen (\d ->
+          pawnSwap n d gs)
   in
     -- Check if it's your turn
     if p.color /= gs.turn then
@@ -444,12 +486,12 @@ playPawn p roll gs =
     -- Let the pawn leave the board
     else if attemptedLeave then
       -- attempt to leave board is legitimate since we checked earlier
-      Just (removePawn p js)
+      Just (removePawn p gs)
     -- Check for collisions and swap
     else
       -- TODO: Check (squareType m) for house of water
-      -- Check destination square (js for switched turn)
-      case (BT.getElem m js.board) of
+      -- Check destination square (gs for switched turn)
+      case (BT.getElem m gs.board) of
         Nothing ->
           let _ = Debug.log "Yikes, out-of-bounds m not handled..." m in
           Nothing
