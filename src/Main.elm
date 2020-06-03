@@ -2,6 +2,14 @@
 -- Senet in Elm (Course Project) for CS 223, Functional Programming
 -- Main.elm: makes the html page and handles interactions
 
+-- TODO:
+--   1. Add board/buttons to HTML
+--   2. Figure out highlighting/selection logic
+--   3. Also fix the rng to be not uniform
+--   4. Add images for the board
+
+
+
 module Main exposing (..)
 
 -- From our project
@@ -47,44 +55,67 @@ type Msg
   | GetRoll Int -- receive random number
   | Select Int  -- select piece
   | Unselect    -- unselect piece (if you click elsewhere)
-  | Play Int    -- play piece
+  | Play        -- play the selected piece
   | Noop
 
 
 
--- INIT
+------ INIT ------
 init : Flags -> (Model, Cmd Msg)
 init () =
   (initModel, Cmd.none)
 
--- SUBSCRIPTIONS
+------ SUBSCRIPTIONS ------
 subscriptions : Model -> Sub msg
 subscriptions model =
   Sub.batch
     [] -- add buttons... and listen for buttons too
 
--- UPDATE
+------ UPDATE ------
+-- To do:
+--   - check if GetRoll is working
+--   - select/unselect:
+--       - check for legality of the move?
+--         (maybe do this in subscriptions...)
+--       - if we check here rather than Play,
+--         what's good error feedback?
+--       - how to determine highlighting?
+--   - play: how to give error feedback?
+--       - may not be needed if we check at selection stage
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     QueryRoll ->
-      (model, Random.generate GetRoll rollGenerator)
+      case model.roll of
+        Nothing ->
+          (model, Random.generate GetRoll rollGenerator)
+        _ ->
+          -- no re-rolls!
+          (model, Cmd.none)
     GetRoll i ->
       (setRoll i model, Cmd.none)
     Select n ->
       -- also want to change highlighting?
+      -- Should we check for legality?
       (selectPiece n model, Cmd.none)
     Unselect ->
       -- also want to change highlighting?
       (unselectPiece model, Cmd.none)
-    Play n ->
-      (tryPlay n model, Cmd.none)
-      -- make sure to remove the old roll result !
-      -- can request next roll if desired
+    Play ->
+      -- TODO: Add error messages...
+      let
+        newModel =
+          model.selected |> Maybe.andThen (\n ->
+          model
+            |> unselectPiece
+            |> tryPlay n
+          ) |> Maybe.withDefault model
+      in
+        (newModel, Cmd.none)
     Noop ->
       (model, Cmd.none)
 
--- Update helper functions
+------ Helper functions for Update ------
 
 -- Need to fix to not be a uniform distribution
 rollGenerator : Generator Int
@@ -95,6 +126,10 @@ setRoll : Int -> Model -> Model
 setRoll i model =
   { model | roll = Just i }
 
+clearRoll : Model -> Model
+clearRoll model =
+  { model | roll = Nothing }
+
 selectPiece : Int -> Model -> Model
 selectPiece n model =
   { model | selected = Just n }
@@ -103,13 +138,16 @@ unselectPiece : Model -> Model
 unselectPiece model =
   { model | selected = Nothing }
 
-tryPlay : Int -> Model -> Model
+-- calls Board.makeMove and clears the model's roll
+tryPlay : Int -> Model -> Maybe Model
 tryPlay n model =
-  -- something with makeMove
-  -- but also updating the current model...
-  Debug.todo "asdfdf"
+  model.roll            |> Maybe.andThen (\r ->
+  getPawn  n model.gs   |> Maybe.andThen (\p ->
+  makeMove p r model.gs |> Maybe.map (\js ->
+  clearRoll { model | gs = js })))
+  -- { model | gs = js, roll = Nothing })))
 
--- VIEW
+------ VIEW ------
 view : Model -> Html Msg
 view model =
   let

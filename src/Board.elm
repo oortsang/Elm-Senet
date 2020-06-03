@@ -22,6 +22,7 @@
 --   3. Pawn Definitions
 --      * initPawnCount -- can change rules
 --      - Pawn type def
+--      - getPawn (for external use)
 --   4. Board String Representation
 --      - boardToStrings (string triple)
 --      - boardToString (one line)
@@ -130,6 +131,19 @@ initPawnCount = 7
 
 -- Pawn will remember its square (for convenience)
 type alias Pawn = { color: Player, square: Int }
+
+-- for outside files
+getPawn : Int -> GameState -> Maybe Pawn
+getPawn i gs =
+  let
+    squarePawn : SquareState -> Maybe Pawn
+    squarePawn sq =
+      case sq of
+        Free -> Nothing
+        Occ c -> Just { square=i, color=c }
+  in
+    BT.getElem i gs.board
+      |> Maybe.andThen squarePawn
 
 getSquareColor : SquareState -> Maybe Player
 getSquareColor p =
