@@ -129,7 +129,18 @@ update msg model =
           else
             (model, Cmd.none)
         _ ->
-          (selectPiece n model, Cmd.none)
+          let
+            mcol =
+              Maybe.map
+                (\p -> p.color)
+                (getPawn n model.gs)
+          in
+            if mcol == Just model.gs.turn then
+              -- can only select piece if it's the right
+              -- color
+              (selectPiece n model, Cmd.none)
+            else
+              (model, Cmd.none)
     Noop ->
       (model, Cmd.none)
     Unselect ->
@@ -185,8 +196,8 @@ centering = Html.Attributes.align "center"
 monospace = Html.Attributes.style "font-family" "monospace"
 
 
-svgSquare : Int -> Int -> Int -> Int -> Html.Html Msg
-svgSquare length n i j =
+svgSquare : Int -> GameState -> Int -> Int -> Int -> Html.Html Msg
+svgSquare length gs n i j =
   --length =
   -- i for row, j for col
   let
@@ -194,26 +205,49 @@ svgSquare length n i j =
     slen = length - rlen
     x = j*length + rlen//2
     y = i*length + rlen//2
+    sqRect =
+      Svg.rect
+        [ SA.x      <| Debug.toString x
+        , SA.y      <| Debug.toString y
+        , SA.width  <| Debug.toString slen
+        , SA.height <| Debug.toString slen
+        -- make it rounded
+        , SA.rx <| Debug.toString rlen
+        , SA.ry <| Debug.toString rlen
+        -- pick colors
+        , SA.stroke "black"
+        , SA.fill <|
+            if 0 == modBy 2 n then
+              "beige"
+            else
+              -- slightly darker
+              "burlywood"
+        ,  SE.onClick (Click n)
+        ]
+        []
+    piece mp =
+      case mp of
+        Just p ->
+          Svg.circle
+            [ SA.cx <| Debug.toString (x+slen//2)
+            , SA.cy <| Debug.toString (y+slen//2)
+            , SA.r  <| Debug.toString (2*slen//7)
+            , SA.stroke "black"
+            , SA.fill <|
+                if p.color == White
+                then "snow"
+                else "slategray"
+            ,  SE.onClick (Click n)
+            ]
+            []
+        Nothing ->
+          Svg.svg [] []
+    maybePawn = getPawn n gs
   in
-    Svg.rect
-      [ SA.x      <| Debug.toString x
-      , SA.y      <| Debug.toString y
-      , SA.width  <| Debug.toString slen
-      , SA.height <| Debug.toString slen
-      -- make it rounded
-      , SA.rx <| Debug.toString rlen
-      , SA.ry <| Debug.toString rlen
-      -- pick colors
-      , SA.stroke "black"
-      , SA.fill <|
-          if 0 == modBy 2 n then
-            "beige"
-          else
-            -- slightly darker
-            "burlywood"
-      ,  SE.onClick (Click n)
+    Svg.svg []
+      [ sqRect
+      , piece maybePawn
       ]
-      []
 
 -- make svg table
 svgBoard : Model -> Html.Html Msg
@@ -223,13 +257,13 @@ svgBoard model =
     ls = List.range 0 9
     line1 =
       ls |> List.map (\i ->
-      svgSquare length i 0 i)
+      svgSquare length model.gs i 0 i)
     line2 =
       ls |> List.map (\i ->
-      svgSquare length (19-i) 1 i)
+      svgSquare length model.gs (19-i) 1 i)
     line3 =
       ls |> List.map (\i ->
-      svgSquare length (20+i) 2 i)
+      svgSquare length model.gs (20+i) 2 i)
   in
     Svg.svg [ SA.viewBox "-50 -50 1100 400"]
       (  [Svg.rect [SA.x "-10", SA.y "-10", SA.width "1020", SA.height "320", SA.fill "gray"] []]

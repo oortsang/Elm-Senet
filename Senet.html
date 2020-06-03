@@ -5622,6 +5622,63 @@ var $elm$random$Random$generate = F2(
 			$elm$random$Random$Generate(
 				A2($elm$random$Random$map, tagger, generator)));
 	});
+var $author$project$BoardTree$getElem = F2(
+	function (i, t) {
+		getElem:
+		while (true) {
+			switch (t.$) {
+				case 'Empty':
+					return $elm$core$Maybe$Nothing;
+				case 'Leaf':
+					var j = t.a;
+					var x = t.b;
+					return _Utils_eq(i, j) ? $elm$core$Maybe$Just(x) : $elm$core$Maybe$Nothing;
+				default:
+					var j = t.a;
+					var t1 = t.b;
+					var t2 = t.c;
+					if (_Utils_cmp(i, j) < 0) {
+						var $temp$i = i,
+							$temp$t = t1;
+						i = $temp$i;
+						t = $temp$t;
+						continue getElem;
+					} else {
+						var $temp$i = i,
+							$temp$t = t2;
+						i = $temp$i;
+						t = $temp$t;
+						continue getElem;
+					}
+			}
+		}
+	});
+var $author$project$Board$getPawn = F2(
+	function (i, gs) {
+		var squarePawn = function (sq) {
+			if (sq.$ === 'Free') {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var c = sq.a;
+				return $elm$core$Maybe$Just(
+					{color: c, square: i});
+			}
+		};
+		return A2(
+			$elm$core$Maybe$andThen,
+			squarePawn,
+			A2($author$project$BoardTree$getElem, i, gs.board));
+	});
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
 var $elm$core$Bitwise$and = _Bitwise_and;
 var $elm$core$Basics$negate = function (n) {
 	return -n;
@@ -5686,53 +5743,6 @@ var $author$project$Main$clearRoll = function (model) {
 		model,
 		{roll: $elm$core$Maybe$Nothing});
 };
-var $author$project$BoardTree$getElem = F2(
-	function (i, t) {
-		getElem:
-		while (true) {
-			switch (t.$) {
-				case 'Empty':
-					return $elm$core$Maybe$Nothing;
-				case 'Leaf':
-					var j = t.a;
-					var x = t.b;
-					return _Utils_eq(i, j) ? $elm$core$Maybe$Just(x) : $elm$core$Maybe$Nothing;
-				default:
-					var j = t.a;
-					var t1 = t.b;
-					var t2 = t.c;
-					if (_Utils_cmp(i, j) < 0) {
-						var $temp$i = i,
-							$temp$t = t1;
-						i = $temp$i;
-						t = $temp$t;
-						continue getElem;
-					} else {
-						var $temp$i = i,
-							$temp$t = t2;
-						i = $temp$i;
-						t = $temp$t;
-						continue getElem;
-					}
-			}
-		}
-	});
-var $author$project$Board$getPawn = F2(
-	function (i, gs) {
-		var squarePawn = function (sq) {
-			if (sq.$ === 'Free') {
-				return $elm$core$Maybe$Nothing;
-			} else {
-				var c = sq.a;
-				return $elm$core$Maybe$Just(
-					{color: c, square: i});
-			}
-		};
-		return A2(
-			$elm$core$Maybe$andThen,
-			squarePawn,
-			A2($author$project$BoardTree$getElem, i, gs.board));
-	});
 var $author$project$Board$lastFreeBy = F2(
 	function (sq, gs) {
 		lastFreeBy:
@@ -5752,16 +5762,6 @@ var $author$project$Board$lastFreeBy = F2(
 					continue lastFreeBy;
 				}
 			}
-		}
-	});
-var $elm$core$Maybe$map = F2(
-	function (f, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return $elm$core$Maybe$Just(
-				f(value));
-		} else {
-			return $elm$core$Maybe$Nothing;
 		}
 	});
 var $author$project$Board$getSquareColor = function (p) {
@@ -6222,9 +6222,17 @@ var $author$project$Main$update = F2(
 						}
 					}
 				} else {
-					return _Utils_Tuple2(
+					var mcol = A2(
+						$elm$core$Maybe$map,
+						function (p) {
+							return p.color;
+						},
+						A2($author$project$Board$getPawn, n, model.gs));
+					return _Utils_eq(
+						mcol,
+						$elm$core$Maybe$Just(model.gs.turn)) ? _Utils_Tuple2(
 						A2($author$project$Main$selectPiece, n, model),
-						$elm$core$Platform$Cmd$none);
+						$elm$core$Platform$Cmd$none) : _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
 			case 'Noop':
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
@@ -6400,12 +6408,16 @@ var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
 var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
 var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
 var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
+var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
+var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
+var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
 var $elm$svg$Svg$Events$onClick = function (msg) {
 	return A2(
 		$elm$html$Html$Events$on,
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
+var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
 var $elm$svg$Svg$Attributes$rx = _VirtualDom_attribute('rx');
 var $elm$svg$Svg$Attributes$ry = _VirtualDom_attribute('ry');
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
@@ -6413,13 +6425,13 @@ var $elm$core$Debug$toString = _Debug_toString;
 var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
 var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
 var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
-var $author$project$Main$svgSquare = F4(
-	function (length, n, i, j) {
+var $author$project$Main$svgSquare = F5(
+	function (length, gs, n, i, j) {
 		var rlen = (length / 10) | 0;
 		var slen = length - rlen;
 		var x = (j * length) + ((rlen / 2) | 0);
 		var y = (i * length) + ((rlen / 2) | 0);
-		return A2(
+		var sqRect = A2(
 			$elm$svg$Svg$rect,
 			_List_fromArray(
 				[
@@ -6442,6 +6454,39 @@ var $author$project$Main$svgSquare = F4(
 					$author$project$Main$Click(n))
 				]),
 			_List_Nil);
+		var piece = function (mp) {
+			if (mp.$ === 'Just') {
+				var p = mp.a;
+				return A2(
+					$elm$svg$Svg$circle,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$cx(
+							$elm$core$Debug$toString(x + ((slen / 2) | 0))),
+							$elm$svg$Svg$Attributes$cy(
+							$elm$core$Debug$toString(y + ((slen / 2) | 0))),
+							$elm$svg$Svg$Attributes$r(
+							$elm$core$Debug$toString(((2 * slen) / 7) | 0)),
+							$elm$svg$Svg$Attributes$stroke('black'),
+							$elm$svg$Svg$Attributes$fill(
+							_Utils_eq(p.color, $author$project$Board$White) ? 'snow' : 'slategray'),
+							$elm$svg$Svg$Events$onClick(
+							$author$project$Main$Click(n))
+						]),
+					_List_Nil);
+			} else {
+				return A2($elm$svg$Svg$svg, _List_Nil, _List_Nil);
+			}
+		};
+		var maybePawn = A2($author$project$Board$getPawn, n, gs);
+		return A2(
+			$elm$svg$Svg$svg,
+			_List_Nil,
+			_List_fromArray(
+				[
+					sqRect,
+					piece(maybePawn)
+				]));
 	});
 var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
 var $author$project$Main$svgBoard = function (model) {
@@ -6450,19 +6495,19 @@ var $author$project$Main$svgBoard = function (model) {
 	var line1 = A2(
 		$elm$core$List$map,
 		function (i) {
-			return A4($author$project$Main$svgSquare, length, i, 0, i);
+			return A5($author$project$Main$svgSquare, length, model.gs, i, 0, i);
 		},
 		ls);
 	var line2 = A2(
 		$elm$core$List$map,
 		function (i) {
-			return A4($author$project$Main$svgSquare, length, 19 - i, 1, i);
+			return A5($author$project$Main$svgSquare, length, model.gs, 19 - i, 1, i);
 		},
 		ls);
 	var line3 = A2(
 		$elm$core$List$map,
 		function (i) {
-			return A4($author$project$Main$svgSquare, length, 20 + i, 2, i);
+			return A5($author$project$Main$svgSquare, length, model.gs, 20 + i, 2, i);
 		},
 		ls);
 	return A2(
