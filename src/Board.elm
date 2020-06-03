@@ -1,10 +1,40 @@
 -- Jeffrey Huang and Oliver Tsang, Spring 2020
 -- Senet in Elm (Course Project) for CS 223, Functional Programming
--- Board.elm: store the main game information
+-- Board.elm: store the main game information and rules
 
 -- Kendall's Rules:
 --   https://www.startwithabook.org/content/pdfs/EgyptianSenetGame.pdf
 --   http://www.gamecabinet.com/history/Senet.html
+
+-- File Layout:
+-- There are many helper functions, so I list the
+-- type definitions and more useful functions:
+--   1. Game State
+--      - GameState type def
+--      - Player type def
+--      - GameOutcome type def
+--      - isOver (check for completion)
+--   2. Square Definitions
+--      - Board type def
+--      - SquareState type def
+--      - SquareType type def
+--      - EndSquare type def
+--   3. Pawn Definitions
+--      * initPawnCount -- can change rules
+--      - Pawn type def
+--   4. Board String Representation
+--      - boardToStrings (string triple)
+--      - boardToString (one line)
+--      - printBoard (easy printing for command line)
+--   5. Board Initialization
+--      - initBoard
+--      - initGame
+--   6. Checking for Legal Moves
+--      - isLegal
+--   7. Pawn Movement and Game Logic
+--      - easyMove (easy for command line interface)
+--      * makeMove -- can change turn termination rules
+--      * playPawn -- most of the rule functionality lives here
 
 module Board exposing (..)
 
@@ -13,7 +43,7 @@ import BoardTree as BT exposing (..)
 
 
 
------- Game state ------
+------ 1. Game state ------
 
 type alias GameState =
   { turn         : Player
@@ -49,7 +79,7 @@ updateList col f gs =
       { gs | blackPawns = f gs.blackPawns }
 
 
------- Square definitions ------
+------ 2. Square definitions ------
 
 type alias Board = BT.Tree SquareState
 
@@ -86,12 +116,8 @@ squareType n =
     29 -> Spec Horus
     _  -> Reg
 
-getSquare : Int -> GameState -> Maybe SquareState
-getSquare i gs =
-  BT.getElem i gs.board
 
-
------- Pawn definitions -----
+------ 3. Pawn definitions -----
 
 -- Control if we want to start with 5 or 7 pawns per player...
 -- Jequier's rules use 5, while Kendall's rules use 7.
@@ -112,7 +138,7 @@ getSquareColor p =
     Occ col -> Just col
 
 
------- Board String Representation ------
+------ 4. Board String Representation ------
 -- Intended for debugging/command-line purposes
 boardToStrings : Board -> (String, String, String)
 boardToStrings board =
@@ -161,7 +187,7 @@ printBoard : Maybe GameState -> Maybe String
 printBoard = Maybe.map (\g -> boardToString g.board)
 
 
------- Board Initialization ------
+------ 5. Board Initialization ------
 
 -- initial board state
 -- white is behind at the moment
@@ -197,7 +223,7 @@ initGame =
 
 
 
------- Checking for legal moves ------
+------ 6. Checking for Legal Moves ------
 
 -- check whether a pawn on square square could
 -- move to a square of number m
@@ -264,7 +290,37 @@ isLegal board p roll =
 
 
 
------- Pawn movement ------
+------ 7. Pawn Movement and Game Logic ------
+-- Mini table of contents:
+--   Helper functions
+--     pawnSwapHelper:
+--       swap pawns at given squares (as integers)
+--     pawnSwap:
+--       swap pawns at given squares (as integers)
+--       operates on GameState rather than boards
+--       *updates the game state to reflect pawn movement
+--     clearSquare:
+--       remove the pawn from a square
+--     removePawn:
+--       remove a pawn from the game state and board
+--     lastFreeBy:
+--       identify the last free square before the requested square
+--     switchTurn:
+--       flip the turn in the game state
+--   Main functions to call
+--     easyMove:
+--       move a pawn from square n to m
+--       easier interface for command-line testing
+--     makeMove:
+--       Moves desired pawn (if possible)
+--       Pawns in squares 27-29 slide back if valid
+--       Checks conditions and ends the turn (currently always)
+--     playPawn:
+--       Moves desired pawn (if possible)
+--       Does redirect from house of water to rebirth
+--       * technically a helper function of makeMove but does
+--         the heavy lifting, so I decided to put it at the end
+
 
 -- helper function to swap pawn positions
 -- should work fine if the destination is empty
