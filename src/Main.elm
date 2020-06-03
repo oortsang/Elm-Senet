@@ -114,7 +114,7 @@ update msg model =
           if n == m then
             -- Unselect
             -- also want to change highlighting?
-            (unselectPiece model, Cmd.none)            
+            (unselectPiece model, Cmd.none)
           else if n == (m+r) then
             -- Play!
             -- TODO: Add error messages...
