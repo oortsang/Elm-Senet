@@ -6370,40 +6370,93 @@ var $author$project$Main$buttonBoard = function (model) {
 								[$author$project$Main$newline])))))));
 };
 var $elm$html$Html$h3 = _VirtualDom_node('h3');
-var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
-var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
-var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
-var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
 var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
 var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
-var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
+var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
+var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
 var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
-var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
+var $elm$svg$Svg$Attributes$rx = _VirtualDom_attribute('rx');
+var $elm$svg$Svg$Attributes$ry = _VirtualDom_attribute('ry');
+var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
+var $elm$core$Debug$toString = _Debug_toString;
 var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
+var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
+var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
+var $author$project$Main$svgSquare = F3(
+	function (n, i, j) {
+		var length = 100;
+		var rlen = (length / 10) | 0;
+		var slen = length - rlen;
+		var x = (j * length) + ((rlen / 2) | 0);
+		var y = (i * length) + ((rlen / 2) | 0);
+		return A2(
+			$elm$svg$Svg$rect,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x(
+					$elm$core$Debug$toString(x)),
+					$elm$svg$Svg$Attributes$y(
+					$elm$core$Debug$toString(y)),
+					$elm$svg$Svg$Attributes$width(
+					$elm$core$Debug$toString(slen)),
+					$elm$svg$Svg$Attributes$height(
+					$elm$core$Debug$toString(slen)),
+					$elm$svg$Svg$Attributes$rx(
+					$elm$core$Debug$toString(rlen)),
+					$elm$svg$Svg$Attributes$ry(
+					$elm$core$Debug$toString(rlen)),
+					$elm$svg$Svg$Attributes$stroke('black'),
+					$elm$svg$Svg$Attributes$fill(
+					(!A2($elm$core$Basics$modBy, 2, n)) ? 'beige' : 'burlywood')
+				]),
+			_List_Nil);
+	});
+var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
 var $author$project$Main$svgBoard = function (model) {
+	var ls = A2($elm$core$List$range, 0, 9);
+	var line3 = A2(
+		$elm$core$List$map,
+		function (i) {
+			return A3($author$project$Main$svgSquare, 20 + i, 2, i);
+		},
+		ls);
+	var line2 = A2(
+		$elm$core$List$map,
+		function (i) {
+			return A3($author$project$Main$svgSquare, 19 - i, 1, i);
+		},
+		ls);
+	var line1 = A2(
+		$elm$core$List$map,
+		function (i) {
+			return A3($author$project$Main$svgSquare, i, 0, i);
+		},
+		ls);
 	return A2(
 		$elm$svg$Svg$svg,
 		_List_fromArray(
 			[
-				$elm$svg$Svg$Attributes$width('1000'),
-				$elm$svg$Svg$Attributes$height('300'),
-				$elm$svg$Svg$Attributes$viewBox('0 0 300 1000')
+				$elm$svg$Svg$Attributes$viewBox('-50 -50 1100 400')
 			]),
-		_List_fromArray(
-			[
-				A2(
-				$elm$svg$Svg$circle,
-				_List_fromArray(
-					[
-						$elm$svg$Svg$Attributes$cx('700'),
-						$elm$svg$Svg$Attributes$cy('50'),
-						$elm$svg$Svg$Attributes$r('5'),
-						$elm$svg$Svg$Attributes$fill('green')
-					]),
-				_List_Nil)
-			]));
+		_Utils_ap(
+			_List_fromArray(
+				[
+					A2(
+					$elm$svg$Svg$rect,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$x('-10'),
+							$elm$svg$Svg$Attributes$y('-10'),
+							$elm$svg$Svg$Attributes$width('1020'),
+							$elm$svg$Svg$Attributes$height('320'),
+							$elm$svg$Svg$Attributes$fill('gray')
+						]),
+					_List_Nil)
+				]),
+			_Utils_ap(
+				line1,
+				_Utils_ap(line2, line3))));
 };
-var $elm$core$Debug$toString = _Debug_toString;
 var $elm$core$List$intersperse = F2(
 	function (sep, xs) {
 		if (!xs.b) {

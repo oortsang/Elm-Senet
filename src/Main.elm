@@ -162,25 +162,59 @@ newline = br [] []
 centering = Html.Attributes.align "center"
 monospace = Html.Attributes.style "font-family" "monospace"
 
-
+-- svgSquare : Int -> Int -> Int -> Int -> Html.Html msg
+svgSquare : Int -> Int -> Int -> Html.Html msg
+svgSquare n i j =
+  --length =
+  -- i for row, j for col
+  let
+    length = 100
+    rlen = length // 10
+    slen = length - rlen
+    x = j*length + rlen//2
+    y = i*length + rlen//2
+  in
+    Svg.rect
+      [ SA.x      <| Debug.toString x
+      , SA.y      <| Debug.toString y
+      , SA.width  <| Debug.toString slen
+      , SA.height <| Debug.toString slen
+      -- make it rounded
+      , SA.rx <| Debug.toString rlen
+      , SA.ry <| Debug.toString rlen
+      -- pick colors
+      , SA.stroke "black"
+      , SA.fill <|
+          if 0 == modBy 2 n then
+            "beige"
+          else
+            -- slightly darker
+            "burlywood"
+      ]
+      []
 
 -- make svg table
 svgBoard : Model -> Html.Html msg
 svgBoard model =
-  Svg.svg
-    [ SA.width  "1000"
-    , SA.height "300"
-    , SA.viewBox "0 0 300 1000"
-    ]
-    [ Svg.circle
-        [ SA.cx "700"
-        , SA.cy "50"
-        , SA.r  "5"
-        , SA.fill "green"
-        ]
-        []
-    ]
-  -- Debug.todo "Make svg board"
+  let
+    ls = List.range 0 9
+    line1 =
+      ls |> List.map (\i ->
+      svgSquare i 0 i)
+    line2 =
+      ls |> List.map (\i ->
+      svgSquare (19-i) 1 i)
+    line3 =
+      ls |> List.map (\i ->
+      svgSquare (20+i) 2 i)
+  in
+    Svg.svg [ SA.viewBox "-50 -50 1100 400"]
+      (  [Svg.rect [SA.x "-10", SA.y "-10", SA.width "1020", SA.height "320", SA.fill "gray"] []]
+      ++ line1 ++ line2 ++ line3
+      -- ++ [ Svg.circle [SA.cx "0",    SA.cy "0",   SA.r "10", SA.fill "green"][]
+      --    , Svg.circle [SA.cx "1000", SA.cy "300", SA.r "10", SA.fill "red"][]
+      --    ]
+      )
 
 txtBoard : Model -> Html Msg
 txtBoard model =
@@ -230,7 +264,7 @@ view model =
         [ text "Senet!"
         , newline
         ]
-    turn = 
+    turn =
       Html.div [centering]
         [ text <|
             if model.gs.turn == White then
@@ -260,6 +294,7 @@ view model =
           , newline
           ]
       , newline
-      -- , div [centering] [svgBoard model]
+      , div [centering] [svgBoard model]
+      -- , svgBoard model
       , newline
       ]
