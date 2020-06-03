@@ -532,9 +532,7 @@ playPawn p roll gs =
     -- meant for checking the last few squares
     -- send back to rebirth
     else if not legalSqType then
-      let _ = Debug.log "legalSqType" legalSqType in
-      -- Nothing -- <- if we don't want sliding back
-      moveToRebirth ()  -- <- if we want sliding back
+      moveToRebirth ()
     -- Enforce landing on house of happiness
     else if skippedHappiness then
       let _ = Debug.log "skippedHappiness" skippedHappiness in
@@ -545,8 +543,6 @@ playPawn p roll gs =
       Just (removePawn p gs)
     -- Check for collisions and swap
     else
-      -- TODO: Check (squareType m) for house of water
-      -- Check destination square (gs for switched turn)
       case (BT.getElem m gs.board) of
         Nothing ->
           let _ = Debug.log "Yikes, out-of-bounds m not handled..." m in
@@ -556,6 +552,6 @@ playPawn p roll gs =
           case squareType m of
             Spec Water ->
               -- moveTo dest
-              moveToRebirth () -- house of rebirth
+              moveToRebirth ()
             _ ->
               moveTo dest
