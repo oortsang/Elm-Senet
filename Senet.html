@@ -6225,6 +6225,7 @@ var $author$project$Main$update = F2(
 	});
 var $author$project$Main$Play = {$: 'Play'};
 var $author$project$Main$QueryRoll = {$: 'QueryRoll'};
+var $elm$html$Html$button = _VirtualDom_node('button');
 var $author$project$Main$Select = function (a) {
 	return {$: 'Select', a: a};
 };
@@ -6237,25 +6238,31 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 			$elm$json$Json$Encode$string(string));
 	});
 var $elm$html$Html$Attributes$align = $elm$html$Html$Attributes$stringProperty('align');
+var $author$project$Main$centering = $elm$html$Html$Attributes$align('center');
+var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$core$String$fromList = _String_fromList;
-var $elm$core$List$intersperse = F2(
-	function (sep, xs) {
-		if (!xs.b) {
-			return _List_Nil;
-		} else {
-			var hd = xs.a;
-			var tl = xs.b;
-			var step = F2(
-				function (x, rest) {
-					return A2(
-						$elm$core$List$cons,
-						sep,
-						A2($elm$core$List$cons, x, rest));
-				});
-			var spersed = A3($elm$core$List$foldr, step, _List_Nil, tl);
-			return A2($elm$core$List$cons, hd, spersed);
-		}
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
+var $author$project$Main$monospace = A2($elm$html$Html$Attributes$style, 'font-family', 'monospace');
+var $elm$html$Html$br = _VirtualDom_node('br');
+var $author$project$Main$newline = A2($elm$html$Html$br, _List_Nil, _List_Nil);
+var $elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var $elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var $elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$Normal(decoder));
 	});
+var $elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'click',
+		$elm$json$Json$Decode$succeed(msg));
+};
 var $author$project$Board$squareToChar = F2(
 	function (i, s) {
 		var pawnRep = function (p) {
@@ -6304,6 +6311,117 @@ var $author$project$Board$squareToChar = F2(
 			return _Utils_chr('.');
 		}
 	});
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Main$buttonBoard = function (model) {
+	var makeButton = function (i) {
+		return A2(
+			$elm$html$Html$button,
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onClick(
+					$author$project$Main$Select(i)),
+					$author$project$Main$monospace
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text(
+					$elm$core$String$fromList(
+						function (c) {
+							return _List_fromArray(
+								[c]);
+						}(
+							A2(
+								$author$project$Board$squareToChar,
+								i,
+								A2($author$project$BoardTree$getElem, i, model.gs.board)))))
+				]));
+	};
+	var line3 = A2(
+		$elm$core$List$map,
+		makeButton,
+		A2($elm$core$List$range, 20, 29));
+	var line2 = A2(
+		$elm$core$List$map,
+		makeButton,
+		$elm$core$List$reverse(
+			A2($elm$core$List$range, 10, 19)));
+	var line1 = A2(
+		$elm$core$List$map,
+		makeButton,
+		A2($elm$core$List$range, 0, 9));
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[$author$project$Main$centering]),
+		_Utils_ap(
+			line1,
+			_Utils_ap(
+				_List_fromArray(
+					[$author$project$Main$newline]),
+				_Utils_ap(
+					line2,
+					_Utils_ap(
+						_List_fromArray(
+							[$author$project$Main$newline]),
+						_Utils_ap(
+							line3,
+							_List_fromArray(
+								[$author$project$Main$newline])))))));
+};
+var $elm$html$Html$h3 = _VirtualDom_node('h3');
+var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
+var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
+var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
+var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
+var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
+var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
+var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
+var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
+var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
+var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
+var $author$project$Main$svgBoard = function (model) {
+	return A2(
+		$elm$svg$Svg$svg,
+		_List_fromArray(
+			[
+				$elm$svg$Svg$Attributes$width('1000'),
+				$elm$svg$Svg$Attributes$height('300'),
+				$elm$svg$Svg$Attributes$viewBox('0 0 300 1000')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$svg$Svg$circle,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$cx('700'),
+						$elm$svg$Svg$Attributes$cy('50'),
+						$elm$svg$Svg$Attributes$r('5'),
+						$elm$svg$Svg$Attributes$fill('green')
+					]),
+				_List_Nil)
+			]));
+};
+var $elm$core$Debug$toString = _Debug_toString;
+var $elm$core$List$intersperse = F2(
+	function (sep, xs) {
+		if (!xs.b) {
+			return _List_Nil;
+		} else {
+			var hd = xs.a;
+			var tl = xs.b;
+			var step = F2(
+				function (x, rest) {
+					return A2(
+						$elm$core$List$cons,
+						sep,
+						A2($elm$core$List$cons, x, rest));
+				});
+			var spersed = A3($elm$core$List$foldr, step, _List_Nil, tl);
+			return A2($elm$core$List$cons, hd, spersed);
+		}
+	});
 var $author$project$Board$boardToStrings = function (board) {
 	var space = $elm$core$List$intersperse(
 		_Utils_chr(' '));
@@ -6339,133 +6457,60 @@ var $author$project$Board$boardToStrings = function (board) {
 		line(nums2),
 		line(nums3));
 };
-var $elm$html$Html$br = _VirtualDom_node('br');
-var $elm$html$Html$button = _VirtualDom_node('button');
-var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$html$Html$h3 = _VirtualDom_node('h3');
-var $elm$virtual_dom$VirtualDom$Normal = function (a) {
-	return {$: 'Normal', a: a};
-};
-var $elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
-var $elm$html$Html$Events$on = F2(
-	function (event, decoder) {
-		return A2(
-			$elm$virtual_dom$VirtualDom$on,
-			event,
-			$elm$virtual_dom$VirtualDom$Normal(decoder));
-	});
-var $elm$html$Html$Events$onClick = function (msg) {
-	return A2(
-		$elm$html$Html$Events$on,
-		'click',
-		$elm$json$Json$Decode$succeed(msg));
-};
-var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $elm$core$Debug$toString = _Debug_toString;
-var $author$project$Main$view = function (model) {
-	var newline = A2($elm$html$Html$br, _List_Nil, _List_Nil);
-	var monospace = A2($elm$html$Html$Attributes$style, 'font-family', 'monospace');
-	var makeButton = function (i) {
-		return A2(
-			$elm$html$Html$button,
-			_List_fromArray(
-				[
-					$elm$html$Html$Events$onClick(
-					$author$project$Main$Select(i)),
-					monospace
-				]),
-			_List_fromArray(
-				[
-					$elm$html$Html$text(
-					$elm$core$String$fromList(
-						function (c) {
-							return _List_fromArray(
-								[c]);
-						}(
-							A2(
-								$author$project$Board$squareToChar,
-								i,
-								A2($author$project$BoardTree$getElem, i, model.gs.board)))))
-				]));
-	};
-	var line3 = A2(
-		$elm$core$List$map,
-		makeButton,
-		A2($elm$core$List$range, 20, 29));
-	var line2 = A2(
-		$elm$core$List$map,
-		makeButton,
-		$elm$core$List$reverse(
-			A2($elm$core$List$range, 10, 19)));
-	var line1 = A2(
-		$elm$core$List$map,
-		makeButton,
-		A2($elm$core$List$range, 0, 9));
-	var centering = $elm$html$Html$Attributes$align('center');
-	var tmpBoard = A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[centering]),
-		_Utils_ap(
-			line1,
-			_Utils_ap(
-				_List_fromArray(
-					[newline]),
-				_Utils_ap(
-					line2,
-					_Utils_ap(
-						_List_fromArray(
-							[newline]),
-						_Utils_ap(
-							line3,
-							_List_fromArray(
-								[newline])))))));
+var $author$project$Main$txtBoard = function (model) {
 	var _v0 = $author$project$Board$boardToStrings(model.gs.board);
 	var l1 = _v0.a;
 	var l2 = _v0.b;
 	var l3 = _v0.c;
-	var txtBoard = A2(
+	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
-			[centering, monospace]),
+			[$author$project$Main$centering, $author$project$Main$monospace]),
 		_List_fromArray(
 			[
 				$elm$html$Html$text('Temporary ASCII Board (P=White; Q=Black)'),
-				newline,
+				$author$project$Main$newline,
 				$elm$html$Html$text(l1),
-				newline,
+				$author$project$Main$newline,
 				$elm$html$Html$text(l2),
-				newline,
+				$author$project$Main$newline,
 				$elm$html$Html$text(l3),
-				newline
+				$author$project$Main$newline
+			]));
+};
+var $author$project$Main$view = function (model) {
+	var turn = A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[$author$project$Main$centering]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(
+				_Utils_eq(model.gs.turn, $author$project$Board$White) ? 'White\'s turn' : 'Black\'s turn')
+			]));
+	var title = A2(
+		$elm$html$Html$h3,
+		_List_fromArray(
+			[$author$project$Main$centering]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text('Senet!'),
+				$author$project$Main$newline
 			]));
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
 		_List_fromArray(
 			[
-				A2(
-				$elm$html$Html$h3,
-				_List_fromArray(
-					[centering]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Senet! Functionality coming soon...'),
-						newline,
-						$elm$html$Html$text(
-						_Utils_eq(model.gs.turn, $author$project$Board$White) ? 'White\'s turn' : 'Black\'s turn')
-					])),
-				txtBoard,
-				newline,
-				tmpBoard,
-				newline,
+				title,
+				turn,
+				$author$project$Main$newline,
+				$author$project$Main$txtBoard(model),
+				$author$project$Main$newline,
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
-					[centering]),
+					[$author$project$Main$centering]),
 				_List_fromArray(
 					[
 						A2(
@@ -6479,8 +6524,17 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$text(
 								'Roll: ' + $elm$core$Debug$toString(model.roll))
 							])),
-						newline,
-						newline,
+						$author$project$Main$newline,
+						$author$project$Main$newline
+					])),
+				$author$project$Main$buttonBoard(model),
+				$author$project$Main$newline,
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[$author$project$Main$centering]),
+				_List_fromArray(
+					[
 						A2(
 						$elm$html$Html$button,
 						_List_fromArray(
@@ -6491,8 +6545,19 @@ var $author$project$Main$view = function (model) {
 							[
 								$elm$html$Html$text(
 								'Play piece: ' + $elm$core$Debug$toString(model.selected))
-							]))
-					]))
+							])),
+						$author$project$Main$newline
+					])),
+				$author$project$Main$newline,
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[$author$project$Main$centering]),
+				_List_fromArray(
+					[
+						$author$project$Main$svgBoard(model)
+					])),
+				$author$project$Main$newline
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(

@@ -24,6 +24,9 @@ import Browser.Events
 import Html exposing (Html, text, button, div, br, h3)
 import Html.Attributes
 import Html.Events
+import Svg
+import Svg.Attributes as SA
+import Svg.Events as SE exposing (on)
 import Random exposing (Generator)
 
 main : Program Flags Model Msg
@@ -152,17 +155,39 @@ tryPlay n model =
   clearRoll { model | gs = js })))
   -- { model | gs = js, roll = Nothing })))
 
------- VIEW ------
-view : Model -> Html Msg
-view model =
-  let
-    newline = br [] []
-    centering = Html.Attributes.align "center"
-    monospace = Html.Attributes.style "font-family" "monospace"
 
+------ VIEW ------
+
+newline = br [] []
+centering = Html.Attributes.align "center"
+monospace = Html.Attributes.style "font-family" "monospace"
+
+
+
+-- make svg table
+svgBoard : Model -> Html.Html msg
+svgBoard model =
+  Svg.svg
+    [ SA.width  "1000"
+    , SA.height "300"
+    , SA.viewBox "0 0 300 1000"
+    ]
+    [ Svg.circle
+        [ SA.cx "700"
+        , SA.cy "50"
+        , SA.r  "5"
+        , SA.fill "green"
+        ]
+        []
+    ]
+  -- Debug.todo "Make svg board"
+
+txtBoard : Model -> Html Msg
+txtBoard model =
+  let
     (l1, l2, l3) = boardToStrings model.gs.board
-    txtBoard =
-      Html.div [centering, monospace]
+  in
+    Html.div [centering, monospace]
         [ text "Temporary ASCII Board (P=White; Q=Black)"
         , newline
         , text l1
@@ -172,6 +197,12 @@ view model =
         , text l3
         , newline
         ]
+
+-- Table of HTML buttons
+-- uses the basic single-character representation
+buttonBoard : Model -> Html Msg
+buttonBoard model =
+  let
     makeButton i =
       button [ Html.Events.onClick (Select i), monospace ]
         [ text
@@ -183,35 +214,52 @@ view model =
     line1 = List.map makeButton (List.range 0 9)
     line2 = List.map makeButton (List.reverse <| List.range 10 19)
     line3 = List.map makeButton (List.range 20 29)
-    tmpBoard =
+  in
+    Html.div [centering]
+      (   line1 ++ [newline]
+       ++ line2 ++ [newline]
+       ++ line3 ++ [newline]
+      )
+
+
+view : Model -> Html Msg
+view model =
+  let
+    title =
+      Html.h3 [ centering ]
+        [ text "Senet!"
+        , newline
+        ]
+    turn = 
       Html.div [centering]
-        (   line1 ++ [newline]
-         ++ line2 ++ [newline]
-         ++ line3 ++ [newline]
-        )
+        [ text <|
+            if model.gs.turn == White then
+              "White's turn"
+            else
+              "Black's turn"
+        ]
   in
     div
       []
-      [ Html.h3
-          [ centering ]
-          [ text "Senet! Functionality coming soon..."
-          , newline
-          , text <|
-              if model.gs.turn == White then
-                "White's turn"
-              else
-                "Black's turn"
-          ]
-      , txtBoard
+      [ title
+      , turn
       , newline
-      , tmpBoard
+      , txtBoard model
       , newline
       , div [centering]
           [ button [ Html.Events.onClick (QueryRoll)]
               [text <| "Roll: " ++ Debug.toString model.roll]
           , newline
           , newline
-          , button [ Html.Events.onClick (Play)]
-            [text <| "Play piece: " ++ Debug.toString model.selected]
           ]
+      , buttonBoard model
+      , newline
+      , div [centering]
+          [ button [ Html.Events.onClick (Play)]
+              [text <| "Play piece: " ++ Debug.toString model.selected]
+          , newline
+          ]
+      , newline
+      -- , div [centering] [svgBoard model]
+      , newline
       ]
