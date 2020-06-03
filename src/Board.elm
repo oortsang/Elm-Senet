@@ -154,8 +154,8 @@ getSquareColor p =
 
 ------ 4. Board String Representation ------
 -- Intended for debugging/command-line purposes
-boardToStrings : Board -> (String, String, String)
-boardToStrings board =
+squareToChar : Int -> Maybe SquareState -> Char
+squareToChar i s =
   let
     blankRep : SquareType -> Char
     blankRep sq =
@@ -172,12 +172,18 @@ boardToStrings board =
       case p of
         White -> 'P'
         Black -> 'Q'
-    rep : Int  -> Char
+  in
+    case s of
+      Just (Occ p) -> pawnRep p
+      Just (Free)  -> blankRep (squareType i)
+      Nothing      -> '.'
+
+
+boardToStrings : Board -> (String, String, String)
+boardToStrings board =
+  let
     rep n =
-      case (BT.getElem n board) of
-        Nothing      -> '.'
-        Just (Free)  -> blankRep (squareType n)
-        Just (Occ p) -> pawnRep p
+      squareToChar n (BT.getElem n board)
     nums1 = List.range 0 9
     nums2 = List.reverse <| List.range 10 19
     nums3 = List.range 20 29

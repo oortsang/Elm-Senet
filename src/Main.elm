@@ -7,6 +7,7 @@
 --   2. Figure out highlighting/selection logic
 --   3. Also fix the rng to be not uniform
 --   3.5. Should there be a button to ask for the roll?
+--   3.6. Skip moves that don't have legal moves
 --   4. Add images for the board
 
 
@@ -88,6 +89,8 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     QueryRoll ->
+      -- make sure that there are legal moves available!!
+      -- if not, the turn should be skipped
       case model.roll of
         Nothing ->
           (model, Random.generate GetRoll rollGenerator)
@@ -170,8 +173,13 @@ view model =
         , newline
         ]
     makeButton i =
-      button [ Html.Events.onClick (Select i) ]
-        [ text <| Debug.toString i ]
+      button [ Html.Events.onClick (Select i), monospace ]
+        [ text
+            <| String.fromList
+            <| (\c -> [c])
+            <| squareToChar i
+            <| BT.getElem i model.gs.board
+        ]
     line1 = List.map makeButton (List.range 0 9)
     line2 = List.map makeButton (List.reverse <| List.range 10 19)
     line3 = List.map makeButton (List.range 20 29)
@@ -206,6 +214,4 @@ view model =
           , button [ Html.Events.onClick (Play)]
             [text <| "Play piece: " ++ Debug.toString model.selected]
           ]
-      -- , div []
-      --   [ text <| Debug.toString model ]
       ]

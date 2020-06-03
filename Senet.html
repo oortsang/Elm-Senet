@@ -6256,61 +6256,67 @@ var $elm$core$List$intersperse = F2(
 			return A2($elm$core$List$cons, hd, spersed);
 		}
 	});
+var $author$project$Board$squareToChar = F2(
+	function (i, s) {
+		var pawnRep = function (p) {
+			if (p.$ === 'White') {
+				return _Utils_chr('P');
+			} else {
+				return _Utils_chr('Q');
+			}
+		};
+		var blankRep = function (sq) {
+			switch (sq.$) {
+				case 'Reg':
+					return _Utils_chr('.');
+				case 'Rebirth':
+					return _Utils_chr(',');
+				default:
+					switch (sq.a.$) {
+						case 'Happy':
+							var _v3 = sq.a;
+							return _Utils_chr('&');
+						case 'Water':
+							var _v4 = sq.a;
+							return _Utils_chr('w');
+						case 'Truths':
+							var _v5 = sq.a;
+							return _Utils_chr('3');
+						case 'Reatoum':
+							var _v6 = sq.a;
+							return _Utils_chr('2');
+						default:
+							var _v7 = sq.a;
+							return _Utils_chr('.');
+					}
+			}
+		};
+		if (s.$ === 'Just') {
+			if (s.a.$ === 'Occ') {
+				var p = s.a.a;
+				return pawnRep(p);
+			} else {
+				var _v1 = s.a;
+				return blankRep(
+					$author$project$Board$squareType(i));
+			}
+		} else {
+			return _Utils_chr('.');
+		}
+	});
 var $author$project$Board$boardToStrings = function (board) {
 	var space = $elm$core$List$intersperse(
 		_Utils_chr(' '));
-	var pawnRep = function (p) {
-		if (p.$ === 'White') {
-			return _Utils_chr('P');
-		} else {
-			return _Utils_chr('Q');
-		}
+	var rep = function (n) {
+		return A2(
+			$author$project$Board$squareToChar,
+			n,
+			A2($author$project$BoardTree$getElem, n, board));
 	};
 	var nums3 = A2($elm$core$List$range, 20, 29);
 	var nums2 = $elm$core$List$reverse(
 		A2($elm$core$List$range, 10, 19));
 	var nums1 = A2($elm$core$List$range, 0, 9);
-	var blankRep = function (sq) {
-		switch (sq.$) {
-			case 'Reg':
-				return _Utils_chr('.');
-			case 'Rebirth':
-				return _Utils_chr(',');
-			default:
-				switch (sq.a.$) {
-					case 'Happy':
-						var _v6 = sq.a;
-						return _Utils_chr('&');
-					case 'Water':
-						var _v7 = sq.a;
-						return _Utils_chr('w');
-					case 'Truths':
-						var _v8 = sq.a;
-						return _Utils_chr('3');
-					case 'Reatoum':
-						var _v9 = sq.a;
-						return _Utils_chr('2');
-					default:
-						var _v10 = sq.a;
-						return _Utils_chr('.');
-				}
-		}
-	};
-	var rep = function (n) {
-		var _v3 = A2($author$project$BoardTree$getElem, n, board);
-		if (_v3.$ === 'Nothing') {
-			return _Utils_chr('.');
-		} else {
-			if (_v3.a.$ === 'Free') {
-				var _v4 = _v3.a;
-				return blankRep(
-					$author$project$Board$squareType(n));
-			} else {
-				var p = _v3.a.a;
-				return pawnRep(p);
-			}
-		}
-	};
 	var line = function (ns) {
 		return $elm$core$String$fromList(
 			space(
@@ -6368,12 +6374,21 @@ var $author$project$Main$view = function (model) {
 			_List_fromArray(
 				[
 					$elm$html$Html$Events$onClick(
-					$author$project$Main$Select(i))
+					$author$project$Main$Select(i)),
+					monospace
 				]),
 			_List_fromArray(
 				[
 					$elm$html$Html$text(
-					$elm$core$Debug$toString(i))
+					$elm$core$String$fromList(
+						function (c) {
+							return _List_fromArray(
+								[c]);
+						}(
+							A2(
+								$author$project$Board$squareToChar,
+								i,
+								A2($author$project$BoardTree$getElem, i, model.gs.board)))))
 				]));
 	};
 	var line3 = A2(
