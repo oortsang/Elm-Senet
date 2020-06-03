@@ -5505,6 +5505,15 @@ var $author$project$Main$subscriptions = function (model) {
 var $author$project$Main$GetRoll = function (a) {
 	return {$: 'GetRoll', a: a};
 };
+var $elm$core$Maybe$andThen = F2(
+	function (callback, maybeValue) {
+		if (maybeValue.$ === 'Just') {
+			var value = maybeValue.a;
+			return callback(value);
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
 var $elm$random$Random$Generate = function (a) {
 	return {$: 'Generate', a: a};
 };
@@ -5671,61 +5680,11 @@ var $author$project$Main$setRoll = F2(
 				roll: $elm$core$Maybe$Just(i)
 			});
 	});
-var $elm$core$Debug$todo = _Debug_todo;
-var $author$project$Main$tryPlay = F2(
-	function (n, model) {
-		return _Debug_todo(
-			'Main',
-			{
-				start: {line: 110, column: 3},
-				end: {line: 110, column: 13}
-			})('asdfdf');
-	});
-var $author$project$Main$unselectPiece = function (model) {
+var $author$project$Main$clearRoll = function (model) {
 	return _Utils_update(
 		model,
-		{selected: $elm$core$Maybe$Nothing});
+		{roll: $elm$core$Maybe$Nothing});
 };
-var $author$project$Main$update = F2(
-	function (msg, model) {
-		switch (msg.$) {
-			case 'QueryRoll':
-				return _Utils_Tuple2(
-					model,
-					A2($elm$random$Random$generate, $author$project$Main$GetRoll, $author$project$Main$rollGenerator));
-			case 'GetRoll':
-				var i = msg.a;
-				return _Utils_Tuple2(
-					A2($author$project$Main$setRoll, i, model),
-					$elm$core$Platform$Cmd$none);
-			case 'Select':
-				var n = msg.a;
-				return _Utils_Tuple2(
-					A2($author$project$Main$selectPiece, n, model),
-					$elm$core$Platform$Cmd$none);
-			case 'Unselect':
-				return _Utils_Tuple2(
-					$author$project$Main$unselectPiece(model),
-					$elm$core$Platform$Cmd$none);
-			case 'Play':
-				var n = msg.a;
-				return _Utils_Tuple2(
-					A2($author$project$Main$tryPlay, n, model),
-					$elm$core$Platform$Cmd$none);
-			default:
-				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-		}
-	});
-var $elm$json$Json$Encode$string = _Json_wrap;
-var $elm$html$Html$Attributes$stringProperty = F2(
-	function (key, string) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			$elm$json$Json$Encode$string(string));
-	});
-var $elm$html$Html$Attributes$align = $elm$html$Html$Attributes$stringProperty('align');
-var $elm$core$String$fromList = _String_fromList;
 var $author$project$BoardTree$getElem = F2(
 	function (i, t) {
 		getElem:
@@ -5757,25 +5716,285 @@ var $author$project$BoardTree$getElem = F2(
 			}
 		}
 	});
-var $elm$core$List$intersperse = F2(
-	function (sep, xs) {
-		if (!xs.b) {
-			return _List_Nil;
-		} else {
-			var hd = xs.a;
-			var tl = xs.b;
-			var step = F2(
-				function (x, rest) {
-					return A2(
-						$elm$core$List$cons,
-						sep,
-						A2($elm$core$List$cons, x, rest));
-				});
-			var spersed = A3($elm$core$List$foldr, step, _List_Nil, tl);
-			return A2($elm$core$List$cons, hd, spersed);
+var $author$project$Board$getPawn = F2(
+	function (i, gs) {
+		var squarePawn = function (sq) {
+			if (sq.$ === 'Free') {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var c = sq.a;
+				return $elm$core$Maybe$Just(
+					{color: c, square: i});
+			}
+		};
+		return A2(
+			$elm$core$Maybe$andThen,
+			squarePawn,
+			A2($author$project$BoardTree$getElem, i, gs.board));
+	});
+var $author$project$Board$lastFreeBy = F2(
+	function (sq, gs) {
+		lastFreeBy:
+		while (true) {
+			var _v0 = A2($author$project$BoardTree$getElem, sq, gs.board);
+			if (_v0.$ === 'Nothing') {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				if (_v0.a.$ === 'Free') {
+					var _v1 = _v0.a;
+					return $elm$core$Maybe$Just(sq);
+				} else {
+					var $temp$sq = sq - 1,
+						$temp$gs = gs;
+					sq = $temp$sq;
+					gs = $temp$gs;
+					continue lastFreeBy;
+				}
+			}
 		}
 	});
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $author$project$Board$getSquareColor = function (p) {
+	if (p.$ === 'Free') {
+		return $elm$core$Maybe$Nothing;
+	} else {
+		var col = p.a;
+		return $elm$core$Maybe$Just(col);
+	}
+};
 var $elm$core$Debug$log = _Debug_log;
+var $author$project$BoardTree$setElem = F3(
+	function (i, x, t) {
+		switch (t.$) {
+			case 'Empty':
+				return $elm$core$Maybe$Nothing;
+			case 'Leaf':
+				var j = t.a;
+				return _Utils_eq(i, j) ? $elm$core$Maybe$Just(
+					A2($author$project$BoardTree$Leaf, j, x)) : $elm$core$Maybe$Nothing;
+			default:
+				var j = t.a;
+				var t1 = t.b;
+				var t2 = t.c;
+				return (_Utils_cmp(i, j) < 0) ? A2(
+					$elm$core$Maybe$map,
+					function (left) {
+						return A2(
+							$author$project$BoardTree$Parent(j),
+							left,
+							t2);
+					},
+					A3($author$project$BoardTree$setElem, i, x, t1)) : A2(
+					$elm$core$Maybe$map,
+					function (right) {
+						return A2(
+							$author$project$BoardTree$Parent(j),
+							t1,
+							right);
+					},
+					A3($author$project$BoardTree$setElem, i, x, t2));
+		}
+	});
+var $author$project$BoardTree$swap = F3(
+	function (i, j, t) {
+		if (t.$ === 'Empty') {
+			return $elm$core$Maybe$Nothing;
+		} else {
+			var setter = F3(
+				function (k, mw, ms) {
+					return A2(
+						$elm$core$Maybe$andThen,
+						function (s) {
+							return A2(
+								$elm$core$Maybe$andThen,
+								function (w) {
+									return A3($author$project$BoardTree$setElem, k, w, s);
+								},
+								mw);
+						},
+						ms);
+				});
+			var my = A2($author$project$BoardTree$getElem, j, t);
+			var mx = A2($author$project$BoardTree$getElem, i, t);
+			return A3(
+				setter,
+				i,
+				my,
+				A3(
+					setter,
+					j,
+					mx,
+					$elm$core$Maybe$Just(t)));
+		}
+	});
+var $author$project$Board$pawnSwapHelper = F3(
+	function (pn, qn, board) {
+		return A3($author$project$BoardTree$swap, pn, qn, board);
+	});
+var $author$project$Board$updateList = F3(
+	function (col, f, gs) {
+		if (col.$ === 'White') {
+			return _Utils_update(
+				gs,
+				{
+					whitePawns: f(gs.whitePawns)
+				});
+		} else {
+			return _Utils_update(
+				gs,
+				{
+					blackPawns: f(gs.blackPawns)
+				});
+		}
+	});
+var $author$project$Board$pawnSwap = F3(
+	function (pn, qn, gs) {
+		var _v0 = A2($author$project$BoardTree$getElem, qn, gs.board);
+		if (_v0.$ === 'Nothing') {
+			return $elm$core$Maybe$Nothing;
+		} else {
+			var q = _v0.a;
+			var replaceHelper = F3(
+				function (oldv, newv, x) {
+					return _Utils_eq(x.square, oldv) ? {color: x.color, square: newv} : x;
+				});
+			var replace = F2(
+				function (old, _new) {
+					return $elm$core$List$map(
+						A2(replaceHelper, old, _new));
+				});
+			var maybeBoard = A3($author$project$Board$pawnSwapHelper, pn, qn, gs.board);
+			var js = function () {
+				var _v2 = A2(
+					$elm$core$Maybe$andThen,
+					$author$project$Board$getSquareColor,
+					A2($author$project$BoardTree$getElem, pn, gs.board));
+				if (_v2.$ === 'Just') {
+					var col = _v2.a;
+					return A3(
+						$author$project$Board$updateList,
+						col,
+						A2(replace, pn, qn),
+						gs);
+				} else {
+					var _v3 = A2($elm$core$Debug$log, 'Oops, invalid pawnSwap?', _Utils_Tuple0);
+					return gs;
+				}
+			}();
+			var hs = A2(
+				$elm$core$Maybe$map,
+				function (b) {
+					return _Utils_update(
+						js,
+						{board: b});
+				},
+				maybeBoard);
+			if (q.$ === 'Free') {
+				return hs;
+			} else {
+				var destCol = q.a;
+				return A2(
+					$elm$core$Maybe$map,
+					function (game) {
+						return A3(
+							$author$project$Board$updateList,
+							destCol,
+							A2(replace, qn, pn),
+							game);
+					},
+					hs);
+			}
+		}
+	});
+var $elm$core$Basics$ge = _Utils_ge;
+var $author$project$Board$legalBySquareType = F2(
+	function (square, m) {
+		if (square.$ === 'Spec') {
+			switch (square.a.$) {
+				case 'Happy':
+					var _v1 = square.a;
+					return true;
+				case 'Water':
+					var _v2 = square.a;
+					return true;
+				case 'Truths':
+					var _v3 = square.a;
+					return m === 30;
+				case 'Reatoum':
+					var _v4 = square.a;
+					return m === 30;
+				default:
+					var _v5 = square.a;
+					return true;
+			}
+		} else {
+			return true;
+		}
+	});
+var $elm$core$Basics$neq = _Utils_notEqual;
+var $elm$core$Basics$not = _Basics_not;
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $author$project$Board$clearSquare = F2(
+	function (board, n) {
+		return A2(
+			$elm$core$Maybe$withDefault,
+			board,
+			A3($author$project$BoardTree$setElem, n, $author$project$Board$Free, board));
+	});
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var $author$project$Board$removePawn = F2(
+	function (p, gs) {
+		var removeListElem = function (x) {
+			return $elm$core$List$filter(
+				$elm$core$Basics$neq(x));
+		};
+		var newBoard = A2($author$project$Board$clearSquare, gs.board, p.square);
+		var _v0 = p.color;
+		if (_v0.$ === 'White') {
+			return _Utils_update(
+				gs,
+				{
+					board: newBoard,
+					whitePawnCnt: gs.whitePawnCnt - 1,
+					whitePawns: A2(removeListElem, p, gs.whitePawns)
+				});
+		} else {
+			return _Utils_update(
+				gs,
+				{
+					blackPawnCnt: gs.blackPawnCnt - 1,
+					blackPawns: A2(removeListElem, p, gs.blackPawns),
+					board: newBoard
+				});
+		}
+	});
 var $author$project$Board$Happy = {$: 'Happy'};
 var $author$project$Board$Horus = {$: 'Horus'};
 var $author$project$Board$Reatoum = {$: 'Reatoum'};
@@ -5804,6 +6023,239 @@ var $author$project$Board$squareType = function (n) {
 			return $author$project$Board$Reg;
 	}
 };
+var $author$project$Board$playPawn = F3(
+	function (p, roll, gs) {
+		var n = p.square;
+		var moveToRebirth = function (_v8) {
+			return A2(
+				$elm$core$Maybe$andThen,
+				function (d) {
+					return A3($author$project$Board$pawnSwap, n, d, gs);
+				},
+				A2($author$project$Board$lastFreeBy, 14, gs));
+		};
+		var m = n + roll;
+		var moveTo = function (destState) {
+			if (destState.$ === 'Free') {
+				return A3($author$project$Board$pawnSwap, n, m, gs);
+			} else {
+				var destCol = destState.a;
+				if (!_Utils_eq(p.color, destCol)) {
+					return A3($author$project$Board$pawnSwap, n, m, gs);
+				} else {
+					var _v7 = A2(
+						$elm$core$Debug$log,
+						'same color! (p, destCol)',
+						_Utils_Tuple2(p, destCol));
+					return $elm$core$Maybe$Nothing;
+				}
+			}
+		};
+		var skippedHappiness = (n < 25) && (m > 25);
+		var legalSqType = A2(
+			$author$project$Board$legalBySquareType,
+			$author$project$Board$squareType(n),
+			m);
+		var attemptedLeave = m >= 30;
+		if (!_Utils_eq(p.color, gs.turn)) {
+			var _v0 = A2(
+				$elm$core$Debug$log,
+				'Getting lost in the moves... (pawn vs. turn)',
+				_Utils_Tuple2(p, gs.turn));
+			return $elm$core$Maybe$Nothing;
+		} else {
+			if (!legalSqType) {
+				return moveToRebirth(_Utils_Tuple0);
+			} else {
+				if (skippedHappiness) {
+					var _v1 = A2($elm$core$Debug$log, 'skippedHappiness', skippedHappiness);
+					return $elm$core$Maybe$Nothing;
+				} else {
+					if (attemptedLeave) {
+						return $elm$core$Maybe$Just(
+							A2($author$project$Board$removePawn, p, gs));
+					} else {
+						var _v2 = A2($author$project$BoardTree$getElem, m, gs.board);
+						if (_v2.$ === 'Nothing') {
+							var _v3 = A2($elm$core$Debug$log, 'Yikes, out-of-bounds m not handled...', m);
+							return $elm$core$Maybe$Nothing;
+						} else {
+							var dest = _v2.a;
+							var _v4 = $author$project$Board$squareType(m);
+							if ((_v4.$ === 'Spec') && (_v4.a.$ === 'Water')) {
+								var _v5 = _v4.a;
+								return moveToRebirth(_Utils_Tuple0);
+							} else {
+								return moveTo(dest);
+							}
+						}
+					}
+				}
+			}
+		}
+	});
+var $author$project$Board$switchTurn = function (gs) {
+	var _v0 = gs.turn;
+	if (_v0.$ === 'White') {
+		return _Utils_update(
+			gs,
+			{turn: $author$project$Board$Black});
+	} else {
+		return _Utils_update(
+			gs,
+			{turn: $author$project$Board$White});
+	}
+};
+var $author$project$Board$makeMove = F3(
+	function (p, roll, gs) {
+		var endOrContinueTurn = function (_v1) {
+			return $author$project$Board$switchTurn;
+		};
+		var checkSquare = F2(
+			function (sq, js) {
+				var getsq = function (g) {
+					return A2($author$project$BoardTree$getElem, sq, g.board);
+				};
+				var _v0 = _Utils_Tuple2(
+					getsq(gs),
+					getsq(js));
+				if ((((_v0.a.$ === 'Just') && (_v0.a.a.$ === 'Occ')) && (_v0.b.$ === 'Just')) && (_v0.b.a.$ === 'Occ')) {
+					var c1 = _v0.a.a.a;
+					var c2 = _v0.b.a.a;
+					return (_Utils_eq(c1, c2) && _Utils_eq(c1, p.color)) ? A2(
+						$elm$core$Maybe$withDefault,
+						js,
+						A2(
+							$elm$core$Maybe$andThen,
+							function (lf) {
+								return A3($author$project$Board$pawnSwap, sq, lf, js);
+							},
+							A2($author$project$Board$lastFreeBy, 14, js))) : js;
+				} else {
+					return js;
+				}
+			});
+		var sendBack = function (js) {
+			return A2(
+				checkSquare,
+				29,
+				A2(
+					checkSquare,
+					28,
+					A2(checkSquare, 27, js)));
+		};
+		return A2(
+			$elm$core$Maybe$map,
+			endOrContinueTurn(_Utils_Tuple0),
+			A2(
+				$elm$core$Maybe$map,
+				sendBack,
+				A3($author$project$Board$playPawn, p, roll, gs)));
+	});
+var $author$project$Main$tryPlay = F2(
+	function (n, model) {
+		return A2(
+			$elm$core$Maybe$andThen,
+			function (r) {
+				return A2(
+					$elm$core$Maybe$andThen,
+					function (p) {
+						return A2(
+							$elm$core$Maybe$map,
+							function (js) {
+								return $author$project$Main$clearRoll(
+									_Utils_update(
+										model,
+										{gs: js}));
+							},
+							A3($author$project$Board$makeMove, p, r, model.gs));
+					},
+					A2($author$project$Board$getPawn, n, model.gs));
+			},
+			model.roll);
+	});
+var $author$project$Main$unselectPiece = function (model) {
+	return _Utils_update(
+		model,
+		{selected: $elm$core$Maybe$Nothing});
+};
+var $author$project$Main$update = F2(
+	function (msg, model) {
+		switch (msg.$) {
+			case 'QueryRoll':
+				var _v1 = model.roll;
+				if (_v1.$ === 'Nothing') {
+					return _Utils_Tuple2(
+						model,
+						A2($elm$random$Random$generate, $author$project$Main$GetRoll, $author$project$Main$rollGenerator));
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			case 'GetRoll':
+				var i = msg.a;
+				return _Utils_Tuple2(
+					A2($author$project$Main$setRoll, i, model),
+					$elm$core$Platform$Cmd$none);
+			case 'Select':
+				var n = msg.a;
+				return _Utils_Tuple2(
+					A2($author$project$Main$selectPiece, n, model),
+					$elm$core$Platform$Cmd$none);
+			case 'Unselect':
+				return _Utils_Tuple2(
+					$author$project$Main$unselectPiece(model),
+					$elm$core$Platform$Cmd$none);
+			case 'Play':
+				var newModel = A2(
+					$elm$core$Maybe$withDefault,
+					model,
+					A2(
+						$elm$core$Maybe$andThen,
+						function (n) {
+							return A2(
+								$author$project$Main$tryPlay,
+								n,
+								$author$project$Main$unselectPiece(model));
+						},
+						model.selected));
+				return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
+			default:
+				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+		}
+	});
+var $author$project$Main$Play = {$: 'Play'};
+var $author$project$Main$QueryRoll = {$: 'QueryRoll'};
+var $author$project$Main$Select = function (a) {
+	return {$: 'Select', a: a};
+};
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$string(string));
+	});
+var $elm$html$Html$Attributes$align = $elm$html$Html$Attributes$stringProperty('align');
+var $elm$core$String$fromList = _String_fromList;
+var $elm$core$List$intersperse = F2(
+	function (sep, xs) {
+		if (!xs.b) {
+			return _List_Nil;
+		} else {
+			var hd = xs.a;
+			var tl = xs.b;
+			var step = F2(
+				function (x, rest) {
+					return A2(
+						$elm$core$List$cons,
+						sep,
+						A2($elm$core$List$cons, x, rest));
+				});
+			var spersed = A3($elm$core$List$foldr, step, _List_Nil, tl);
+			return A2($elm$core$List$cons, hd, spersed);
+		}
+	});
 var $author$project$Board$boardToStrings = function (board) {
 	var space = $elm$core$List$intersperse(
 		_Utils_chr(' '));
@@ -5882,16 +6334,80 @@ var $author$project$Board$boardToStrings = function (board) {
 		line(nums3));
 };
 var $elm$html$Html$br = _VirtualDom_node('br');
+var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$html$Html$h3 = _VirtualDom_node('h3');
+var $elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var $elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var $elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var $elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'click',
+		$elm$json$Json$Decode$succeed(msg));
+};
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $elm$core$Debug$toString = _Debug_toString;
 var $author$project$Main$view = function (model) {
 	var newline = A2($elm$html$Html$br, _List_Nil, _List_Nil);
 	var monospace = A2($elm$html$Html$Attributes$style, 'font-family', 'monospace');
+	var makeButton = function (i) {
+		return A2(
+			$elm$html$Html$button,
+			_List_fromArray(
+				[
+					$elm$html$Html$Events$onClick(
+					$author$project$Main$Select(i))
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text(
+					$elm$core$Debug$toString(i))
+				]));
+	};
+	var line3 = A2(
+		$elm$core$List$map,
+		makeButton,
+		A2($elm$core$List$range, 20, 29));
+	var line2 = A2(
+		$elm$core$List$map,
+		makeButton,
+		$elm$core$List$reverse(
+			A2($elm$core$List$range, 10, 19)));
+	var line1 = A2(
+		$elm$core$List$map,
+		makeButton,
+		A2($elm$core$List$range, 0, 9));
 	var centering = $elm$html$Html$Attributes$align('center');
+	var tmpBoard = A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[centering]),
+		_Utils_ap(
+			line1,
+			_Utils_ap(
+				_List_fromArray(
+					[newline]),
+				_Utils_ap(
+					line2,
+					_Utils_ap(
+						_List_fromArray(
+							[newline]),
+						_Utils_ap(
+							line3,
+							_List_fromArray(
+								[newline])))))));
 	var _v0 = $author$project$Board$boardToStrings(model.gs.board);
 	var l1 = _v0.a;
 	var l2 = _v0.b;
@@ -5908,7 +6424,8 @@ var $author$project$Main$view = function (model) {
 				newline,
 				$elm$html$Html$text(l2),
 				newline,
-				$elm$html$Html$text(l3)
+				$elm$html$Html$text(l3),
+				newline
 			]));
 	return A2(
 		$elm$html$Html$div,
@@ -5921,9 +6438,46 @@ var $author$project$Main$view = function (model) {
 					[centering]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Senet! Functionality coming soon...')
+						$elm$html$Html$text('Senet! Functionality coming soon...'),
+						newline,
+						$elm$html$Html$text(
+						_Utils_eq(model.gs.turn, $author$project$Board$White) ? 'White\'s turn' : 'Black\'s turn')
 					])),
-				txtBoard
+				txtBoard,
+				newline,
+				tmpBoard,
+				newline,
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[centering]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$QueryRoll)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(
+								'Roll: ' + $elm$core$Debug$toString(model.roll))
+							])),
+						newline,
+						newline,
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$Play)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(
+								'Play piece: ' + $elm$core$Debug$toString(model.selected))
+							]))
+					]))
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(

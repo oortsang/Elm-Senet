@@ -6,6 +6,7 @@
 --   1. Add board/buttons to HTML
 --   2. Figure out highlighting/selection logic
 --   3. Also fix the rng to be not uniform
+--   3.5. Should there be a button to ask for the roll?
 --   4. Add images for the board
 
 
@@ -19,8 +20,9 @@ import BoardTree as BT exposing (..)
 -- For html-side
 import Browser
 import Browser.Events
-import Html exposing (Html)
+import Html exposing (Html, text, button, div, br, h3)
 import Html.Attributes
+import Html.Events
 import Random exposing (Generator)
 
 main : Program Flags Model Msg
@@ -151,26 +153,59 @@ tryPlay n model =
 view : Model -> Html Msg
 view model =
   let
-    newline = Html.br [] []
+    newline = br [] []
     centering = Html.Attributes.align "center"
     monospace = Html.Attributes.style "font-family" "monospace"
 
     (l1, l2, l3) = boardToStrings model.gs.board
     txtBoard =
       Html.div [centering, monospace]
-        [ Html.text "Temporary ASCII Board (P=White; Q=Black)"
+        [ text "Temporary ASCII Board (P=White; Q=Black)"
         , newline
-        , Html.text l1
+        , text l1
         , newline
-        , Html.text l2
+        , text l2
         , newline
-        , Html.text l3
+        , text l3
+        , newline
         ]
+    makeButton i =
+      button [ Html.Events.onClick (Select i) ]
+        [ text <| Debug.toString i ]
+    line1 = List.map makeButton (List.range 0 9)
+    line2 = List.map makeButton (List.reverse <| List.range 10 19)
+    line3 = List.map makeButton (List.range 20 29)
+    tmpBoard =
+      Html.div [centering]
+        (   line1 ++ [newline]
+         ++ line2 ++ [newline]
+         ++ line3 ++ [newline]
+        )
   in
-    Html.div
+    div
       []
       [ Html.h3
           [ centering ]
-          [ Html.text "Senet! Functionality coming soon..." ]
+          [ text "Senet! Functionality coming soon..."
+          , newline
+          , text <|
+              if model.gs.turn == White then
+                "White's turn"
+              else
+                "Black's turn"
+          ]
       , txtBoard
+      , newline
+      , tmpBoard
+      , newline
+      , div [centering]
+          [ button [ Html.Events.onClick (QueryRoll)]
+              [text <| "Roll: " ++ Debug.toString model.roll]
+          , newline
+          , newline
+          , button [ Html.Events.onClick (Play)]
+            [text <| "Play piece: " ++ Debug.toString model.selected]
+          ]
+      -- , div []
+      --   [ text <| Debug.toString model ]
       ]
