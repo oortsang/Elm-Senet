@@ -21,12 +21,15 @@ import BoardTree as BT exposing (..)
 -- For html-side
 import Browser
 import Browser.Events
+
 import Html exposing (Html, text, button, div, br, h3)
 import Html.Attributes
 import Html.Events
+
 import Svg
 import Svg.Attributes as SA
 import Svg.Events as SE exposing (on)
+
 import Random exposing (Generator)
 
 main : Program Flags Model Msg
@@ -59,10 +62,11 @@ initModel =
 type Msg
   = QueryRoll   -- request random number
   | GetRoll Int -- receive random number
-  | Select Int  -- select piece
-  | Unselect    -- unselect piece (if you click elsewhere)
-  | Play        -- play the selected piece
+  | Click Int  -- select piece
   | Noop
+    -- Deprecated for new interface:
+  | Unselect -- unselect piece (if you click elsewhere)
+  | Play     -- deprecated -- use Click instead
 
 
 
@@ -72,10 +76,10 @@ init () =
   (initModel, Cmd.none)
 
 ------ SUBSCRIPTIONS ------
+-- Not actually using any at the moment
 subscriptions : Model -> Sub msg
 subscriptions model =
-  Sub.batch
-    [] -- add buttons... and listen for buttons too
+  Sub.none
 
 ------ UPDATE ------
 -- To do:
@@ -102,26 +106,44 @@ update msg model =
           (model, Cmd.none)
     GetRoll i ->
       (setRoll i model, Cmd.none)
-    Select n ->
-      -- also want to change highlighting?
-      -- Should we check for legality?
-      (selectPiece n model, Cmd.none)
+    Click n ->
+      case (model.selected, model.roll) of
+        -- also want to change highlighting?
+        -- Should we check for legality
+        (Just m, Just r) ->
+          if n == m then
+            -- Unselect
+            -- also want to change highlighting?
+            (unselectPiece model, Cmd.none)            
+          else if n == (m+r) then
+            -- Play!
+            -- TODO: Add error messages...
+            let
+              newModel =
+                model
+                  |> unselectPiece
+                  |> tryPlay m
+                  |> Maybe.withDefault model
+            in
+              (newModel, Cmd.none)
+          else
+            (model, Cmd.none)
+        _ ->
+          (selectPiece n model, Cmd.none)
+    Noop ->
+      (model, Cmd.none)
     Unselect ->
-      -- also want to change highlighting?
       (unselectPiece model, Cmd.none)
     Play ->
-      -- TODO: Add error messages...
       let
         newModel =
-          model.selected |> Maybe.andThen (\n ->
-          model
+          model.selected |> Maybe.andThen (\nn ->
+            model
             |> unselectPiece
-            |> tryPlay n
+            |> tryPlay nn
           ) |> Maybe.withDefault model
       in
         (newModel, Cmd.none)
-    Noop ->
-      (model, Cmd.none)
 
 ------ Helper functions for Update ------
 
@@ -162,13 +184,12 @@ newline = br [] []
 centering = Html.Attributes.align "center"
 monospace = Html.Attributes.style "font-family" "monospace"
 
--- svgSquare : Int -> Int -> Int -> Int -> Html.Html msg
-svgSquare : Int -> Int -> Int -> Html.Html msg
-svgSquare n i j =
+
+svgSquare : Int -> Int -> Int -> Int -> Html.Html Msg
+svgSquare length n i j =
   --length =
   -- i for row, j for col
   let
-    length = 100
     rlen = length // 10
     slen = length - rlen
     x = j*length + rlen//2
@@ -190,23 +211,25 @@ svgSquare n i j =
           else
             -- slightly darker
             "burlywood"
+      ,  SE.onClick (Click n)
       ]
       []
 
 -- make svg table
-svgBoard : Model -> Html.Html msg
+svgBoard : Model -> Html.Html Msg
 svgBoard model =
   let
+    length = 100
     ls = List.range 0 9
     line1 =
       ls |> List.map (\i ->
-      svgSquare i 0 i)
+      svgSquare length i 0 i)
     line2 =
       ls |> List.map (\i ->
-      svgSquare (19-i) 1 i)
+      svgSquare length (19-i) 1 i)
     line3 =
       ls |> List.map (\i ->
-      svgSquare (20+i) 2 i)
+      svgSquare length (20+i) 2 i)
   in
     Svg.svg [ SA.viewBox "-50 -50 1100 400"]
       (  [Svg.rect [SA.x "-10", SA.y "-10", SA.width "1020", SA.height "320", SA.fill "gray"] []]
@@ -238,7 +261,7 @@ buttonBoard : Model -> Html Msg
 buttonBoard model =
   let
     makeButton i =
-      button [ Html.Events.onClick (Select i), monospace ]
+      button [ Html.Events.onClick (Click i), monospace ]
         [ text
             <| String.fromList
             <| (\c -> [c])
