@@ -268,8 +268,7 @@ svgSquare length gs n i j =
                 then "snow"
                 else "slategray"
             ,  SE.onClick (Click n)
-            ]
-            []
+            ] []
           ]
         Nothing ->
           []
@@ -283,6 +282,7 @@ svgSquare length gs n i j =
             , SA.y <| Debug.toString y
             , SA.width picSize, SA.height picSize
             , href "images/rebirth.png"
+            , SE.onClick (Click n)
             ] []
           ]
         Spec Happy ->
@@ -290,32 +290,36 @@ svgSquare length gs n i j =
             [ SA.x <| Debug.toString x
             , SA.y <| Debug.toString y
             , SA.width picSize, SA.height picSize
-            , href "images/happy.png"]
-            []
+            , href "images/happy.png"
+            , SE.onClick (Click n)
+            ] []
           ]
         Spec Water ->
           [ Svg.image
             [ SA.x <| Debug.toString x
             , SA.y <| Debug.toString y
             , SA.width picSize, SA.height picSize
-            , href "images/water.png"]
-            []
+            , href "images/water.png"
+            , SE.onClick (Click n)
+            ] []
           ]
         Spec Truths ->
           [ Svg.image
             [ SA.x <| Debug.toString x
             , SA.y <| Debug.toString y
             , SA.width picSize, SA.height picSize
-            , href "images/three.png"]
-            []
+            , href "images/three.png"
+            , SE.onClick (Click n)
+            ] []
           ]
         Spec Reatoum ->
           [ Svg.image
             [ SA.x <| Debug.toString x
             , SA.y <| Debug.toString y
             , SA.width picSize, SA.height picSize
-            , href "images/two.png"]
-            []
+            , href "images/two.png"
+            , SE.onClick (Click n)
+            ] []
           ]
         _ -> []
   in
