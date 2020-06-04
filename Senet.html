@@ -5654,6 +5654,209 @@ var $author$project$BoardTree$getElem = F2(
 			}
 		}
 	});
+var $author$project$Board$getPawn = F2(
+	function (i, gs) {
+		var squarePawn = function (sq) {
+			if (sq.$ === 'Free') {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var c = sq.a;
+				return $elm$core$Maybe$Just(
+					{color: c, square: i});
+			}
+		};
+		return A2(
+			$elm$core$Maybe$andThen,
+			squarePawn,
+			A2($author$project$BoardTree$getElem, i, gs.board));
+	});
+var $author$project$Logic$legalBySquareType = F2(
+	function (square, m) {
+		if (square.$ === 'Spec') {
+			switch (square.a.$) {
+				case 'Happy':
+					var _v1 = square.a;
+					return true;
+				case 'Water':
+					var _v2 = square.a;
+					return true;
+				case 'Truths':
+					var _v3 = square.a;
+					return m === 30;
+				case 'Reatoum':
+					var _v4 = square.a;
+					return m === 30;
+				default:
+					var _v5 = square.a;
+					return true;
+			}
+		} else {
+			return true;
+		}
+	});
+var $elm$core$Debug$log = _Debug_log;
+var $elm$core$Basics$neq = _Utils_notEqual;
+var $elm$core$Basics$not = _Basics_not;
+var $author$project$Board$Happy = {$: 'Happy'};
+var $author$project$Board$Horus = {$: 'Horus'};
+var $author$project$Board$Reatoum = {$: 'Reatoum'};
+var $author$project$Board$Rebirth = {$: 'Rebirth'};
+var $author$project$Board$Reg = {$: 'Reg'};
+var $author$project$Board$Spec = function (a) {
+	return {$: 'Spec', a: a};
+};
+var $author$project$Board$Truths = {$: 'Truths'};
+var $author$project$Board$Water = {$: 'Water'};
+var $author$project$Board$squareType = function (n) {
+	switch (n) {
+		case 14:
+			return $author$project$Board$Rebirth;
+		case 25:
+			return $author$project$Board$Spec($author$project$Board$Happy);
+		case 26:
+			return $author$project$Board$Spec($author$project$Board$Water);
+		case 27:
+			return $author$project$Board$Spec($author$project$Board$Truths);
+		case 28:
+			return $author$project$Board$Spec($author$project$Board$Reatoum);
+		case 29:
+			return $author$project$Board$Spec($author$project$Board$Horus);
+		default:
+			return $author$project$Board$Reg;
+	}
+};
+var $author$project$Logic$isLegal = F3(
+	function (board, p, roll) {
+		var n = p.square;
+		var m = n + roll;
+		var skippedHappiness = (n < 25) && (m > 25);
+		var legalSqType = A2(
+			$author$project$Logic$legalBySquareType,
+			$author$project$Board$squareType(n),
+			m);
+		var attemptedLeave = m >= 30;
+		if (!legalSqType) {
+			return false;
+		} else {
+			if (skippedHappiness) {
+				return false;
+			} else {
+				if (attemptedLeave) {
+					return true;
+				} else {
+					var _v0 = A2($author$project$BoardTree$getElem, m, board);
+					if (_v0.$ === 'Nothing') {
+						var _v1 = A2($elm$core$Debug$log, 'Yikes, out-of-bounds m not handled...', m);
+						return false;
+					} else {
+						if (_v0.a.$ === 'Free') {
+							var _v2 = _v0.a;
+							return true;
+						} else {
+							var destCol = _v0.a.a;
+							return !_Utils_eq(p.color, destCol);
+						}
+					}
+				}
+			}
+		}
+	});
+var $elm$core$List$partition = F2(
+	function (pred, list) {
+		var step = F2(
+			function (x, _v0) {
+				var trues = _v0.a;
+				var falses = _v0.b;
+				return pred(x) ? _Utils_Tuple2(
+					A2($elm$core$List$cons, x, trues),
+					falses) : _Utils_Tuple2(
+					trues,
+					A2($elm$core$List$cons, x, falses));
+			});
+		return A3(
+			$elm$core$List$foldr,
+			step,
+			_Utils_Tuple2(_List_Nil, _List_Nil),
+			list);
+	});
+var $author$project$Logic$legalMoves = F2(
+	function (gs, roll) {
+		var _v0 = A2(
+			$elm$core$List$partition,
+			function (p) {
+				return A3($author$project$Logic$isLegal, gs.board, p, roll);
+			},
+			gs.whitePawns);
+		var wvalid = _v0.a;
+		var winvalid = _v0.b;
+		var _v1 = A2(
+			$elm$core$List$partition,
+			function (p) {
+				return A3($author$project$Logic$isLegal, gs.board, p, roll);
+			},
+			gs.blackPawns);
+		var bvalid = _v1.a;
+		var binvalid = _v1.b;
+		var _v2 = gs.turn;
+		if (_v2.$ === 'Black') {
+			return bvalid;
+		} else {
+			return wvalid;
+		}
+	});
+var $author$project$Main$highlightPieces = function (model) {
+	var _v0 = model.selected;
+	if (_v0.$ === 'Nothing') {
+		var _v1 = model.roll;
+		if (_v1.$ === 'Nothing') {
+			return _Utils_update(
+				model,
+				{highlighted: _List_Nil});
+		} else {
+			var roll = _v1.a;
+			return _Utils_update(
+				model,
+				{
+					highlighted: A2(
+						$elm$core$List$map,
+						function (p) {
+							return p.square;
+						},
+						A2($author$project$Logic$legalMoves, model.gs, roll))
+				});
+		}
+	} else {
+		var numpawn = _v0.a;
+		var _v2 = model.roll;
+		if (_v2.$ === 'Nothing') {
+			return _Utils_update(
+				model,
+				{highlighted: _List_Nil});
+		} else {
+			var roll = _v2.a;
+			var _v3 = A2($author$project$Board$getPawn, numpawn, model.gs);
+			if (_v3.$ === 'Nothing') {
+				return _Utils_update(
+					model,
+					{highlighted: _List_Nil});
+			} else {
+				var spawn = _v3.a;
+				return A3($author$project$Logic$isLegal, model.gs.board, spawn, roll) ? _Utils_update(
+					model,
+					{
+						highlighted: A2(
+							$elm$core$List$cons,
+							spawn.square,
+							A2($elm$core$List$cons, spawn.square + roll, _List_Nil))
+					}) : _Utils_update(
+					model,
+					{
+						highlighted: A2($elm$core$List$cons, spawn.square, _List_Nil)
+					});
+			}
+		}
+	}
+};
 var $elm$core$Maybe$map = F2(
 	function (f, maybe) {
 		if (maybe.$ === 'Just') {
@@ -5664,7 +5867,6 @@ var $elm$core$Maybe$map = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
-var $elm$core$Basics$neq = _Utils_notEqual;
 var $elm$core$Basics$negate = function (n) {
 	return -n;
 };
@@ -5769,22 +5971,6 @@ var $author$project$Main$clearRoll = function (model) {
 		model,
 		{roll: $elm$core$Maybe$Nothing});
 };
-var $author$project$Board$getPawn = F2(
-	function (i, gs) {
-		var squarePawn = function (sq) {
-			if (sq.$ === 'Free') {
-				return $elm$core$Maybe$Nothing;
-			} else {
-				var c = sq.a;
-				return $elm$core$Maybe$Just(
-					{color: c, square: i});
-			}
-		};
-		return A2(
-			$elm$core$Maybe$andThen,
-			squarePawn,
-			A2($author$project$BoardTree$getElem, i, gs.board));
-	});
 var $author$project$Logic$lastFreeBy = F2(
 	function (sq, gs) {
 		lastFreeBy:
@@ -5814,7 +6000,6 @@ var $author$project$Board$getSquareColor = function (p) {
 		return $elm$core$Maybe$Just(col);
 	}
 };
-var $elm$core$Debug$log = _Debug_log;
 var $author$project$BoardTree$setElem = F3(
 	function (i, x, t) {
 		switch (t.$) {
@@ -5958,31 +6143,6 @@ var $author$project$Logic$pawnSwap = F3(
 			}
 		}
 	});
-var $author$project$Logic$legalBySquareType = F2(
-	function (square, m) {
-		if (square.$ === 'Spec') {
-			switch (square.a.$) {
-				case 'Happy':
-					var _v1 = square.a;
-					return true;
-				case 'Water':
-					var _v2 = square.a;
-					return true;
-				case 'Truths':
-					var _v3 = square.a;
-					return m === 30;
-				case 'Reatoum':
-					var _v4 = square.a;
-					return m === 30;
-				default:
-					var _v5 = square.a;
-					return true;
-			}
-		} else {
-			return true;
-		}
-	});
-var $elm$core$Basics$not = _Basics_not;
 var $elm$core$Maybe$withDefault = F2(
 	function (_default, maybe) {
 		if (maybe.$ === 'Just') {
@@ -6036,34 +6196,6 @@ var $author$project$Logic$removePawn = F2(
 				});
 		}
 	});
-var $author$project$Board$Happy = {$: 'Happy'};
-var $author$project$Board$Horus = {$: 'Horus'};
-var $author$project$Board$Reatoum = {$: 'Reatoum'};
-var $author$project$Board$Rebirth = {$: 'Rebirth'};
-var $author$project$Board$Reg = {$: 'Reg'};
-var $author$project$Board$Spec = function (a) {
-	return {$: 'Spec', a: a};
-};
-var $author$project$Board$Truths = {$: 'Truths'};
-var $author$project$Board$Water = {$: 'Water'};
-var $author$project$Board$squareType = function (n) {
-	switch (n) {
-		case 14:
-			return $author$project$Board$Rebirth;
-		case 25:
-			return $author$project$Board$Spec($author$project$Board$Happy);
-		case 26:
-			return $author$project$Board$Spec($author$project$Board$Water);
-		case 27:
-			return $author$project$Board$Spec($author$project$Board$Truths);
-		case 28:
-			return $author$project$Board$Spec($author$project$Board$Reatoum);
-		case 29:
-			return $author$project$Board$Spec($author$project$Board$Horus);
-		default:
-			return $author$project$Board$Reg;
-	}
-};
 var $author$project$Logic$playPawn = F3(
 	function (p, roll, gs) {
 		var n = p.square;
@@ -6234,14 +6366,15 @@ var $author$project$Main$update = F2(
 				}
 			case 'GetRoll':
 				var i = msg.a;
-				return _Utils_Tuple2(
-					A2($author$project$Main$setRoll, i, model),
-					$elm$core$Platform$Cmd$none);
+				var newModel = $author$project$Main$highlightPieces(
+					A2($author$project$Main$setRoll, i, model));
+				return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
 			case 'Click':
 				var n = msg.a;
 				var unselect = function (_v5) {
 					return _Utils_Tuple2(
-						$author$project$Main$unselectPiece(model),
+						$author$project$Main$highlightPieces(
+							$author$project$Main$unselectPiece(model)),
 						$elm$core$Platform$Cmd$none);
 				};
 				var play = function (m) {
@@ -6264,7 +6397,8 @@ var $author$project$Main$update = F2(
 					if ((_v2.$ === 'Just') && (_v2.a.$ === 'Occ')) {
 						var col = _v2.a.a;
 						return _Utils_eq(col, currTurn) ? _Utils_Tuple2(
-							A2($author$project$Main$selectPiece, n, model),
+							$author$project$Main$highlightPieces(
+								A2($author$project$Main$selectPiece, n, model)),
 							$elm$core$Platform$Cmd$none) : unselect(_Utils_Tuple0);
 					} else {
 						return unselect(_Utils_Tuple0);
@@ -6297,21 +6431,23 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 			case 'Unselect':
 				return _Utils_Tuple2(
-					$author$project$Main$unselectPiece(model),
+					$author$project$Main$highlightPieces(
+						$author$project$Main$unselectPiece(model)),
 					$elm$core$Platform$Cmd$none);
 			default:
-				var newModel = A2(
-					$elm$core$Maybe$withDefault,
-					model,
+				var newModel = $author$project$Main$highlightPieces(
 					A2(
-						$elm$core$Maybe$andThen,
-						function (nn) {
-							return A2(
-								$author$project$Main$tryPlay,
-								nn,
-								$author$project$Main$unselectPiece(model));
-						},
-						model.selected));
+						$elm$core$Maybe$withDefault,
+						model,
+						A2(
+							$elm$core$Maybe$andThen,
+							function (nn) {
+								return A2(
+									$author$project$Main$tryPlay,
+									nn,
+									$author$project$Main$unselectPiece(model));
+							},
+							model.selected)));
 				return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
 		}
 	});
@@ -6372,6 +6508,36 @@ var $author$project$Main$href = function (value) {
 	return A2($elm$virtual_dom$VirtualDom$attribute, 'href', value);
 };
 var $elm$svg$Svg$image = $elm$svg$Svg$trustedNode('image');
+var $elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var $elm$core$List$member = F2(
+	function (x, xs) {
+		return A2(
+			$elm$core$List$any,
+			function (a) {
+				return _Utils_eq(a, x);
+			},
+			xs);
+	});
 var $elm$svg$Svg$Events$onClick = function (msg) {
 	return A2(
 		$elm$html$Html$Events$on,
@@ -6387,7 +6553,7 @@ var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
 var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
 var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
 var $author$project$Main$svgSquare = F5(
-	function (length, gs, n, i, j) {
+	function (length, model, n, i, j) {
 		var rlen = (length / 10) | 0;
 		var slen = length - rlen;
 		var x = (j * length) + ((rlen / 2) | 0);
@@ -6410,7 +6576,8 @@ var $author$project$Main$svgSquare = F5(
 						$elm$core$Debug$toString(rlen)),
 						$elm$svg$Svg$Attributes$ry(
 						$elm$core$Debug$toString(rlen)),
-						$elm$svg$Svg$Attributes$stroke('black'),
+						$elm$svg$Svg$Attributes$stroke(
+						A2($elm$core$List$member, n, model.highlighted) ? 'pink' : 'black'),
 						$elm$svg$Svg$Attributes$fill(
 						(!A2($elm$core$Basics$modBy, 2, n)) ? 'beige' : 'burlywood'),
 						$elm$svg$Svg$Events$onClick(
@@ -6532,7 +6699,7 @@ var $author$project$Main$svgSquare = F5(
 			}
 			return _List_Nil;
 		}();
-		var maybePawn = A2($author$project$Board$getPawn, n, gs);
+		var maybePawn = A2($author$project$Board$getPawn, n, model.gs);
 		return A2(
 			$elm$svg$Svg$svg,
 			_List_Nil,
@@ -6549,19 +6716,19 @@ var $author$project$Main$svgBoard = function (model) {
 	var line1 = A2(
 		$elm$core$List$map,
 		function (i) {
-			return A5($author$project$Main$svgSquare, length, model.gs, i, 0, i);
+			return A5($author$project$Main$svgSquare, length, model, i, 0, i);
 		},
 		ls);
 	var line2 = A2(
 		$elm$core$List$map,
 		function (i) {
-			return A5($author$project$Main$svgSquare, length, model.gs, 19 - i, 1, i);
+			return A5($author$project$Main$svgSquare, length, model, 19 - i, 1, i);
 		},
 		ls);
 	var line3 = A2(
 		$elm$core$List$map,
 		function (i) {
-			return A5($author$project$Main$svgSquare, length, model.gs, 20 + i, 2, i);
+			return A5($author$project$Main$svgSquare, length, model, 20 + i, 2, i);
 		},
 		ls);
 	var background = A2(
@@ -6575,7 +6742,7 @@ var $author$project$Main$svgBoard = function (model) {
 				$elm$svg$Svg$Attributes$fill('gray')
 			]),
 		_List_Nil);
-	var afterlife = A5($author$project$Main$svgSquare, length, model.gs, 30, 3, 9);
+	var afterlife = A5($author$project$Main$svgSquare, length, model, 30, 3, 9);
 	return A2(
 		$elm$svg$Svg$svg,
 		_List_fromArray(

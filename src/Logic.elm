@@ -87,7 +87,17 @@ isLegal board p roll =
 -- (-> List (Pawn, GameState) output in that case)
 -- legalMoves : GameState -> Int -> List (Pawn)
 
-
+legalMoves : GameState -> Int -> List (Pawn)
+legalMoves gs roll =
+  let 
+    (bvalid, binvalid) = List.partition (\p -> isLegal gs.board p roll) gs.blackPawns
+    (wvalid, winvalid) = List.partition (\p -> isLegal gs.board p roll) gs.whitePawns
+  in 
+  case gs.turn of
+    Black ->
+      bvalid
+    White ->
+      wvalid
 
 ------ 6. Pawn Movement and Game Logic ------
 -- Mini table of contents:

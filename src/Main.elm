@@ -57,7 +57,7 @@ type alias Model =
   { gs          : GameState
   , roll        : Maybe Int
   , selected    : Maybe Int
-  , highlighted : List Bool -- or BT.Tree
+  , highlighted : List Int -- or BT.Tree
   -- maybe something else??
   }
 
@@ -114,7 +114,11 @@ update msg model =
           -- no re-rolls!
           (model, Cmd.none)
     GetRoll i ->
-      (setRoll i model, Cmd.none)
+      let 
+        newModel = model |> setRoll i |> highlightPieces
+      in
+      --(setRoll i model, Cmd.none)
+      (newModel, Cmd.none)
     Click n ->
       let
         play m =
@@ -124,13 +128,13 @@ update msg model =
                 |> Maybe.withDefault model
             , Cmd.none)
         unselect () =
-          (unselectPiece model, Cmd.none)
+          (unselectPiece model |> highlightPieces, Cmd.none)
         -- select the piece if it's the right color
         select () =
           case BT.getElem n model.gs.board of
             Just (Occ col) ->
               if col == currTurn then
-                (selectPiece n model, Cmd.none)
+                (selectPiece n model |> highlightPieces, Cmd.none)
               else
                 -- nothing ()
                 unselect ()
@@ -162,10 +166,11 @@ update msg model =
           checkSquare m
         ) |> Maybe.withDefault (checkSquare m) -- no roll
         ) |> Maybe.withDefault (select ()) -- no selection
+          |> highlightPieces
     Noop ->
       (model, Cmd.none)
     Unselect ->
-      (unselectPiece model, Cmd.none)
+      (unselectPiece model |> highlightPieces, Cmd.none)
     Play ->
       let
         newModel =
@@ -174,6 +179,7 @@ update msg model =
             |> unselectPiece
             |> tryPlay nn
           ) |> Maybe.withDefault model
+            |> highlightPieces
       in
         (newModel, Cmd.none)
 
@@ -219,6 +225,25 @@ tryPlay n model =
   clearRoll { model | gs = js })))
   -- { model | gs = js, roll = Nothing })))
 
+highlightPieces : Model -> Model
+highlightPieces model =
+  case model.selected of
+    Nothing -> 
+      case model.roll of 
+        Nothing -> { model | highlighted = []}
+        Just roll -> { model | highlighted = List.map (\p -> p.square) (legalMoves model.gs roll)}
+    Just numpawn -> 
+      case model.roll of
+        Nothing -> { model | highlighted = []}
+        Just roll -> 
+          case getPawn numpawn model.gs of
+            Nothing -> { model | highlighted = []}
+            Just spawn ->
+              if isLegal model.gs.board spawn roll then
+                { model | highlighted = 
+                  spawn.square :: (spawn.square + roll) :: []}
+              else { model | highlighted = spawn.square :: [] }
+
 
 ------ VIEW ------
 
@@ -227,8 +252,8 @@ centering = Html.Attributes.align "center"
 monospace = Html.Attributes.style "font-family" "monospace"
 
 
-svgSquare : Int -> GameState -> Int -> Int -> Int -> Html.Html Msg
-svgSquare length gs n i j =
+svgSquare : Int -> Model -> Int -> Int -> Int -> Html.Html Msg
+svgSquare length model n i j =
   -- n for square number
   -- i for row, j for col
   let
@@ -246,7 +271,9 @@ svgSquare length gs n i j =
         , SA.rx <| Debug.toString rlen
         , SA.ry <| Debug.toString rlen
         -- pick colors
-        , SA.stroke "black"
+        , SA.stroke <|
+            if List.member n model.highlighted then "pink"
+            else "black"
         , SA.fill <|
             if 0 == modBy 2 n
             then "beige"
@@ -272,7 +299,7 @@ svgSquare length gs n i j =
           ]
         Nothing ->
           []
-    maybePawn = getPawn n gs
+    maybePawn = getPawn n model.gs
     picSize = "88"
     sqImage =
       let
@@ -318,17 +345,17 @@ svgBoard model =
     ls = List.range 0 9
     line1 =
       ls |> List.map (\i ->
-      svgSquare length model.gs i 0 i)
+      svgSquare length model i 0 i)
     line2 =
       ls |> List.map (\i ->
-      svgSquare length model.gs (19-i) 1 i)
+      svgSquare length model (19-i) 1 i)
     line3 =
       ls |> List.map (\i ->
-      svgSquare length model.gs (20+i) 2 i)
+      svgSquare length model (20+i) 2 i)
     background =
       Svg.rect [SA.x "-10", SA.y "-10", SA.width "1020", SA.height "320", SA.fill "gray"] []
     afterlife =
-      svgSquare length model.gs 30 3 9
+      svgSquare length model 30 3 9
   in
     Svg.svg [ SA.viewBox "-50 -50 1100 500"]
       ( [background]
