@@ -6361,6 +6361,16 @@ var $author$project$Main$Click = function (a) {
 var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
 var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
 var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
+var $elm$virtual_dom$VirtualDom$attribute = F2(
+	function (key, value) {
+		return A2(
+			_VirtualDom_attribute,
+			_VirtualDom_noOnOrFormAction(key),
+			_VirtualDom_noJavaScriptOrHtmlUri(value));
+	});
+var $author$project$Main$href = function (value) {
+	return A2($elm$virtual_dom$VirtualDom$attribute, 'href', value);
+};
 var $elm$svg$Svg$image = $elm$svg$Svg$trustedNode('image');
 var $elm$svg$Svg$Events$onClick = function (msg) {
 	return A2(
@@ -6375,13 +6385,6 @@ var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
 var $elm$core$Debug$toString = _Debug_toString;
 var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
 var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
-var $elm$svg$Svg$Attributes$xlinkHref = function (value) {
-	return A3(
-		_VirtualDom_attributeNS,
-		'http://www.w3.org/1999/xlink',
-		'xlink:href',
-		_VirtualDom_noJavaScriptUri(value));
-};
 var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
 var $author$project$Main$svgSquare = F5(
 	function (length, gs, n, i, j) {
@@ -6389,111 +6392,6 @@ var $author$project$Main$svgSquare = F5(
 		var slen = length - rlen;
 		var x = (j * length) + ((rlen / 2) | 0);
 		var y = (i * length) + ((rlen / 2) | 0);
-		var sqImage = function () {
-			var _v1 = $author$project$Board$squareType(n);
-			_v1$5:
-			while (true) {
-				switch (_v1.$) {
-					case 'Rebirth':
-						return _List_fromArray(
-							[
-								A2(
-								$elm$svg$Svg$image,
-								_List_fromArray(
-									[
-										$elm$svg$Svg$Attributes$x(
-										$elm$core$Debug$toString(x)),
-										$elm$svg$Svg$Attributes$y(
-										$elm$core$Debug$toString(y)),
-										$elm$svg$Svg$Attributes$width('92px'),
-										$elm$svg$Svg$Attributes$height('92px'),
-										$elm$svg$Svg$Attributes$xlinkHref('images/square 15.png')
-									]),
-								_List_Nil)
-							]);
-					case 'Spec':
-						switch (_v1.a.$) {
-							case 'Happy':
-								var _v2 = _v1.a;
-								return _List_fromArray(
-									[
-										A2(
-										$elm$svg$Svg$image,
-										_List_fromArray(
-											[
-												$elm$svg$Svg$Attributes$x(
-												$elm$core$Debug$toString(x)),
-												$elm$svg$Svg$Attributes$y(
-												$elm$core$Debug$toString(y)),
-												$elm$svg$Svg$Attributes$width('92px'),
-												$elm$svg$Svg$Attributes$height('92px'),
-												$elm$svg$Svg$Attributes$xlinkHref('images/square 26.png')
-											]),
-										_List_Nil)
-									]);
-							case 'Water':
-								var _v3 = _v1.a;
-								return _List_fromArray(
-									[
-										A2(
-										$elm$svg$Svg$image,
-										_List_fromArray(
-											[
-												$elm$svg$Svg$Attributes$x(
-												$elm$core$Debug$toString(x)),
-												$elm$svg$Svg$Attributes$y(
-												$elm$core$Debug$toString(y)),
-												$elm$svg$Svg$Attributes$width('92px'),
-												$elm$svg$Svg$Attributes$height('92px'),
-												$elm$svg$Svg$Attributes$xlinkHref('images/square 27.png')
-											]),
-										_List_Nil)
-									]);
-							case 'Reatoum':
-								var _v4 = _v1.a;
-								return _List_fromArray(
-									[
-										A2(
-										$elm$svg$Svg$image,
-										_List_fromArray(
-											[
-												$elm$svg$Svg$Attributes$x(
-												$elm$core$Debug$toString(x)),
-												$elm$svg$Svg$Attributes$y(
-												$elm$core$Debug$toString(y)),
-												$elm$svg$Svg$Attributes$width('92px'),
-												$elm$svg$Svg$Attributes$height('92px'),
-												$elm$svg$Svg$Attributes$xlinkHref('images/square 28.png')
-											]),
-										_List_Nil)
-									]);
-							case 'Horus':
-								var _v5 = _v1.a;
-								return _List_fromArray(
-									[
-										A2(
-										$elm$svg$Svg$image,
-										_List_fromArray(
-											[
-												$elm$svg$Svg$Attributes$x(
-												$elm$core$Debug$toString(x)),
-												$elm$svg$Svg$Attributes$y(
-												$elm$core$Debug$toString(y)),
-												$elm$svg$Svg$Attributes$width('92px'),
-												$elm$svg$Svg$Attributes$height('92px'),
-												$elm$svg$Svg$Attributes$xlinkHref('images/square 29.png')
-											]),
-										_List_Nil)
-									]);
-							default:
-								break _v1$5;
-						}
-					default:
-						break _v1$5;
-				}
-			}
-			return _List_Nil;
-		}();
 		var sqRect = _List_fromArray(
 			[
 				A2(
@@ -6547,6 +6445,112 @@ var $author$project$Main$svgSquare = F5(
 				return _List_Nil;
 			}
 		};
+		var picSize = '88';
+		var sqImage = function () {
+			var _v0 = $author$project$Board$squareType(n);
+			_v0$5:
+			while (true) {
+				switch (_v0.$) {
+					case 'Rebirth':
+						return _List_fromArray(
+							[
+								A2(
+								$elm$svg$Svg$image,
+								_List_fromArray(
+									[
+										$elm$svg$Svg$Attributes$x(
+										$elm$core$Debug$toString(x)),
+										$elm$svg$Svg$Attributes$y(
+										$elm$core$Debug$toString(y)),
+										$elm$svg$Svg$Attributes$width(picSize),
+										$elm$svg$Svg$Attributes$height(picSize),
+										$author$project$Main$href('images/rebirth.png')
+									]),
+								_List_Nil)
+							]);
+					case 'Spec':
+						switch (_v0.a.$) {
+							case 'Happy':
+								var _v1 = _v0.a;
+								return _List_fromArray(
+									[
+										A2(
+										$elm$svg$Svg$image,
+										_List_fromArray(
+											[
+												$elm$svg$Svg$Attributes$x(
+												$elm$core$Debug$toString(x)),
+												$elm$svg$Svg$Attributes$y(
+												$elm$core$Debug$toString(y)),
+												$elm$svg$Svg$Attributes$width(picSize),
+												$elm$svg$Svg$Attributes$height(picSize),
+												$author$project$Main$href('images/happy.png')
+											]),
+										_List_Nil)
+									]);
+							case 'Water':
+								var _v2 = _v0.a;
+								return _List_fromArray(
+									[
+										A2(
+										$elm$svg$Svg$image,
+										_List_fromArray(
+											[
+												$elm$svg$Svg$Attributes$x(
+												$elm$core$Debug$toString(x)),
+												$elm$svg$Svg$Attributes$y(
+												$elm$core$Debug$toString(y)),
+												$elm$svg$Svg$Attributes$width(picSize),
+												$elm$svg$Svg$Attributes$height(picSize),
+												$author$project$Main$href('images/water.png')
+											]),
+										_List_Nil)
+									]);
+							case 'Truths':
+								var _v3 = _v0.a;
+								return _List_fromArray(
+									[
+										A2(
+										$elm$svg$Svg$image,
+										_List_fromArray(
+											[
+												$elm$svg$Svg$Attributes$x(
+												$elm$core$Debug$toString(x)),
+												$elm$svg$Svg$Attributes$y(
+												$elm$core$Debug$toString(y)),
+												$elm$svg$Svg$Attributes$width(picSize),
+												$elm$svg$Svg$Attributes$height(picSize),
+												$author$project$Main$href('images/three.png')
+											]),
+										_List_Nil)
+									]);
+							case 'Reatoum':
+								var _v4 = _v0.a;
+								return _List_fromArray(
+									[
+										A2(
+										$elm$svg$Svg$image,
+										_List_fromArray(
+											[
+												$elm$svg$Svg$Attributes$x(
+												$elm$core$Debug$toString(x)),
+												$elm$svg$Svg$Attributes$y(
+												$elm$core$Debug$toString(y)),
+												$elm$svg$Svg$Attributes$width(picSize),
+												$elm$svg$Svg$Attributes$height(picSize),
+												$author$project$Main$href('images/two.png')
+											]),
+										_List_Nil)
+									]);
+							default:
+								break _v0$5;
+						}
+					default:
+						break _v0$5;
+				}
+			}
+			return _List_Nil;
+		}();
 		var maybePawn = A2($author$project$Board$getPawn, n, gs);
 		return A2(
 			$elm$svg$Svg$svg,

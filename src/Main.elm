@@ -34,6 +34,14 @@ import Svg.Events as SE exposing (on)
 
 import Random exposing (Generator)
 
+
+-- apparently xlinkHref is deprecated
+import VirtualDom exposing (Attribute, attribute)
+href : String -> Attribute msg
+href value =
+  VirtualDom.attribute "href" value
+
+
 main : Program Flags Model Msg
 main =
   Browser.element
@@ -266,46 +274,47 @@ svgSquare length gs n i j =
         Nothing ->
           []
     maybePawn = getPawn n gs
-    sqImage = 
+    picSize = "88"
+    sqImage =
       case squareType n of
-        Rebirth -> 
+        Rebirth ->
           [ Svg.image
             [ SA.x <| Debug.toString x
             , SA.y <| Debug.toString y
-            , SA.width "92px", SA.height "92px" 
-            , SA.xlinkHref "images/square 15.png"]
+            , SA.width picSize, SA.height picSize
+            , href "images/rebirth.png"
+            ] []
+          ]
+        Spec Happy ->
+          [ Svg.image
+            [ SA.x <| Debug.toString x
+            , SA.y <| Debug.toString y
+            , SA.width picSize, SA.height picSize
+            , href "images/happy.png"]
             []
           ]
-        Spec Happy -> 
+        Spec Water ->
           [ Svg.image
             [ SA.x <| Debug.toString x
             , SA.y <| Debug.toString y
-            , SA.width "92px", SA.height "92px" 
-            , SA.xlinkHref "images/square 26.png"]
+            , SA.width picSize, SA.height picSize
+            , href "images/water.png"]
             []
           ]
-        Spec Water -> 
+        Spec Truths ->
           [ Svg.image
             [ SA.x <| Debug.toString x
             , SA.y <| Debug.toString y
-            , SA.width "92px", SA.height "92px" 
-            , SA.xlinkHref "images/square 27.png"]
+            , SA.width picSize, SA.height picSize
+            , href "images/three.png"]
             []
           ]
-        Spec Reatoum -> 
+        Spec Reatoum ->
           [ Svg.image
             [ SA.x <| Debug.toString x
             , SA.y <| Debug.toString y
-            , SA.width "92px", SA.height "92px" 
-            , SA.xlinkHref "images/square 28.png"]
-            []
-          ]
-        Spec Horus -> 
-          [ Svg.image
-            [ SA.x <| Debug.toString x
-            , SA.y <| Debug.toString y
-            , SA.width "92px", SA.height "92px" 
-            , SA.xlinkHref "images/square 29.png"]
+            , SA.width picSize, SA.height picSize
+            , href "images/two.png"]
             []
           ]
         _ -> []
