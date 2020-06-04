@@ -266,52 +266,52 @@ svgSquare length gs n i j =
         Nothing ->
           []
     maybePawn = getPawn n gs
-    sqImage sqnum = 
-      case sqnum of
-        15 -> 
+    sqImage = 
+      case squareType n of
+        Rebirth -> 
           [ Svg.image
             [ SA.x <| Debug.toString x
             , SA.y <| Debug.toString y
             , SA.width "92px", SA.height "92px" 
-            , SA.xlinkHref "src/Images/square 15.png"]
+            , SA.xlinkHref "images/square 15.png"]
             []
           ]
-        26 -> 
+        Spec Happy -> 
           [ Svg.image
             [ SA.x <| Debug.toString x
             , SA.y <| Debug.toString y
             , SA.width "92px", SA.height "92px" 
-            , SA.xlinkHref "src/Images/square 26.png"]
+            , SA.xlinkHref "images/square 26.png"]
             []
           ]
-        27 -> 
+        Spec Water -> 
           [ Svg.image
             [ SA.x <| Debug.toString x
             , SA.y <| Debug.toString y
             , SA.width "92px", SA.height "92px" 
-            , SA.xlinkHref "src/Images/square 27.png"]
+            , SA.xlinkHref "images/square 27.png"]
             []
           ]
-        28 -> 
+        Spec Reatoum -> 
           [ Svg.image
             [ SA.x <| Debug.toString x
             , SA.y <| Debug.toString y
             , SA.width "92px", SA.height "92px" 
-            , SA.xlinkHref "src/Images/square 28.png"]
+            , SA.xlinkHref "images/square 28.png"]
             []
           ]
-        29 -> 
+        Spec Horus -> 
           [ Svg.image
             [ SA.x <| Debug.toString x
             , SA.y <| Debug.toString y
             , SA.width "92px", SA.height "92px" 
-            , SA.xlinkHref "src/Images/square 29.png"]
+            , SA.xlinkHref "images/square 29.png"]
             []
           ]
         _ -> []
   in
     Svg.svg []
-      (sqRect ++ sqImage (i * 10 + j) ++ piece maybePawn)
+      (sqRect ++ sqImage ++ piece maybePawn)
 
 -- make svg table
 svgBoard : Model -> Html.Html Msg
