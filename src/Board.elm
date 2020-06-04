@@ -38,7 +38,6 @@ import BoardTree as BT exposing (..)
 
 
 
-
 ------ 1. Game state ------
 
 type alias GameState =
