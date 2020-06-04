@@ -9,6 +9,7 @@
 --   3. Should there be a button to ask for the roll?
 --   3.5. Skip moves that don't have legal moves
 --   4. Add images for the board
+--   5. Check for game termination!
 
 
 
@@ -84,7 +85,6 @@ subscriptions model =
 
 ------ UPDATE ------
 -- To do:
---   - check if GetRoll is working
 --   - select/unselect:
 --       - check for legality of the move?
 --         (maybe do this in subscriptions...)
@@ -135,26 +135,25 @@ update msg model =
 
         checkSquare : Int -> (Model, Cmd Msg)
         checkSquare m =
-          let _=Debug.log "Checking square" m in
-          if n /= m then
-            select ()
-          else
-            unselect ()
+          if n /= m
+          then select ()
+          else unselect ()
       in
         model.selected |> Maybe.map (\m ->
         model.roll     |> Maybe.map (\r ->
-        if n == (m+r) then
-          -- allow selecting a pawn of the same color
+        if n == (m+r) || n >= 30 then
+          -- n>=30 is for pieces that will leave the board
+          -- Allow selecting a pawn of the same color
           -- that is being ``attacked'' (otherwise
           -- the click would be considered illegal)
           if Just (Occ model.gs.turn)
              /= BT.getElem n model.gs.board
           then play m
-          else select ()
+          else select () -- tries to select
         else
           checkSquare m
         ) |> Maybe.withDefault (checkSquare m) -- no roll
-        ) |> Maybe.withDefault (select ())
+        ) |> Maybe.withDefault (select ()) -- no selection
     Noop ->
       (model, Cmd.none)
     Unselect ->
@@ -172,10 +171,27 @@ update msg model =
 
 ------ Helper functions for Update ------
 
--- Need to fix to not be a uniform distribution
+-- Equivalent to throwing 4 coins (0/1)
+-- and taking the sum. 0 becomes a roll
+-- of 5 to make things more interesting
+-- Note that 1-3 become by far the most
+-- common rolls (7/8 of the time)
 rollGenerator : Generator Int
 rollGenerator =
-  Random.int 1 5
+  Random.weighted
+    (4, 1)
+    [ (6, 2)
+    , (4, 3)
+    , (1, 4)
+    , (1, 5)
+    ]
+  -- Random.int 0 15 |> Random.map (\i ->
+  -- if      i == 0  then 5
+  -- else if i <= 4  then 1
+  -- else if i <= 10 then 2
+  -- else if i <= 14 then 3
+  -- else                 4
+  -- )
 
 setRoll : Int -> Model -> Model
 setRoll i model =
@@ -231,12 +247,10 @@ svgSquare length gs n i j =
         -- pick colors
         , SA.stroke "black"
         , SA.fill <|
-            if 0 == modBy 2 n then
-              "beige"
-            else
-              -- slightly darker
-              "burlywood"
-        ,  SE.onClick (Click n)
+            if 0 == modBy 2 n
+            then "beige"
+            else "burlywood"
+        , SE.onClick (Click n)
         ]
         []
       ]
@@ -278,12 +292,12 @@ svgBoard model =
     line3 =
       ls |> List.map (\i ->
       svgSquare length model.gs (20+i) 2 i)
-    background = 
+    background =
       Svg.rect [SA.x "-10", SA.y "-10", SA.width "1020", SA.height "320", SA.fill "gray"] []
-    afterlife = 
+    afterlife =
       svgSquare length model.gs 30 3 9
   in
-    Svg.svg [ SA.viewBox "-50 -50 1100 400"]
+    Svg.svg [ SA.viewBox "-50 -50 1100 500"]
       ( [background]
       ++ line1 ++ line2 ++ line3
       ++ [afterlife]
@@ -295,7 +309,10 @@ txtBoard model =
     (l1, l2, l3) = boardToStrings model.gs.board
   in
     Html.div [centering, monospace]
-        [ text "Temporary ASCII Board (P=White; Q=Black)"
+        [ text "Mini ASCII Board"
+        , newline
+        , text" (P=White; Q=Black)"
+        , newline
         , newline
         , text l1
         , newline
@@ -333,37 +350,45 @@ view : Model -> Html Msg
 view model =
   let
     title =
-      Html.h2 [ centering ]
-        [ text "Senet!"
-        , newline
-        ]
+      Html.h1 [ centering ]
+        [ text "Senet!" ]
     turn =
-      Html.h4 [centering]
+      Html.h2 [centering]
         [ text <|
-            if model.gs.turn == White then
-              "White's turn"
-            else
-              "Black's turn"
+            if model.gs.turn == White
+            then "White's turn"
+            else "Black's turn"
         ]
   in
     div
       []
       [ title
       , turn
-      , div [centering] [svgBoard model]
       , div [centering]
           [ button [ Html.Events.onClick (QueryRoll)]
-              [text <| "Roll: " ++ Debug.toString model.roll]
-          , newline
-          , newline
+              [ text <|
+                  case model.roll of
+                    Just r  -> "Roll: " ++ (Debug.toString r)
+                    Nothing -> "Roll!"
+              ]
+          , text "\t"
+          , button [ Html.Events.onClick (Play)]
+              [ text <|
+                  case model.selected of
+                    Just s  -> "Play piece on square " ++ (Debug.toString s)
+                    Nothing -> "Select a piece"
+              ]
+              -- "Play piece: " ++ Debug.toString model.selected]
           ]
-      , div [centering]
-          [ button [ Html.Events.onClick (Play)]
-              [text <| "Play piece: " ++ Debug.toString model.selected]
-          , newline
-          ]
-      , newline
-      , buttonBoard model
+      , div [centering] [svgBoard model]
+
+      -- , div [centering]
+      --     [ button [ Html.Events.onClick (Play)]
+      --         [text <| "Play piece: " ++ Debug.toString model.selected]
+      --     , newline
+      --     ]
+      -- , newline
+      -- , buttonBoard model
       , newline
       , txtBoard model
       ]

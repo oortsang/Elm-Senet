@@ -183,9 +183,10 @@ boardToStrings board =
     nums3 = List.range 20 29
     space = List.intersperse ' '
     line ns = String.fromList <| space <| List.map rep ns
-    _ = Debug.log "Row 1" (line nums1)
-    _ = Debug.log "Row 2" (line nums2)
-    _ = Debug.log "Row 3" (line nums3)
+    -- Only needed for command line:
+    -- _ = Debug.log "Row 1" (line nums1)
+    -- _ = Debug.log "Row 2" (line nums2)
+    -- _ = Debug.log "Row 3" (line nums3)
   in
     (line nums1, line nums2, line nums3)
 
