@@ -229,7 +229,7 @@ monospace = Html.Attributes.style "font-family" "monospace"
 
 svgSquare : Int -> GameState -> Int -> Int -> Int -> Html.Html Msg
 svgSquare length gs n i j =
-  --length =
+  -- n for square number
   -- i for row, j for col
   let
     rlen = length // 10
