@@ -5,10 +5,10 @@
 -- TODO:
 --   1. Add board/buttons to HTML
 --   2. Figure out highlighting/selection logic
---   3. Also fix the rng to be not uniform
+--   3. Also fix the rng to be not uniform (check)
 --   3.5. Should there be a button to ask for the roll?
 --   3.6. Skip moves that don't have legal moves
---   4. Add images for the board
+--   4. Add images for the board (check)
 
 
 
@@ -162,7 +162,13 @@ update msg model =
 -- Need to fix to not be a uniform distribution
 rollGenerator : Generator Int
 rollGenerator =
-  Random.int 1 5
+  Random.weighted
+    (4, 1)
+    [ (6, 2)
+    , (4, 3)
+    , (1, 4)
+    , (1, 5)
+    ]
 
 setRoll : Int -> Model -> Model
 setRoll i model =
@@ -246,9 +252,52 @@ svgSquare length gs n i j =
         Nothing ->
           []
     maybePawn = getPawn n gs
+    sqImage sqnum = 
+      case sqnum of
+        15 -> 
+          [ Svg.image
+            [ SA.x <| Debug.toString x
+            , SA.y <| Debug.toString y
+            , SA.width "92px", SA.height "92px" 
+            , SA.xlinkHref "src/Images/square 15.png"]
+            []
+          ]
+        26 -> 
+          [ Svg.image
+            [ SA.x <| Debug.toString x
+            , SA.y <| Debug.toString y
+            , SA.width "92px", SA.height "92px" 
+            , SA.xlinkHref "src/Images/square 26.png"]
+            []
+          ]
+        27 -> 
+          [ Svg.image
+            [ SA.x <| Debug.toString x
+            , SA.y <| Debug.toString y
+            , SA.width "92px", SA.height "92px" 
+            , SA.xlinkHref "src/Images/square 27.png"]
+            []
+          ]
+        28 -> 
+          [ Svg.image
+            [ SA.x <| Debug.toString x
+            , SA.y <| Debug.toString y
+            , SA.width "92px", SA.height "92px" 
+            , SA.xlinkHref "src/Images/square 28.png"]
+            []
+          ]
+        29 -> 
+          [ Svg.image
+            [ SA.x <| Debug.toString x
+            , SA.y <| Debug.toString y
+            , SA.width "92px", SA.height "92px" 
+            , SA.xlinkHref "src/Images/square 29.png"]
+            []
+          ]
+        _ -> []
   in
     Svg.svg []
-      (sqRect ++ piece maybePawn)
+      (sqRect ++ sqImage (i * 10 + j) ++ piece maybePawn)
 
 -- make svg table
 svgBoard : Model -> Html.Html Msg

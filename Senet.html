@@ -5679,49 +5679,89 @@ var $elm$core$Maybe$map = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
-var $elm$core$Bitwise$and = _Bitwise_and;
 var $elm$core$Basics$negate = function (n) {
 	return -n;
 };
+var $elm$core$Basics$abs = function (n) {
+	return (n < 0) ? (-n) : n;
+};
+var $elm$core$Bitwise$and = _Bitwise_and;
 var $elm$core$Bitwise$xor = _Bitwise_xor;
 var $elm$random$Random$peel = function (_v0) {
 	var state = _v0.a;
 	var word = (state ^ (state >>> ((state >>> 28) + 4))) * 277803737;
 	return ((word >>> 22) ^ word) >>> 0;
 };
-var $elm$random$Random$int = F2(
+var $elm$random$Random$float = F2(
 	function (a, b) {
 		return $elm$random$Random$Generator(
 			function (seed0) {
-				var _v0 = (_Utils_cmp(a, b) < 0) ? _Utils_Tuple2(a, b) : _Utils_Tuple2(b, a);
-				var lo = _v0.a;
-				var hi = _v0.b;
-				var range = (hi - lo) + 1;
-				if (!((range - 1) & range)) {
-					return _Utils_Tuple2(
-						(((range - 1) & $elm$random$Random$peel(seed0)) >>> 0) + lo,
-						$elm$random$Random$next(seed0));
-				} else {
-					var threshhold = (((-range) >>> 0) % range) >>> 0;
-					var accountForBias = function (seed) {
-						accountForBias:
-						while (true) {
-							var x = $elm$random$Random$peel(seed);
-							var seedN = $elm$random$Random$next(seed);
-							if (_Utils_cmp(x, threshhold) < 0) {
-								var $temp$seed = seedN;
-								seed = $temp$seed;
-								continue accountForBias;
-							} else {
-								return _Utils_Tuple2((x % range) + lo, seedN);
-							}
-						}
-					};
-					return accountForBias(seed0);
-				}
+				var seed1 = $elm$random$Random$next(seed0);
+				var range = $elm$core$Basics$abs(b - a);
+				var n1 = $elm$random$Random$peel(seed1);
+				var n0 = $elm$random$Random$peel(seed0);
+				var lo = (134217727 & n1) * 1.0;
+				var hi = (67108863 & n0) * 1.0;
+				var val = ((hi * 134217728.0) + lo) / 9007199254740992.0;
+				var scaled = (val * range) + a;
+				return _Utils_Tuple2(
+					scaled,
+					$elm$random$Random$next(seed1));
 			});
 	});
-var $author$project$Main$rollGenerator = A2($elm$random$Random$int, 1, 5);
+var $elm$random$Random$getByWeight = F3(
+	function (_v0, others, countdown) {
+		getByWeight:
+		while (true) {
+			var weight = _v0.a;
+			var value = _v0.b;
+			if (!others.b) {
+				return value;
+			} else {
+				var second = others.a;
+				var otherOthers = others.b;
+				if (_Utils_cmp(
+					countdown,
+					$elm$core$Basics$abs(weight)) < 1) {
+					return value;
+				} else {
+					var $temp$_v0 = second,
+						$temp$others = otherOthers,
+						$temp$countdown = countdown - $elm$core$Basics$abs(weight);
+					_v0 = $temp$_v0;
+					others = $temp$others;
+					countdown = $temp$countdown;
+					continue getByWeight;
+				}
+			}
+		}
+	});
+var $elm$core$List$sum = function (numbers) {
+	return A3($elm$core$List$foldl, $elm$core$Basics$add, 0, numbers);
+};
+var $elm$random$Random$weighted = F2(
+	function (first, others) {
+		var normalize = function (_v0) {
+			var weight = _v0.a;
+			return $elm$core$Basics$abs(weight);
+		};
+		var total = normalize(first) + $elm$core$List$sum(
+			A2($elm$core$List$map, normalize, others));
+		return A2(
+			$elm$random$Random$map,
+			A2($elm$random$Random$getByWeight, first, others),
+			A2($elm$random$Random$float, 0, total));
+	});
+var $author$project$Main$rollGenerator = A2(
+	$elm$random$Random$weighted,
+	_Utils_Tuple2(4, 1),
+	_List_fromArray(
+		[
+			_Utils_Tuple2(6, 2),
+			_Utils_Tuple2(4, 3),
+			_Utils_Tuple2(1, 4),
+			_Utils_Tuple2(1, 5)
+		]));
 var $author$project$Main$selectPiece = F2(
 	function (n, model) {
 		return _Utils_update(
@@ -6411,6 +6451,7 @@ var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
 var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
 var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
 var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
+var $elm$svg$Svg$image = $elm$svg$Svg$trustedNode('image');
 var $elm$svg$Svg$Events$onClick = function (msg) {
 	return A2(
 		$elm$html$Html$Events$on,
@@ -6424,6 +6465,13 @@ var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
 var $elm$core$Debug$toString = _Debug_toString;
 var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
 var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
+var $elm$svg$Svg$Attributes$xlinkHref = function (value) {
+	return A3(
+		_VirtualDom_attributeNS,
+		'http://www.w3.org/1999/xlink',
+		'xlink:href',
+		_VirtualDom_noJavaScriptUri(value));
+};
 var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
 var $author$project$Main$svgSquare = F5(
 	function (length, gs, n, i, j) {
@@ -6431,6 +6479,97 @@ var $author$project$Main$svgSquare = F5(
 		var slen = length - rlen;
 		var x = (j * length) + ((rlen / 2) | 0);
 		var y = (i * length) + ((rlen / 2) | 0);
+		var sqImage = function (sqnum) {
+			switch (sqnum) {
+				case 15:
+					return _List_fromArray(
+						[
+							A2(
+							$elm$svg$Svg$image,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$x(
+									$elm$core$Debug$toString(x)),
+									$elm$svg$Svg$Attributes$y(
+									$elm$core$Debug$toString(y)),
+									$elm$svg$Svg$Attributes$width('92px'),
+									$elm$svg$Svg$Attributes$height('92px'),
+									$elm$svg$Svg$Attributes$xlinkHref('src/Images/square 15.png')
+								]),
+							_List_Nil)
+						]);
+				case 26:
+					return _List_fromArray(
+						[
+							A2(
+							$elm$svg$Svg$image,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$x(
+									$elm$core$Debug$toString(x)),
+									$elm$svg$Svg$Attributes$y(
+									$elm$core$Debug$toString(y)),
+									$elm$svg$Svg$Attributes$width('92px'),
+									$elm$svg$Svg$Attributes$height('92px'),
+									$elm$svg$Svg$Attributes$xlinkHref('src/Images/square 26.png')
+								]),
+							_List_Nil)
+						]);
+				case 27:
+					return _List_fromArray(
+						[
+							A2(
+							$elm$svg$Svg$image,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$x(
+									$elm$core$Debug$toString(x)),
+									$elm$svg$Svg$Attributes$y(
+									$elm$core$Debug$toString(y)),
+									$elm$svg$Svg$Attributes$width('92px'),
+									$elm$svg$Svg$Attributes$height('92px'),
+									$elm$svg$Svg$Attributes$xlinkHref('src/Images/square 27.png')
+								]),
+							_List_Nil)
+						]);
+				case 28:
+					return _List_fromArray(
+						[
+							A2(
+							$elm$svg$Svg$image,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$x(
+									$elm$core$Debug$toString(x)),
+									$elm$svg$Svg$Attributes$y(
+									$elm$core$Debug$toString(y)),
+									$elm$svg$Svg$Attributes$width('92px'),
+									$elm$svg$Svg$Attributes$height('92px'),
+									$elm$svg$Svg$Attributes$xlinkHref('src/Images/square 28.png')
+								]),
+							_List_Nil)
+						]);
+				case 29:
+					return _List_fromArray(
+						[
+							A2(
+							$elm$svg$Svg$image,
+							_List_fromArray(
+								[
+									$elm$svg$Svg$Attributes$x(
+									$elm$core$Debug$toString(x)),
+									$elm$svg$Svg$Attributes$y(
+									$elm$core$Debug$toString(y)),
+									$elm$svg$Svg$Attributes$width('92px'),
+									$elm$svg$Svg$Attributes$height('92px'),
+									$elm$svg$Svg$Attributes$xlinkHref('src/Images/square 29.png')
+								]),
+							_List_Nil)
+						]);
+				default:
+					return _List_Nil;
+			}
+		};
 		var sqRect = _List_fromArray(
 			[
 				A2(
@@ -6490,7 +6629,9 @@ var $author$project$Main$svgSquare = F5(
 			_List_Nil,
 			_Utils_ap(
 				sqRect,
-				piece(maybePawn)));
+				_Utils_ap(
+					sqImage((i * 10) + j),
+					piece(maybePawn))));
 	});
 var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
 var $author$project$Main$svgBoard = function (model) {
