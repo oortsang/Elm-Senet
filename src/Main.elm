@@ -3,11 +3,11 @@
 -- Main.elm: makes the html page and handles interactions
 
 -- TODO:
---   1. Add board/buttons to HTML
---   2. Figure out highlighting/selection logic
---   3. Also fix the rng to be not uniform
---   3.5. Should there be a button to ask for the roll?
---   3.6. Skip moves that don't have legal moves
+--   0. Add a way to promote the pawns
+--   1. Figure out highlighting/selection logic
+--   2. Also fix the rng to be not uniform
+--   3. Should there be a button to ask for the roll?
+--   3.5. Skip moves that don't have legal moves
 --   4. Add images for the board
 
 
@@ -108,40 +108,53 @@ update msg model =
     GetRoll i ->
       (setRoll i model, Cmd.none)
     Click n ->
-      case (model.selected, model.roll) of
-        -- also want to change highlighting?
-        -- Should we check for legality
-        (Just m, Just r) ->
-          if n == m then
-            -- Unselect
-            -- also want to change highlighting?
-            (unselectPiece model, Cmd.none)
-          else if n == (m+r) then
-            -- Play!
-            -- TODO: Add error messages...
-            let
-              newModel =
-                model
-                  |> unselectPiece
-                  |> tryPlay m
-                  |> Maybe.withDefault model
-            in
-              (newModel, Cmd.none)
+      let
+        play m =
+            (model
+                |> unselectPiece
+                |> tryPlay m
+                |> Maybe.withDefault model
+            , Cmd.none)
+        unselect () =
+          (unselectPiece model, Cmd.none)
+        -- select the piece if it's the right color
+        select () =
+          case BT.getElem n model.gs.board of
+            Just (Occ col) ->
+              if col == currTurn then
+                (selectPiece n model, Cmd.none)
+              else
+                -- nothing ()
+                unselect ()
+            _ ->
+              -- nothing ()
+              unselect ()
+        nothing () =
+          (model, Cmd.none)
+        currTurn = model.gs.turn
+
+        checkSquare : Int -> (Model, Cmd Msg)
+        checkSquare m =
+          let _=Debug.log "Checking square" m in
+          if n /= m then
+            select ()
           else
-            (model, Cmd.none)
-        _ ->
-          let
-            mcol =
-              Maybe.map
-                (\p -> p.color)
-                (getPawn n model.gs)
-          in
-            if mcol == Just model.gs.turn then
-              -- can only select piece if it's the right
-              -- color
-              (selectPiece n model, Cmd.none)
-            else
-              (model, Cmd.none)
+            unselect ()
+      in
+        model.selected |> Maybe.map (\m ->
+        model.roll     |> Maybe.map (\r ->
+        if n == (m+r) then
+          -- allow selecting a pawn of the same color
+          -- that is being ``attacked'' (otherwise
+          -- the click would be considered illegal)
+          if Just (Occ model.gs.turn)
+             /= BT.getElem n model.gs.board
+          then play m
+          else select ()
+        else
+          checkSquare m
+        ) |> Maybe.withDefault (checkSquare m) -- no roll
+        ) |> Maybe.withDefault (select ())
     Noop ->
       (model, Cmd.none)
     Unselect ->
@@ -265,10 +278,15 @@ svgBoard model =
     line3 =
       ls |> List.map (\i ->
       svgSquare length model.gs (20+i) 2 i)
+    background = 
+      Svg.rect [SA.x "-10", SA.y "-10", SA.width "1020", SA.height "320", SA.fill "gray"] []
+    afterlife = 
+      svgSquare length model.gs 30 3 9
   in
     Svg.svg [ SA.viewBox "-50 -50 1100 400"]
-      (  [Svg.rect [SA.x "-10", SA.y "-10", SA.width "1020", SA.height "320", SA.fill "gray"] []]
+      ( [background]
       ++ line1 ++ line2 ++ line3
+      ++ [afterlife]
       )
 
 txtBoard : Model -> Html Msg
@@ -315,12 +333,12 @@ view : Model -> Html Msg
 view model =
   let
     title =
-      Html.h3 [ centering ]
+      Html.h2 [ centering ]
         [ text "Senet!"
         , newline
         ]
     turn =
-      Html.div [centering]
+      Html.h4 [centering]
         [ text <|
             if model.gs.turn == White then
               "White's turn"
@@ -332,24 +350,20 @@ view model =
       []
       [ title
       , turn
-      , newline
-      , txtBoard model
-      , newline
+      , div [centering] [svgBoard model]
       , div [centering]
           [ button [ Html.Events.onClick (QueryRoll)]
               [text <| "Roll: " ++ Debug.toString model.roll]
           , newline
           , newline
           ]
-      , buttonBoard model
-      , newline
       , div [centering]
           [ button [ Html.Events.onClick (Play)]
               [text <| "Play piece: " ++ Debug.toString model.selected]
           , newline
           ]
       , newline
-      , div [centering] [svgBoard model]
-      -- , svgBoard model
+      , buttonBoard model
       , newline
+      , txtBoard model
       ]
