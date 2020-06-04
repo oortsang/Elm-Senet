@@ -275,53 +275,37 @@ svgSquare length gs n i j =
     maybePawn = getPawn n gs
     picSize = "88"
     sqImage =
-      case squareType n of
-        Rebirth ->
-          [ Svg.image
-            [ SA.x <| Debug.toString x
+      let
+        attrList =
+          [ SA.x <| Debug.toString x
             , SA.y <| Debug.toString y
             , SA.width picSize, SA.height picSize
-            , href "images/rebirth.png"
             , SE.onClick (Click n)
-            ] []
           ]
-        Spec Happy ->
-          [ Svg.image
-            [ SA.x <| Debug.toString x
-            , SA.y <| Debug.toString y
-            , SA.width picSize, SA.height picSize
-            , href "images/happy.png"
-            , SE.onClick (Click n)
-            ] []
-          ]
-        Spec Water ->
-          [ Svg.image
-            [ SA.x <| Debug.toString x
-            , SA.y <| Debug.toString y
-            , SA.width picSize, SA.height picSize
-            , href "images/water.png"
-            , SE.onClick (Click n)
-            ] []
-          ]
-        Spec Truths ->
-          [ Svg.image
-            [ SA.x <| Debug.toString x
-            , SA.y <| Debug.toString y
-            , SA.width picSize, SA.height picSize
-            , href "images/three.png"
-            , SE.onClick (Click n)
-            ] []
-          ]
-        Spec Reatoum ->
-          [ Svg.image
-            [ SA.x <| Debug.toString x
-            , SA.y <| Debug.toString y
-            , SA.width picSize, SA.height picSize
-            , href "images/two.png"
-            , SE.onClick (Click n)
-            ] []
-          ]
-        _ -> []
+      in
+        case squareType n of
+          Rebirth ->
+            [ Svg.image
+              ((href "images/rebirth.png") :: attrList) []
+            ]
+          Spec Happy ->
+            [ Svg.image
+              ((href "images/happy.png") :: attrList) []
+            ]
+          Spec Water ->
+            [ Svg.image
+              ((href "images/water.png") :: attrList) []
+            ]
+          Spec Truths ->
+            [ Svg.image
+              ((href "images/three.png") :: attrList) []
+            ]
+          Spec Reatoum ->
+            [ Svg.image
+              ((href "images/two.png") :: attrList) []
+            ]
+          _ ->
+            []
   in
     Svg.svg []
       (sqRect ++ sqImage ++ piece maybePawn)
@@ -440,4 +424,6 @@ view model =
       -- , buttonBoard model
       , newline
       , txtBoard model
+      , newline
+      , newline
       ]

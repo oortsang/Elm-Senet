@@ -6447,6 +6447,17 @@ var $author$project$Main$svgSquare = F5(
 		};
 		var picSize = '88';
 		var sqImage = function () {
+			var attrList = _List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x(
+					$elm$core$Debug$toString(x)),
+					$elm$svg$Svg$Attributes$y(
+					$elm$core$Debug$toString(y)),
+					$elm$svg$Svg$Attributes$width(picSize),
+					$elm$svg$Svg$Attributes$height(picSize),
+					$elm$svg$Svg$Events$onClick(
+					$author$project$Main$Click(n))
+				]);
 			var _v0 = $author$project$Board$squareType(n);
 			_v0$5:
 			while (true) {
@@ -6456,16 +6467,10 @@ var $author$project$Main$svgSquare = F5(
 							[
 								A2(
 								$elm$svg$Svg$image,
-								_List_fromArray(
-									[
-										$elm$svg$Svg$Attributes$x(
-										$elm$core$Debug$toString(x)),
-										$elm$svg$Svg$Attributes$y(
-										$elm$core$Debug$toString(y)),
-										$elm$svg$Svg$Attributes$width(picSize),
-										$elm$svg$Svg$Attributes$height(picSize),
-										$author$project$Main$href('images/rebirth.png')
-									]),
+								A2(
+									$elm$core$List$cons,
+									$author$project$Main$href('images/rebirth.png'),
+									attrList),
 								_List_Nil)
 							]);
 					case 'Spec':
@@ -6476,16 +6481,10 @@ var $author$project$Main$svgSquare = F5(
 									[
 										A2(
 										$elm$svg$Svg$image,
-										_List_fromArray(
-											[
-												$elm$svg$Svg$Attributes$x(
-												$elm$core$Debug$toString(x)),
-												$elm$svg$Svg$Attributes$y(
-												$elm$core$Debug$toString(y)),
-												$elm$svg$Svg$Attributes$width(picSize),
-												$elm$svg$Svg$Attributes$height(picSize),
-												$author$project$Main$href('images/happy.png')
-											]),
+										A2(
+											$elm$core$List$cons,
+											$author$project$Main$href('images/happy.png'),
+											attrList),
 										_List_Nil)
 									]);
 							case 'Water':
@@ -6494,16 +6493,10 @@ var $author$project$Main$svgSquare = F5(
 									[
 										A2(
 										$elm$svg$Svg$image,
-										_List_fromArray(
-											[
-												$elm$svg$Svg$Attributes$x(
-												$elm$core$Debug$toString(x)),
-												$elm$svg$Svg$Attributes$y(
-												$elm$core$Debug$toString(y)),
-												$elm$svg$Svg$Attributes$width(picSize),
-												$elm$svg$Svg$Attributes$height(picSize),
-												$author$project$Main$href('images/water.png')
-											]),
+										A2(
+											$elm$core$List$cons,
+											$author$project$Main$href('images/water.png'),
+											attrList),
 										_List_Nil)
 									]);
 							case 'Truths':
@@ -6512,16 +6505,10 @@ var $author$project$Main$svgSquare = F5(
 									[
 										A2(
 										$elm$svg$Svg$image,
-										_List_fromArray(
-											[
-												$elm$svg$Svg$Attributes$x(
-												$elm$core$Debug$toString(x)),
-												$elm$svg$Svg$Attributes$y(
-												$elm$core$Debug$toString(y)),
-												$elm$svg$Svg$Attributes$width(picSize),
-												$elm$svg$Svg$Attributes$height(picSize),
-												$author$project$Main$href('images/three.png')
-											]),
+										A2(
+											$elm$core$List$cons,
+											$author$project$Main$href('images/three.png'),
+											attrList),
 										_List_Nil)
 									]);
 							case 'Reatoum':
@@ -6530,16 +6517,10 @@ var $author$project$Main$svgSquare = F5(
 									[
 										A2(
 										$elm$svg$Svg$image,
-										_List_fromArray(
-											[
-												$elm$svg$Svg$Attributes$x(
-												$elm$core$Debug$toString(x)),
-												$elm$svg$Svg$Attributes$y(
-												$elm$core$Debug$toString(y)),
-												$elm$svg$Svg$Attributes$width(picSize),
-												$elm$svg$Svg$Attributes$height(picSize),
-												$author$project$Main$href('images/two.png')
-											]),
+										A2(
+											$elm$core$List$cons,
+											$author$project$Main$href('images/two.png'),
+											attrList),
 										_List_Nil)
 									]);
 							default:
@@ -6812,7 +6793,9 @@ var $author$project$Main$view = function (model) {
 						$author$project$Main$svgBoard(model)
 					])),
 				$author$project$Main$newline,
-				$author$project$Main$txtBoard(model)
+				$author$project$Main$txtBoard(model),
+				$author$project$Main$newline,
+				$author$project$Main$newline
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(
