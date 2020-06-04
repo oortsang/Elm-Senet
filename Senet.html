@@ -6435,19 +6435,18 @@ var $author$project$Main$update = F2(
 						$author$project$Main$unselectPiece(model)),
 					$elm$core$Platform$Cmd$none);
 			default:
-				var newModel = $author$project$Main$highlightPieces(
+				var newModel = A2(
+					$elm$core$Maybe$withDefault,
+					model,
 					A2(
-						$elm$core$Maybe$withDefault,
-						model,
-						A2(
-							$elm$core$Maybe$andThen,
-							function (nn) {
-								return A2(
-									$author$project$Main$tryPlay,
-									nn,
-									$author$project$Main$unselectPiece(model));
-							},
-							model.selected)));
+						$elm$core$Maybe$andThen,
+						function (nn) {
+							return A2(
+								$author$project$Main$tryPlay,
+								nn,
+								$author$project$Main$unselectPiece(model));
+						},
+						model.selected));
 				return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
 		}
 	});

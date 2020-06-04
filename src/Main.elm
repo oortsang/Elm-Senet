@@ -166,7 +166,6 @@ update msg model =
           checkSquare m
         ) |> Maybe.withDefault (checkSquare m) -- no roll
         ) |> Maybe.withDefault (select ()) -- no selection
-          |> highlightPieces
     Noop ->
       (model, Cmd.none)
     Unselect ->
@@ -179,7 +178,6 @@ update msg model =
             |> unselectPiece
             |> tryPlay nn
           ) |> Maybe.withDefault model
-            |> highlightPieces
       in
         (newModel, Cmd.none)
 
