@@ -5515,6 +5515,7 @@ var $elm$core$Maybe$andThen = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
+var $elm$core$Basics$ge = _Utils_ge;
 var $elm$random$Random$Generate = function (a) {
 	return {$: 'Generate', a: a};
 };
@@ -5653,22 +5654,6 @@ var $author$project$BoardTree$getElem = F2(
 			}
 		}
 	});
-var $author$project$Board$getPawn = F2(
-	function (i, gs) {
-		var squarePawn = function (sq) {
-			if (sq.$ === 'Free') {
-				return $elm$core$Maybe$Nothing;
-			} else {
-				var c = sq.a;
-				return $elm$core$Maybe$Just(
-					{color: c, square: i});
-			}
-		};
-		return A2(
-			$elm$core$Maybe$andThen,
-			squarePawn,
-			A2($author$project$BoardTree$getElem, i, gs.board));
-	});
 var $elm$core$Maybe$map = F2(
 	function (f, maybe) {
 		if (maybe.$ === 'Just') {
@@ -5679,6 +5664,7 @@ var $elm$core$Maybe$map = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
+var $elm$core$Basics$neq = _Utils_notEqual;
 var $elm$core$Bitwise$and = _Bitwise_and;
 var $elm$core$Basics$negate = function (n) {
 	return -n;
@@ -5721,7 +5707,12 @@ var $elm$random$Random$int = F2(
 				}
 			});
 	});
-var $author$project$Main$rollGenerator = A2($elm$random$Random$int, 1, 5);
+var $author$project$Main$rollGenerator = A2(
+	$elm$random$Random$map,
+	function (i) {
+		return (!i) ? 5 : ((i <= 4) ? 1 : ((i <= 10) ? 2 : ((i <= 14) ? 3 : 4)));
+	},
+	A2($elm$random$Random$int, 0, 15));
 var $author$project$Main$selectPiece = F2(
 	function (n, model) {
 		return _Utils_update(
@@ -5743,6 +5734,22 @@ var $author$project$Main$clearRoll = function (model) {
 		model,
 		{roll: $elm$core$Maybe$Nothing});
 };
+var $author$project$Board$getPawn = F2(
+	function (i, gs) {
+		var squarePawn = function (sq) {
+			if (sq.$ === 'Free') {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var c = sq.a;
+				return $elm$core$Maybe$Just(
+					{color: c, square: i});
+			}
+		};
+		return A2(
+			$elm$core$Maybe$andThen,
+			squarePawn,
+			A2($author$project$BoardTree$getElem, i, gs.board));
+	});
 var $author$project$Logic$lastFreeBy = F2(
 	function (sq, gs) {
 		lastFreeBy:
@@ -5916,7 +5923,6 @@ var $author$project$Logic$pawnSwap = F3(
 			}
 		}
 	});
-var $elm$core$Basics$ge = _Utils_ge;
 var $author$project$Logic$legalBySquareType = F2(
 	function (square, m) {
 		if (square.$ === 'Spec') {
@@ -5941,7 +5947,6 @@ var $author$project$Logic$legalBySquareType = F2(
 			return true;
 		}
 	});
-var $elm$core$Basics$neq = _Utils_notEqual;
 var $elm$core$Basics$not = _Basics_not;
 var $elm$core$Maybe$withDefault = F2(
 	function (_default, maybe) {
@@ -6199,41 +6204,60 @@ var $author$project$Main$update = F2(
 					$elm$core$Platform$Cmd$none);
 			case 'Click':
 				var n = msg.a;
-				var _v2 = _Utils_Tuple2(model.selected, model.roll);
-				if ((_v2.a.$ === 'Just') && (_v2.b.$ === 'Just')) {
-					var m = _v2.a.a;
-					var r = _v2.b.a;
-					if (_Utils_eq(n, m)) {
-						return _Utils_Tuple2(
-							$author$project$Main$unselectPiece(model),
-							$elm$core$Platform$Cmd$none);
+				var unselect = function (_v5) {
+					return _Utils_Tuple2(
+						$author$project$Main$unselectPiece(model),
+						$elm$core$Platform$Cmd$none);
+				};
+				var play = function (m) {
+					return _Utils_Tuple2(
+						A2(
+							$elm$core$Maybe$withDefault,
+							model,
+							A2(
+								$author$project$Main$tryPlay,
+								m,
+								$author$project$Main$unselectPiece(model))),
+						$elm$core$Platform$Cmd$none);
+				};
+				var nothing = function (_v4) {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				};
+				var currTurn = model.gs.turn;
+				var select = function (_v3) {
+					var _v2 = A2($author$project$BoardTree$getElem, n, model.gs.board);
+					if ((_v2.$ === 'Just') && (_v2.a.$ === 'Occ')) {
+						var col = _v2.a.a;
+						return _Utils_eq(col, currTurn) ? _Utils_Tuple2(
+							A2($author$project$Main$selectPiece, n, model),
+							$elm$core$Platform$Cmd$none) : unselect(_Utils_Tuple0);
 					} else {
-						if (_Utils_eq(n, m + r)) {
-							var newModel = A2(
-								$elm$core$Maybe$withDefault,
-								model,
-								A2(
-									$author$project$Main$tryPlay,
-									m,
-									$author$project$Main$unselectPiece(model)));
-							return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
-						} else {
-							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-						}
+						return unselect(_Utils_Tuple0);
 					}
-				} else {
-					var mcol = A2(
+				};
+				var checkSquare = function (m) {
+					return (!_Utils_eq(n, m)) ? select(_Utils_Tuple0) : unselect(_Utils_Tuple0);
+				};
+				return A2(
+					$elm$core$Maybe$withDefault,
+					select(_Utils_Tuple0),
+					A2(
 						$elm$core$Maybe$map,
-						function (p) {
-							return p.color;
+						function (m) {
+							return A2(
+								$elm$core$Maybe$withDefault,
+								checkSquare(m),
+								A2(
+									$elm$core$Maybe$map,
+									function (r) {
+										return (_Utils_eq(n, m + r) || (n >= 30)) ? ((!_Utils_eq(
+											$elm$core$Maybe$Just(
+												$author$project$Board$Occ(model.gs.turn)),
+											A2($author$project$BoardTree$getElem, n, model.gs.board))) ? play(m) : select(_Utils_Tuple0)) : checkSquare(m);
+									},
+									model.roll));
 						},
-						A2($author$project$Board$getPawn, n, model.gs));
-					return _Utils_eq(
-						mcol,
-						$elm$core$Maybe$Just(model.gs.turn)) ? _Utils_Tuple2(
-						A2($author$project$Main$selectPiece, n, model),
-						$elm$core$Platform$Cmd$none) : _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-				}
+						model.selected));
 			case 'Noop':
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 			case 'Unselect':
@@ -6259,9 +6283,6 @@ var $author$project$Main$update = F2(
 var $author$project$Main$Play = {$: 'Play'};
 var $author$project$Main$QueryRoll = {$: 'QueryRoll'};
 var $elm$html$Html$button = _VirtualDom_node('button');
-var $author$project$Main$Click = function (a) {
-	return {$: 'Click', a: a};
-};
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
@@ -6273,10 +6294,8 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 var $elm$html$Html$Attributes$align = $elm$html$Html$Attributes$stringProperty('align');
 var $author$project$Main$centering = $elm$html$Html$Attributes$align('center');
 var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$core$String$fromList = _String_fromList;
-var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
-var $author$project$Main$monospace = A2($elm$html$Html$Attributes$style, 'font-family', 'monospace');
+var $elm$html$Html$h1 = _VirtualDom_node('h1');
+var $elm$html$Html$h2 = _VirtualDom_node('h2');
 var $elm$html$Html$br = _VirtualDom_node('br');
 var $author$project$Main$newline = A2($elm$html$Html$br, _List_Nil, _List_Nil);
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
@@ -6296,118 +6315,14 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
-var $author$project$Board$squareToChar = F2(
-	function (i, s) {
-		var pawnRep = function (p) {
-			if (p.$ === 'White') {
-				return _Utils_chr('P');
-			} else {
-				return _Utils_chr('Q');
-			}
-		};
-		var blankRep = function (sq) {
-			switch (sq.$) {
-				case 'Reg':
-					return _Utils_chr('.');
-				case 'Rebirth':
-					return _Utils_chr(',');
-				default:
-					switch (sq.a.$) {
-						case 'Happy':
-							var _v3 = sq.a;
-							return _Utils_chr('&');
-						case 'Water':
-							var _v4 = sq.a;
-							return _Utils_chr('w');
-						case 'Truths':
-							var _v5 = sq.a;
-							return _Utils_chr('3');
-						case 'Reatoum':
-							var _v6 = sq.a;
-							return _Utils_chr('2');
-						default:
-							var _v7 = sq.a;
-							return _Utils_chr('.');
-					}
-			}
-		};
-		if (s.$ === 'Just') {
-			if (s.a.$ === 'Occ') {
-				var p = s.a.a;
-				return pawnRep(p);
-			} else {
-				var _v1 = s.a;
-				return blankRep(
-					$author$project$Board$squareType(i));
-			}
-		} else {
-			return _Utils_chr('.');
-		}
-	});
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $author$project$Main$buttonBoard = function (model) {
-	var makeButton = function (i) {
-		return A2(
-			$elm$html$Html$button,
-			_List_fromArray(
-				[
-					$elm$html$Html$Events$onClick(
-					$author$project$Main$Click(i)),
-					$author$project$Main$monospace
-				]),
-			_List_fromArray(
-				[
-					$elm$html$Html$text(
-					$elm$core$String$fromList(
-						function (c) {
-							return _List_fromArray(
-								[c]);
-						}(
-							A2(
-								$author$project$Board$squareToChar,
-								i,
-								A2($author$project$BoardTree$getElem, i, model.gs.board)))))
-				]));
-	};
-	var line3 = A2(
-		$elm$core$List$map,
-		makeButton,
-		A2($elm$core$List$range, 20, 29));
-	var line2 = A2(
-		$elm$core$List$map,
-		makeButton,
-		$elm$core$List$reverse(
-			A2($elm$core$List$range, 10, 19)));
-	var line1 = A2(
-		$elm$core$List$map,
-		makeButton,
-		A2($elm$core$List$range, 0, 9));
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[$author$project$Main$centering]),
-		_Utils_ap(
-			line1,
-			_Utils_ap(
-				_List_fromArray(
-					[$author$project$Main$newline]),
-				_Utils_ap(
-					line2,
-					_Utils_ap(
-						_List_fromArray(
-							[$author$project$Main$newline]),
-						_Utils_ap(
-							line3,
-							_List_fromArray(
-								[$author$project$Main$newline])))))));
-};
-var $elm$html$Html$h3 = _VirtualDom_node('h3');
 var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
 var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
 var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
 var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
 var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
+var $author$project$Main$Click = function (a) {
+	return {$: 'Click', a: a};
+};
 var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
 var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
 var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
@@ -6514,31 +6429,39 @@ var $author$project$Main$svgBoard = function (model) {
 			return A5($author$project$Main$svgSquare, length, model.gs, 20 + i, 2, i);
 		},
 		ls);
+	var background = A2(
+		$elm$svg$Svg$rect,
+		_List_fromArray(
+			[
+				$elm$svg$Svg$Attributes$x('-10'),
+				$elm$svg$Svg$Attributes$y('-10'),
+				$elm$svg$Svg$Attributes$width('1020'),
+				$elm$svg$Svg$Attributes$height('320'),
+				$elm$svg$Svg$Attributes$fill('gray')
+			]),
+		_List_Nil);
+	var afterlife = A5($author$project$Main$svgSquare, length, model.gs, 30, 3, 9);
 	return A2(
 		$elm$svg$Svg$svg,
 		_List_fromArray(
 			[
-				$elm$svg$Svg$Attributes$viewBox('-50 -50 1100 400')
+				$elm$svg$Svg$Attributes$viewBox('-50 -50 1100 500')
 			]),
 		_Utils_ap(
 			_List_fromArray(
-				[
-					A2(
-					$elm$svg$Svg$rect,
-					_List_fromArray(
-						[
-							$elm$svg$Svg$Attributes$x('-10'),
-							$elm$svg$Svg$Attributes$y('-10'),
-							$elm$svg$Svg$Attributes$width('1020'),
-							$elm$svg$Svg$Attributes$height('320'),
-							$elm$svg$Svg$Attributes$fill('gray')
-						]),
-					_List_Nil)
-				]),
+				[background]),
 			_Utils_ap(
 				line1,
-				_Utils_ap(line2, line3))));
+				_Utils_ap(
+					line2,
+					_Utils_ap(
+						line3,
+						_List_fromArray(
+							[afterlife]))))));
 };
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $elm$core$String$fromList = _String_fromList;
 var $elm$core$List$intersperse = F2(
 	function (sep, xs) {
 		if (!xs.b) {
@@ -6555,6 +6478,54 @@ var $elm$core$List$intersperse = F2(
 				});
 			var spersed = A3($elm$core$List$foldr, step, _List_Nil, tl);
 			return A2($elm$core$List$cons, hd, spersed);
+		}
+	});
+var $author$project$Board$squareToChar = F2(
+	function (i, s) {
+		var pawnRep = function (p) {
+			if (p.$ === 'White') {
+				return _Utils_chr('P');
+			} else {
+				return _Utils_chr('Q');
+			}
+		};
+		var blankRep = function (sq) {
+			switch (sq.$) {
+				case 'Reg':
+					return _Utils_chr('.');
+				case 'Rebirth':
+					return _Utils_chr(',');
+				default:
+					switch (sq.a.$) {
+						case 'Happy':
+							var _v3 = sq.a;
+							return _Utils_chr('&');
+						case 'Water':
+							var _v4 = sq.a;
+							return _Utils_chr('w');
+						case 'Truths':
+							var _v5 = sq.a;
+							return _Utils_chr('3');
+						case 'Reatoum':
+							var _v6 = sq.a;
+							return _Utils_chr('2');
+						default:
+							var _v7 = sq.a;
+							return _Utils_chr('.');
+					}
+			}
+		};
+		if (s.$ === 'Just') {
+			if (s.a.$ === 'Occ') {
+				var p = s.a.a;
+				return pawnRep(p);
+			} else {
+				var _v1 = s.a;
+				return blankRep(
+					$author$project$Board$squareType(i));
+			}
+		} else {
+			return _Utils_chr('.');
 		}
 	});
 var $author$project$Board$boardToStrings = function (board) {
@@ -6575,23 +6546,14 @@ var $author$project$Board$boardToStrings = function (board) {
 			space(
 				A2($elm$core$List$map, rep, ns)));
 	};
-	var _v0 = A2(
-		$elm$core$Debug$log,
-		'Row 1',
-		line(nums1));
-	var _v1 = A2(
-		$elm$core$Debug$log,
-		'Row 2',
-		line(nums2));
-	var _v2 = A2(
-		$elm$core$Debug$log,
-		'Row 3',
-		line(nums3));
 	return _Utils_Tuple3(
 		line(nums1),
 		line(nums2),
 		line(nums3));
 };
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
+var $author$project$Main$monospace = A2($elm$html$Html$Attributes$style, 'font-family', 'monospace');
 var $author$project$Main$txtBoard = function (model) {
 	var _v0 = $author$project$Board$boardToStrings(model.gs.board);
 	var l1 = _v0.a;
@@ -6603,7 +6565,10 @@ var $author$project$Main$txtBoard = function (model) {
 			[$author$project$Main$centering, $author$project$Main$monospace]),
 		_List_fromArray(
 			[
-				$elm$html$Html$text('Temporary ASCII Board (P=White; Q=Black)'),
+				$elm$html$Html$text('Mini ASCII Board'),
+				$author$project$Main$newline,
+				$elm$html$Html$text(' (P=White; Q=Black)'),
+				$author$project$Main$newline,
 				$author$project$Main$newline,
 				$elm$html$Html$text(l1),
 				$author$project$Main$newline,
@@ -6615,7 +6580,7 @@ var $author$project$Main$txtBoard = function (model) {
 };
 var $author$project$Main$view = function (model) {
 	var turn = A2(
-		$elm$html$Html$div,
+		$elm$html$Html$h2,
 		_List_fromArray(
 			[$author$project$Main$centering]),
 		_List_fromArray(
@@ -6624,13 +6589,12 @@ var $author$project$Main$view = function (model) {
 				_Utils_eq(model.gs.turn, $author$project$Board$White) ? 'White\'s turn' : 'Black\'s turn')
 			]));
 	var title = A2(
-		$elm$html$Html$h3,
+		$elm$html$Html$h1,
 		_List_fromArray(
 			[$author$project$Main$centering]),
 		_List_fromArray(
 			[
-				$elm$html$Html$text('Senet!'),
-				$author$project$Main$newline
+				$elm$html$Html$text('Senet!')
 			]));
 	return A2(
 		$elm$html$Html$div,
@@ -6639,9 +6603,6 @@ var $author$project$Main$view = function (model) {
 			[
 				title,
 				turn,
-				$author$project$Main$newline,
-				$author$project$Main$txtBoard(model),
-				$author$project$Main$newline,
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
@@ -6657,19 +6618,17 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$text(
-								'Roll: ' + $elm$core$Debug$toString(model.roll))
+								function () {
+									var _v0 = model.roll;
+									if (_v0.$ === 'Just') {
+										var r = _v0.a;
+										return 'Roll: ' + $elm$core$Debug$toString(r);
+									} else {
+										return 'Roll!';
+									}
+								}())
 							])),
-						$author$project$Main$newline,
-						$author$project$Main$newline
-					])),
-				$author$project$Main$buttonBoard(model),
-				$author$project$Main$newline,
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[$author$project$Main$centering]),
-				_List_fromArray(
-					[
+						$elm$html$Html$text('\t'),
 						A2(
 						$elm$html$Html$button,
 						_List_fromArray(
@@ -6679,11 +6638,17 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$text(
-								'Play piece: ' + $elm$core$Debug$toString(model.selected))
-							])),
-						$author$project$Main$newline
+								function () {
+									var _v1 = model.selected;
+									if (_v1.$ === 'Just') {
+										var s = _v1.a;
+										return 'Play piece on square ' + $elm$core$Debug$toString(s);
+									} else {
+										return 'Select a piece';
+									}
+								}())
+							]))
 					])),
-				$author$project$Main$newline,
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
@@ -6692,7 +6657,8 @@ var $author$project$Main$view = function (model) {
 					[
 						$author$project$Main$svgBoard(model)
 					])),
-				$author$project$Main$newline
+				$author$project$Main$newline,
+				$author$project$Main$txtBoard(model)
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(
