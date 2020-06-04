@@ -185,13 +185,6 @@ rollGenerator =
     , (1, 4)
     , (1, 5)
     ]
-  -- Random.int 0 15 |> Random.map (\i ->
-  -- if      i == 0  then 5
-  -- else if i <= 4  then 1
-  -- else if i <= 10 then 2
-  -- else if i <= 14 then 3
-  -- else                 4
-  -- )
 
 setRoll : Int -> Model -> Model
 setRoll i model =
@@ -273,9 +266,52 @@ svgSquare length gs n i j =
         Nothing ->
           []
     maybePawn = getPawn n gs
+    sqImage sqnum = 
+      case sqnum of
+        15 -> 
+          [ Svg.image
+            [ SA.x <| Debug.toString x
+            , SA.y <| Debug.toString y
+            , SA.width "92px", SA.height "92px" 
+            , SA.xlinkHref "src/Images/square 15.png"]
+            []
+          ]
+        26 -> 
+          [ Svg.image
+            [ SA.x <| Debug.toString x
+            , SA.y <| Debug.toString y
+            , SA.width "92px", SA.height "92px" 
+            , SA.xlinkHref "src/Images/square 26.png"]
+            []
+          ]
+        27 -> 
+          [ Svg.image
+            [ SA.x <| Debug.toString x
+            , SA.y <| Debug.toString y
+            , SA.width "92px", SA.height "92px" 
+            , SA.xlinkHref "src/Images/square 27.png"]
+            []
+          ]
+        28 -> 
+          [ Svg.image
+            [ SA.x <| Debug.toString x
+            , SA.y <| Debug.toString y
+            , SA.width "92px", SA.height "92px" 
+            , SA.xlinkHref "src/Images/square 28.png"]
+            []
+          ]
+        29 -> 
+          [ Svg.image
+            [ SA.x <| Debug.toString x
+            , SA.y <| Debug.toString y
+            , SA.width "92px", SA.height "92px" 
+            , SA.xlinkHref "src/Images/square 29.png"]
+            []
+          ]
+        _ -> []
   in
     Svg.svg []
-      (sqRect ++ piece maybePawn)
+      (sqRect ++ sqImage (i * 10 + j) ++ piece maybePawn)
 
 -- make svg table
 svgBoard : Model -> Html.Html Msg
