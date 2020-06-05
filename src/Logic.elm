@@ -99,6 +99,20 @@ legalMoves gs roll =
     White ->
       wvalid
 
+existspromotion : GameState -> Maybe Int -> Bool
+existspromotion gs roll = 
+  case roll of
+    Nothing -> False
+    Just i ->
+      let 
+        bpotential = List.filter (\p -> p.square + i >= 30) gs.blackPawns
+        wpotential = List.filter (\p -> p.square + i >= 30) gs.whitePawns
+      in
+      case gs.turn of
+        Black -> List.foldr (||) False (List.map (\p -> isLegal gs.board p i) bpotential) 
+        White -> List.foldr (||) False (List.map (\p -> isLegal gs.board p i) wpotential) 
+
+
 ------ 6. Pawn Movement and Game Logic ------
 -- Mini table of contents:
 --   Helper functions

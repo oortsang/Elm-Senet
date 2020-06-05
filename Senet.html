@@ -6450,6 +6450,9 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
 		}
 	});
+var $author$project$Main$Click = function (a) {
+	return {$: 'Click', a: a};
+};
 var $author$project$Main$Play = {$: 'Play'};
 var $author$project$Main$QueryRoll = {$: 'QueryRoll'};
 var $elm$html$Html$button = _VirtualDom_node('button');
@@ -6464,8 +6467,65 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 var $elm$html$Html$Attributes$align = $elm$html$Html$Attributes$stringProperty('align');
 var $author$project$Main$centering = $elm$html$Html$Attributes$align('center');
 var $elm$html$Html$div = _VirtualDom_node('div');
+var $author$project$Logic$existspromotion = F2(
+	function (gs, roll) {
+		if (roll.$ === 'Nothing') {
+			return false;
+		} else {
+			var i = roll.a;
+			var wpotential = A2(
+				$elm$core$List$filter,
+				function (p) {
+					return (p.square + i) >= 30;
+				},
+				gs.whitePawns);
+			var bpotential = A2(
+				$elm$core$List$filter,
+				function (p) {
+					return (p.square + i) >= 30;
+				},
+				gs.blackPawns);
+			var _v1 = gs.turn;
+			if (_v1.$ === 'Black') {
+				return A3(
+					$elm$core$List$foldr,
+					$elm$core$Basics$or,
+					false,
+					A2(
+						$elm$core$List$map,
+						function (p) {
+							return A3($author$project$Logic$isLegal, gs.board, p, i);
+						},
+						bpotential));
+			} else {
+				return A3(
+					$elm$core$List$foldr,
+					$elm$core$Basics$or,
+					false,
+					A2(
+						$elm$core$List$map,
+						function (p) {
+							return A3($author$project$Logic$isLegal, gs.board, p, i);
+						},
+						wpotential));
+			}
+		}
+	});
 var $elm$html$Html$h1 = _VirtualDom_node('h1');
 var $elm$html$Html$h2 = _VirtualDom_node('h2');
+var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
+var $elm$virtual_dom$VirtualDom$attribute = F2(
+	function (key, value) {
+		return A2(
+			_VirtualDom_attribute,
+			_VirtualDom_noOnOrFormAction(key),
+			_VirtualDom_noJavaScriptOrHtmlUri(value));
+	});
+var $author$project$Main$href = function (value) {
+	return A2($elm$virtual_dom$VirtualDom$attribute, 'href', value);
+};
+var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
+var $elm$svg$Svg$image = $elm$svg$Svg$trustedNode('image');
 var $elm$html$Html$br = _VirtualDom_node('br');
 var $author$project$Main$newline = A2($elm$html$Html$br, _List_Nil, _List_Nil);
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
@@ -6485,7 +6545,12 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
-var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
+var $elm$svg$Svg$Events$onClick = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'click',
+		$elm$json$Json$Decode$succeed(msg));
+};
 var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
 var $elm$core$List$append = F2(
 	function (xs, ys) {
@@ -6544,22 +6609,7 @@ var $author$project$Main$scoreboard = F2(
 				},
 				centers));
 	});
-var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
 var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
-var $author$project$Main$Click = function (a) {
-	return {$: 'Click', a: a};
-};
-var $elm$virtual_dom$VirtualDom$attribute = F2(
-	function (key, value) {
-		return A2(
-			_VirtualDom_attribute,
-			_VirtualDom_noOnOrFormAction(key),
-			_VirtualDom_noJavaScriptOrHtmlUri(value));
-	});
-var $author$project$Main$href = function (value) {
-	return A2($elm$virtual_dom$VirtualDom$attribute, 'href', value);
-};
-var $elm$svg$Svg$image = $elm$svg$Svg$trustedNode('image');
 var $elm$core$List$any = F2(
 	function (isOkay, list) {
 		any:
@@ -6590,12 +6640,6 @@ var $elm$core$List$member = F2(
 			},
 			xs);
 	});
-var $elm$svg$Svg$Events$onClick = function (msg) {
-	return A2(
-		$elm$html$Html$Events$on,
-		'click',
-		$elm$json$Json$Decode$succeed(msg));
-};
 var $elm$svg$Svg$Attributes$rx = _VirtualDom_attribute('rx');
 var $elm$svg$Svg$Attributes$ry = _VirtualDom_attribute('ry');
 var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
@@ -6797,7 +6841,6 @@ var $author$project$Main$svgBoard = function (model) {
 				$elm$svg$Svg$Attributes$fill('gray')
 			]),
 		_List_Nil);
-	var afterlife = A5($author$project$Main$svgSquare, length, model, 30, 3, 9);
 	return A2(
 		$elm$svg$Svg$svg,
 		_List_fromArray(
@@ -6809,12 +6852,7 @@ var $author$project$Main$svgBoard = function (model) {
 				[background]),
 			_Utils_ap(
 				line1,
-				_Utils_ap(
-					line2,
-					_Utils_ap(
-						line3,
-						_List_fromArray(
-							[afterlife]))))));
+				_Utils_ap(line2, line3))));
 };
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
@@ -6971,6 +7009,20 @@ var $author$project$Main$view = function (model) {
 				$elm$html$Html$text(
 				'Black has promoted ' + ($elm$core$Debug$toString(7 - model.gs.blackPawnCnt) + ' pawn(s)! '))
 			]));
+	var afterlifepic = _List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$image,
+			_List_fromArray(
+				[
+					$author$project$Main$href('images/rebirth.png'),
+					$elm$svg$Svg$Attributes$width('100px'),
+					$elm$svg$Svg$Attributes$height('100px'),
+					$elm$svg$Svg$Events$onClick(
+					$author$project$Main$Click(30))
+				]),
+			_List_Nil)
+		]);
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
@@ -7033,8 +7085,29 @@ var $author$project$Main$view = function (model) {
 						$author$project$Main$svgBoard(model)
 					])),
 				$author$project$Main$newline,
-				$author$project$Main$txtBoard(model),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[$author$project$Main$centering]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick(
+								$author$project$Main$Click(30))
+							]),
+						_Utils_ap(
+							_List_fromArray(
+								[
+									$elm$html$Html$text(
+									A2($author$project$Logic$existspromotion, model.gs, model.roll) ? 'Promote' : 'No Promotion Available')
+								]),
+							afterlifepic))
+					])),
 				$author$project$Main$newline,
+				$author$project$Main$txtBoard(model),
 				$author$project$Main$newline,
 				wscoreboard,
 				A2(

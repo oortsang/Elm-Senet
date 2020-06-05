@@ -32,6 +32,7 @@ import Svg
 import Svg.Attributes as SA
 import Svg.Events as SE exposing (on)
 
+import Bootstrap.Button as Button
 import Random exposing (Generator)
 
 
@@ -77,7 +78,6 @@ type Msg
     -- Deprecated for new interface:
   | Unselect -- unselect piece (if you click elsewhere)
   | Play     -- deprecated -- use Click instead
-
 
 
 ------ INIT ------
@@ -180,7 +180,6 @@ update msg model =
           ) |> Maybe.withDefault model
       in
         (newModel, Cmd.none)
-
 ------ Helper functions for Update ------
 
 -- Equivalent to throwing 4 coins (0/1)
@@ -356,13 +355,13 @@ svgBoard model =
       svgSquare length model (20+i) 2 i)
     background =
       Svg.rect [SA.x "-10", SA.y "-10", SA.width "1020", SA.height "320", SA.fill "gray"] []
-    afterlife =
-      svgSquare length model 30 3 9
+    -- afterlife =
+      -- svgSquare length model 30 3 9
   in
     Svg.svg [ SA.viewBox "-50 -50 1100 500"]
       ( [background]
       ++ line1 ++ line2 ++ line3
-      ++ [afterlife]
+      -- ++ [afterlife]
       )
 
 txtBoard : Model -> Html Msg
@@ -461,7 +460,12 @@ view model =
             ++ (Debug.toString (7 - model.gs.blackPawnCnt))
             ++ " pawn(s)! "
         ]
-
+    afterlifepic = [ Svg.image
+              [href "images/rebirth.png"
+              , SA.width "100px"
+              , SA.height "100px"
+              , SE.onClick (Click 30)] []
+            ]
   in
     div
       []
@@ -493,8 +497,15 @@ view model =
       -- , newline
       -- , buttonBoard model
       , newline
-      , txtBoard model
+      , div [centering]
+          [ button [ Html.Events.onClick (Click 30)]
+              ([ text <|
+                  if existspromotion model.gs model.roll then "Promote"
+                  else "No Promotion Available"
+              ] ++ afterlifepic)
+          ]
       , newline
+      , txtBoard model
       , newline
       , wscoreboard
       , div [centering] [scoreboard (7 - model.gs.whitePawnCnt) White]
