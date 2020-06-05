@@ -78,7 +78,7 @@ type Msg
     -- Deprecated for new interface:
   | Unselect -- unselect piece (if you click elsewhere)
   | Play     -- deprecated -- use Click instead
-
+  | Reset
 
 ------ INIT ------
 init : Flags -> (Model, Cmd Msg)
@@ -180,6 +180,8 @@ update msg model =
           ) |> Maybe.withDefault model
       in
         (newModel, Cmd.none)
+    Reset ->
+      (initModel, Cmd.none)
 ------ Helper functions for Update ------
 
 -- Equivalent to throwing 4 coins (0/1)
@@ -228,7 +230,10 @@ highlightPieces model =
     Nothing -> 
       case model.roll of 
         Nothing -> { model | highlighted = []}
-        Just roll -> { model | highlighted = List.map (\p -> p.square) (legalMoves model.gs roll)}
+        Just roll -> 
+          case List.map (\p -> p.square) (legalMoves model.gs roll) of
+            [] -> { model | gs = switchTurn model.gs}
+            moves -> { model | highlighted = moves}
     Just numpawn -> 
       case model.roll of
         Nothing -> { model | highlighted = []}
@@ -447,19 +452,24 @@ view model =
             else "Black's turn"
         ]
     wscoreboard =
-      Html.h1 [centering]
+      Html.h3 [centering]
         [ text <|
+            if 7 - model.gs.whitePawnCnt == 7 then "Game Over. White Wins!"
+            else
             "White has promoted "
             ++ (Debug.toString (7 - model.gs.whitePawnCnt))
             ++ " pawn(s)! " 
         ]
     bscoreboard = 
-      Html.h1 [centering]
+      Html.h3 [centering]
         [ text <|
+            if 7 - model.gs.blackPawnCnt == 7 then "Game Over. Black Wins!"
+            else
             "Black has promoted "
             ++ (Debug.toString (7 - model.gs.blackPawnCnt))
             ++ " pawn(s)! "
         ]
+    -- THis image never shows up lol
     afterlifepic = 
             -- if existspromotion model.gs model.roll then 
             div [centering] 
@@ -491,6 +501,11 @@ view model =
                     Just s  -> "Play piece on square " ++ (Debug.toString s)
                     Nothing -> "Select a piece"
               ]
+          , text "\t"
+          , button [ Html.Events.onClick (Reset)]
+              [ text <|
+                  "Reset"
+              ]
               -- "Play piece: " ++ Debug.toString model.selected]
           ]
       , div [centering] [svgBoard model]
@@ -502,7 +517,6 @@ view model =
       --     ]
       -- , newline
       -- , buttonBoard model
-      , newline
       , div [centering]
           [ button [ Html.Events.onClick (Click 30)]
               [ text <|

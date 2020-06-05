@@ -5804,6 +5804,18 @@ var $author$project$Logic$legalMoves = F2(
 			return wvalid;
 		}
 	});
+var $author$project$Logic$switchTurn = function (gs) {
+	var _v0 = gs.turn;
+	if (_v0.$ === 'White') {
+		return _Utils_update(
+			gs,
+			{turn: $author$project$Board$Black});
+	} else {
+		return _Utils_update(
+			gs,
+			{turn: $author$project$Board$White});
+	}
+};
 var $author$project$Main$highlightPieces = function (model) {
 	var _v0 = model.selected;
 	if (_v0.$ === 'Nothing') {
@@ -5814,33 +5826,41 @@ var $author$project$Main$highlightPieces = function (model) {
 				{highlighted: _List_Nil});
 		} else {
 			var roll = _v1.a;
-			return _Utils_update(
-				model,
-				{
-					highlighted: A2(
-						$elm$core$List$map,
-						function (p) {
-							return p.square;
-						},
-						A2($author$project$Logic$legalMoves, model.gs, roll))
-				});
+			var _v2 = A2(
+				$elm$core$List$map,
+				function (p) {
+					return p.square;
+				},
+				A2($author$project$Logic$legalMoves, model.gs, roll));
+			if (!_v2.b) {
+				return _Utils_update(
+					model,
+					{
+						gs: $author$project$Logic$switchTurn(model.gs)
+					});
+			} else {
+				var moves = _v2;
+				return _Utils_update(
+					model,
+					{highlighted: moves});
+			}
 		}
 	} else {
 		var numpawn = _v0.a;
-		var _v2 = model.roll;
-		if (_v2.$ === 'Nothing') {
+		var _v3 = model.roll;
+		if (_v3.$ === 'Nothing') {
 			return _Utils_update(
 				model,
 				{highlighted: _List_Nil});
 		} else {
-			var roll = _v2.a;
-			var _v3 = A2($author$project$Board$getPawn, numpawn, model.gs);
-			if (_v3.$ === 'Nothing') {
+			var roll = _v3.a;
+			var _v4 = A2($author$project$Board$getPawn, numpawn, model.gs);
+			if (_v4.$ === 'Nothing') {
 				return _Utils_update(
 					model,
 					{highlighted: _List_Nil});
 			} else {
-				var spawn = _v3.a;
+				var spawn = _v4.a;
 				return A3($author$project$Logic$isLegal, model.gs.board, spawn, roll) ? _Utils_update(
 					model,
 					{
@@ -6267,18 +6287,6 @@ var $author$project$Logic$playPawn = F3(
 			}
 		}
 	});
-var $author$project$Logic$switchTurn = function (gs) {
-	var _v0 = gs.turn;
-	if (_v0.$ === 'White') {
-		return _Utils_update(
-			gs,
-			{turn: $author$project$Board$Black});
-	} else {
-		return _Utils_update(
-			gs,
-			{turn: $author$project$Board$White});
-	}
-};
 var $author$project$Logic$makeMove = F3(
 	function (p, roll, gs) {
 		var endOrContinueTurn = function (_v1) {
@@ -6434,7 +6442,7 @@ var $author$project$Main$update = F2(
 					$author$project$Main$highlightPieces(
 						$author$project$Main$unselectPiece(model)),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'Play':
 				var newModel = A2(
 					$elm$core$Maybe$withDefault,
 					model,
@@ -6448,6 +6456,8 @@ var $author$project$Main$update = F2(
 						},
 						model.selected));
 				return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
+			default:
+				return _Utils_Tuple2($author$project$Main$initModel, $elm$core$Platform$Cmd$none);
 		}
 	});
 var $author$project$Main$Click = function (a) {
@@ -6455,6 +6465,7 @@ var $author$project$Main$Click = function (a) {
 };
 var $author$project$Main$Play = {$: 'Play'};
 var $author$project$Main$QueryRoll = {$: 'QueryRoll'};
+var $author$project$Main$Reset = {$: 'Reset'};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
@@ -6513,6 +6524,7 @@ var $author$project$Logic$existspromotion = F2(
 	});
 var $elm$html$Html$h1 = _VirtualDom_node('h1');
 var $elm$html$Html$h2 = _VirtualDom_node('h2');
+var $elm$html$Html$h3 = _VirtualDom_node('h3');
 var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
 var $elm$virtual_dom$VirtualDom$attribute = F2(
 	function (key, value) {
@@ -6975,13 +6987,13 @@ var $author$project$Main$txtBoard = function (model) {
 };
 var $author$project$Main$view = function (model) {
 	var wscoreboard = A2(
-		$elm$html$Html$h1,
+		$elm$html$Html$h3,
 		_List_fromArray(
 			[$author$project$Main$centering]),
 		_List_fromArray(
 			[
 				$elm$html$Html$text(
-				'White has promoted ' + ($elm$core$Debug$toString(7 - model.gs.whitePawnCnt) + ' pawn(s)! '))
+				((7 - model.gs.whitePawnCnt) === 7) ? 'Game Over. White Wins!' : ('White has promoted ' + ($elm$core$Debug$toString(7 - model.gs.whitePawnCnt) + ' pawn(s)! ')))
 			]));
 	var turn = A2(
 		$elm$html$Html$h2,
@@ -7001,13 +7013,13 @@ var $author$project$Main$view = function (model) {
 				$elm$html$Html$text('Senet!')
 			]));
 	var bscoreboard = A2(
-		$elm$html$Html$h1,
+		$elm$html$Html$h3,
 		_List_fromArray(
 			[$author$project$Main$centering]),
 		_List_fromArray(
 			[
 				$elm$html$Html$text(
-				'Black has promoted ' + ($elm$core$Debug$toString(7 - model.gs.blackPawnCnt) + ' pawn(s)! '))
+				((7 - model.gs.blackPawnCnt) === 7) ? 'Game Over. Black Wins!' : ('Black has promoted ' + ($elm$core$Debug$toString(7 - model.gs.blackPawnCnt) + ' pawn(s)! ')))
 			]));
 	var afterlifepic = A2(
 		$elm$html$Html$div,
@@ -7082,6 +7094,17 @@ var $author$project$Main$view = function (model) {
 										return 'Select a piece';
 									}
 								}())
+							])),
+						$elm$html$Html$text('\t'),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$Reset)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Reset')
 							]))
 					])),
 				A2(
@@ -7092,7 +7115,6 @@ var $author$project$Main$view = function (model) {
 					[
 						$author$project$Main$svgBoard(model)
 					])),
-				$author$project$Main$newline,
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
