@@ -329,6 +329,10 @@ svgSquare length model n i j =
             [ Svg.image
               ((href "images/two.png") :: attrList) []
             ]
+          Spec Horus ->
+            [ Svg.image
+              ((href "images/horus.png") :: attrList) []
+            ]
           _ ->
             []
   in

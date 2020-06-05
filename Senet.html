@@ -6675,78 +6675,84 @@ var $author$project$Main$svgSquare = F5(
 					$author$project$Main$Click(n))
 				]);
 			var _v0 = $author$project$Board$squareType(n);
-			_v0$5:
-			while (true) {
-				switch (_v0.$) {
-					case 'Rebirth':
-						return _List_fromArray(
-							[
-								A2(
-								$elm$svg$Svg$image,
-								A2(
-									$elm$core$List$cons,
-									$author$project$Main$href('images/rebirth.png'),
-									attrList),
-								_List_Nil)
-							]);
-					case 'Spec':
-						switch (_v0.a.$) {
-							case 'Happy':
-								var _v1 = _v0.a;
-								return _List_fromArray(
-									[
-										A2(
-										$elm$svg$Svg$image,
-										A2(
-											$elm$core$List$cons,
-											$author$project$Main$href('images/happy.png'),
-											attrList),
-										_List_Nil)
-									]);
-							case 'Water':
-								var _v2 = _v0.a;
-								return _List_fromArray(
-									[
-										A2(
-										$elm$svg$Svg$image,
-										A2(
-											$elm$core$List$cons,
-											$author$project$Main$href('images/water.png'),
-											attrList),
-										_List_Nil)
-									]);
-							case 'Truths':
-								var _v3 = _v0.a;
-								return _List_fromArray(
-									[
-										A2(
-										$elm$svg$Svg$image,
-										A2(
-											$elm$core$List$cons,
-											$author$project$Main$href('images/three.png'),
-											attrList),
-										_List_Nil)
-									]);
-							case 'Reatoum':
-								var _v4 = _v0.a;
-								return _List_fromArray(
-									[
-										A2(
-										$elm$svg$Svg$image,
-										A2(
-											$elm$core$List$cons,
-											$author$project$Main$href('images/two.png'),
-											attrList),
-										_List_Nil)
-									]);
-							default:
-								break _v0$5;
-						}
-					default:
-						break _v0$5;
-				}
+			switch (_v0.$) {
+				case 'Rebirth':
+					return _List_fromArray(
+						[
+							A2(
+							$elm$svg$Svg$image,
+							A2(
+								$elm$core$List$cons,
+								$author$project$Main$href('images/rebirth.png'),
+								attrList),
+							_List_Nil)
+						]);
+				case 'Spec':
+					switch (_v0.a.$) {
+						case 'Happy':
+							var _v1 = _v0.a;
+							return _List_fromArray(
+								[
+									A2(
+									$elm$svg$Svg$image,
+									A2(
+										$elm$core$List$cons,
+										$author$project$Main$href('images/happy.png'),
+										attrList),
+									_List_Nil)
+								]);
+						case 'Water':
+							var _v2 = _v0.a;
+							return _List_fromArray(
+								[
+									A2(
+									$elm$svg$Svg$image,
+									A2(
+										$elm$core$List$cons,
+										$author$project$Main$href('images/water.png'),
+										attrList),
+									_List_Nil)
+								]);
+						case 'Truths':
+							var _v3 = _v0.a;
+							return _List_fromArray(
+								[
+									A2(
+									$elm$svg$Svg$image,
+									A2(
+										$elm$core$List$cons,
+										$author$project$Main$href('images/three.png'),
+										attrList),
+									_List_Nil)
+								]);
+						case 'Reatoum':
+							var _v4 = _v0.a;
+							return _List_fromArray(
+								[
+									A2(
+									$elm$svg$Svg$image,
+									A2(
+										$elm$core$List$cons,
+										$author$project$Main$href('images/two.png'),
+										attrList),
+									_List_Nil)
+								]);
+						default:
+							var _v5 = _v0.a;
+							return _List_fromArray(
+								[
+									A2(
+									$elm$svg$Svg$image,
+									A2(
+										$elm$core$List$cons,
+										$author$project$Main$href('images/horus.png'),
+										attrList),
+									_List_Nil)
+								]);
+					}
+				default:
+					return _List_Nil;
 			}
-			return _List_Nil;
 		}();
 		var maybePawn = A2($author$project$Board$getPawn, n, model.gs);
 		return A2(
