@@ -7009,20 +7009,28 @@ var $author$project$Main$view = function (model) {
 				$elm$html$Html$text(
 				'Black has promoted ' + ($elm$core$Debug$toString(7 - model.gs.blackPawnCnt) + ' pawn(s)! '))
 			]));
-	var afterlifepic = _List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$image,
-			_List_fromArray(
-				[
-					$author$project$Main$href('images/rebirth.png'),
-					$elm$svg$Svg$Attributes$width('100px'),
-					$elm$svg$Svg$Attributes$height('100px'),
-					$elm$svg$Svg$Events$onClick(
-					$author$project$Main$Click(30))
-				]),
-			_List_Nil)
-		]);
+	var afterlifepic = A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[$author$project$Main$centering]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$svg$Svg$image,
+				_List_fromArray(
+					[
+						$author$project$Main$href('images/rebirth.png'),
+						$elm$svg$Svg$Attributes$x(
+						$elm$core$Debug$toString(0)),
+						$elm$svg$Svg$Attributes$y(
+						$elm$core$Debug$toString(0)),
+						$elm$svg$Svg$Attributes$width('190'),
+						$elm$svg$Svg$Attributes$height('265'),
+						$elm$svg$Svg$Events$onClick(
+						$author$project$Main$Click(30))
+					]),
+				_List_Nil)
+			]));
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
@@ -7098,15 +7106,13 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$Events$onClick(
 								$author$project$Main$Click(30))
 							]),
-						_Utils_ap(
-							_List_fromArray(
-								[
-									$elm$html$Html$text(
-									A2($author$project$Logic$existspromotion, model.gs, model.roll) ? 'Promote' : 'No Promotion Available')
-								]),
-							afterlifepic))
+						_List_fromArray(
+							[
+								$elm$html$Html$text(
+								A2($author$project$Logic$existspromotion, model.gs, model.roll) ? 'Promote' : 'No Promotion Available')
+							]))
 					])),
-				$author$project$Main$newline,
+				afterlifepic,
 				$author$project$Main$txtBoard(model),
 				$author$project$Main$newline,
 				wscoreboard,

@@ -460,12 +460,18 @@ view model =
             ++ (Debug.toString (7 - model.gs.blackPawnCnt))
             ++ " pawn(s)! "
         ]
-    afterlifepic = [ Svg.image
+    afterlifepic = 
+            -- if existspromotion model.gs model.roll then 
+            div [centering] 
+            [ Svg.image
               [href "images/rebirth.png"
-              , SA.width "100px"
-              , SA.height "100px"
+              , SA.x <| Debug.toString 0
+              , SA.y <| Debug.toString 0
+              , SA.width "190" , SA.height "265"
               , SE.onClick (Click 30)] []
             ]
+            -- else newline
+
   in
     div
       []
@@ -499,12 +505,12 @@ view model =
       , newline
       , div [centering]
           [ button [ Html.Events.onClick (Click 30)]
-              ([ text <|
+              [ text <|
                   if existspromotion model.gs model.roll then "Promote"
                   else "No Promotion Available"
-              ] ++ afterlifepic)
+              ]
           ]
-      , newline
+      , afterlifepic
       , txtBoard model
       , newline
       , wscoreboard
