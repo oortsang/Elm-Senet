@@ -402,7 +402,33 @@ buttonBoard model =
        ++ line2 ++ [newline]
        ++ line3 ++ [newline]
       )
+  
 
+scoreboard : Int -> Player -> Html.Html Msg
+scoreboard n color = 
+  let
+    makepiece x y = 
+      [ Svg.circle
+        [ SA.cx <| Debug.toString (x + 90//2)
+        , SA.cy <| Debug.toString (y + 90//2)
+        , SA.r  <| Debug.toString (2*90//7)
+        , SA.stroke "black"
+        , SA.fill <|
+            if color == White
+            then "snow"
+            else "slategray"
+        ] []
+      ]
+    centers = 
+      if 0 == modBy 2 n then 
+        --List.map (\x -> (x - (n+1)// 2) * 100) (List.range 1 n)
+        List.range 1 n
+      else 
+        --List.map (\x -> (x - (n+1)//2) * 100) (List.range 1 n)
+        List.range 1 n
+  in
+  Svg.svg []
+   (List.concatMap (\x -> makepiece x 0) centers)
 
 view : Model -> Html Msg
 view model =
@@ -417,6 +443,21 @@ view model =
             then "White's turn"
             else "Black's turn"
         ]
+    wscoreboard =
+      Html.h1 [centering]
+        [ text <|
+            "White has promoted "
+            ++ (Debug.toString (7 - model.gs.whitePawnCnt))
+            ++ " pawn(s)! " 
+        ]
+    bscoreboard = 
+      Html.h1 [centering]
+        [ text <|
+            "Black has promoted "
+            ++ (Debug.toString (7 - model.gs.blackPawnCnt))
+            ++ " pawn(s)! "
+        ]
+
   in
     div
       []
@@ -451,4 +492,8 @@ view model =
       , txtBoard model
       , newline
       , newline
+      , wscoreboard
+      , div [centering] [scoreboard (7 - model.gs.whitePawnCnt) White]
+      , bscoreboard
+      , div [centering] [scoreboard (7 - model.gs.blackPawnCnt) Black]
       ]

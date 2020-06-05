@@ -6485,17 +6485,70 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
-var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
-var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
 var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
-var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
+var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $elm$core$List$concat = function (lists) {
+	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
+};
+var $elm$core$List$concatMap = F2(
+	function (f, list) {
+		return $elm$core$List$concat(
+			A2($elm$core$List$map, f, list));
+	});
+var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
+var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
+var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
+var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
+var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
 var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
+var $elm$core$Debug$toString = _Debug_toString;
+var $author$project$Main$scoreboard = F2(
+	function (n, color) {
+		var makepiece = F2(
+			function (x, y) {
+				return _List_fromArray(
+					[
+						A2(
+						$elm$svg$Svg$circle,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$cx(
+								$elm$core$Debug$toString(x + ((90 / 2) | 0))),
+								$elm$svg$Svg$Attributes$cy(
+								$elm$core$Debug$toString(y + ((90 / 2) | 0))),
+								$elm$svg$Svg$Attributes$r(
+								$elm$core$Debug$toString(((2 * 90) / 7) | 0)),
+								$elm$svg$Svg$Attributes$stroke('black'),
+								$elm$svg$Svg$Attributes$fill(
+								_Utils_eq(color, $author$project$Board$White) ? 'snow' : 'slategray')
+							]),
+						_List_Nil)
+					]);
+			});
+		var centers = (!A2($elm$core$Basics$modBy, 2, n)) ? A2($elm$core$List$range, 1, n) : A2($elm$core$List$range, 1, n);
+		return A2(
+			$elm$svg$Svg$svg,
+			_List_Nil,
+			A2(
+				$elm$core$List$concatMap,
+				function (x) {
+					return A2(makepiece, x, 0);
+				},
+				centers));
+	});
+var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
+var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
 var $author$project$Main$Click = function (a) {
 	return {$: 'Click', a: a};
 };
-var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
-var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
-var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
 var $elm$virtual_dom$VirtualDom$attribute = F2(
 	function (key, value) {
 		return A2(
@@ -6543,11 +6596,8 @@ var $elm$svg$Svg$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
-var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
 var $elm$svg$Svg$Attributes$rx = _VirtualDom_attribute('rx');
 var $elm$svg$Svg$Attributes$ry = _VirtualDom_attribute('ry');
-var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
-var $elm$core$Debug$toString = _Debug_toString;
 var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
 var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
 var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
@@ -6880,6 +6930,15 @@ var $author$project$Main$txtBoard = function (model) {
 			]));
 };
 var $author$project$Main$view = function (model) {
+	var wscoreboard = A2(
+		$elm$html$Html$h1,
+		_List_fromArray(
+			[$author$project$Main$centering]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(
+				'White has promoted ' + ($elm$core$Debug$toString(7 - model.gs.whitePawnCnt) + ' pawn(s)! '))
+			]));
 	var turn = A2(
 		$elm$html$Html$h2,
 		_List_fromArray(
@@ -6896,6 +6955,15 @@ var $author$project$Main$view = function (model) {
 		_List_fromArray(
 			[
 				$elm$html$Html$text('Senet!')
+			]));
+	var bscoreboard = A2(
+		$elm$html$Html$h1,
+		_List_fromArray(
+			[$author$project$Main$centering]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(
+				'Black has promoted ' + ($elm$core$Debug$toString(7 - model.gs.blackPawnCnt) + ' pawn(s)! '))
 			]));
 	return A2(
 		$elm$html$Html$div,
@@ -6961,7 +7029,25 @@ var $author$project$Main$view = function (model) {
 				$author$project$Main$newline,
 				$author$project$Main$txtBoard(model),
 				$author$project$Main$newline,
-				$author$project$Main$newline
+				$author$project$Main$newline,
+				wscoreboard,
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[$author$project$Main$centering]),
+				_List_fromArray(
+					[
+						A2($author$project$Main$scoreboard, 7 - model.gs.whitePawnCnt, $author$project$Board$White)
+					])),
+				bscoreboard,
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[$author$project$Main$centering]),
+				_List_fromArray(
+					[
+						A2($author$project$Main$scoreboard, 7 - model.gs.blackPawnCnt, $author$project$Board$Black)
+					]))
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(
