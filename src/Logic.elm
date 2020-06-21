@@ -87,33 +87,68 @@ isLegal board p roll =
 -- (-> List (Pawn, GameState) output in that case)
 -- legalMoves : GameState -> Int -> List (Pawn)
 
-legalMoves : GameState -> Int -> List (Pawn)
+-- legalMoves : GameState -> Int -> List (Pawn)
+-- legalMoves gs roll =
+--   let
+--     (bvalid, binvalid) = List.partition (\p -> isLegal gs.board p roll) gs.blackPawns
+--     (wvalid, winvalid) = List.partition (\p -> isLegal gs.board p roll) gs.whitePawns
+--   in
+--   case gs.turn of
+--     Black ->
+--       bvalid
+--     White ->
+--       wvalid
+
+-- May be more efficient:
+legalMoves : GameState -> Int -> List Pawn
 legalMoves gs roll =
-  let 
-    (bvalid, binvalid) = List.partition (\p -> isLegal gs.board p roll) gs.blackPawns
-    (wvalid, winvalid) = List.partition (\p -> isLegal gs.board p roll) gs.whitePawns
-  in 
-  case gs.turn of
-    Black ->
-      bvalid
-    White ->
-      wvalid
+  let
+    legals = List.filter (\p -> isLegal gs.board p roll)
+  in
+    case gs.turn of
+      Black ->
+        legals gs.blackPawns
+      White ->
+        legals gs.whitePawns
+
+allMoves : GameState -> Int -> List GameState
+allMoves gs roll =
+  let
+    moves = legalMoves gs roll
+    maybeToList : Maybe a -> List a
+    maybeToList ma =
+      case ma of
+        Nothing ->
+          []
+        Just a ->
+          [a]
+  in
+    case moves of
+      [] ->
+        -- End turn if there are no options
+        [switchTurn gs]
+      _  ->
+        -- Return all possible moves otherwise
+        -- List.map (\p -> makeMove p roll gs) moves
+        moves |> List.map (\p ->
+        makeMove p roll gs |> maybeToList
+        ) |> List.concat
 
 existspromotion : GameState -> Maybe Int -> Bool
-existspromotion gs roll = 
+existspromotion gs roll =
   case roll of
     Nothing -> False
     Just i ->
-      let 
+      let
         bpotential = List.filter (\p -> p.square + i >= 30) gs.blackPawns
         wpotential = List.filter (\p -> p.square + i >= 30) gs.whitePawns
       in
       case gs.turn of
-        Black -> List.foldr (||) False (List.map (\p -> isLegal gs.board p i) bpotential) 
-        White -> List.foldr (||) False (List.map (\p -> isLegal gs.board p i) wpotential) 
+        Black -> List.foldr (||) False (List.map (\p -> isLegal gs.board p i) bpotential)
+        White -> List.foldr (||) False (List.map (\p -> isLegal gs.board p i) wpotential)
 
 
------- 6. Pawn Movement and Game Logic ------
+------ 2. Pawn Movement and Game Logic ------
 -- Mini table of contents:
 --   Helper functions
 --     pawnSwapHelper:
@@ -332,7 +367,7 @@ playPawn p roll gs =
           if p.color /= destCol then
             pawnSwap n m gs
           else
-            let _ = Debug.log "same color! (p, destCol)" (p, destCol) in
+            -- let _ = Debug.log "same color! (p, destCol)" (p, destCol) in
             Nothing
     -- Move to rebirth square
     moveToRebirth : () -> Maybe GameState

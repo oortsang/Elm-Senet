@@ -5761,47 +5761,28 @@ var $author$project$Logic$isLegal = F3(
 			}
 		}
 	});
-var $elm$core$List$partition = F2(
-	function (pred, list) {
-		var step = F2(
-			function (x, _v0) {
-				var trues = _v0.a;
-				var falses = _v0.b;
-				return pred(x) ? _Utils_Tuple2(
-					A2($elm$core$List$cons, x, trues),
-					falses) : _Utils_Tuple2(
-					trues,
-					A2($elm$core$List$cons, x, falses));
-			});
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
 		return A3(
 			$elm$core$List$foldr,
-			step,
-			_Utils_Tuple2(_List_Nil, _List_Nil),
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
 			list);
 	});
 var $author$project$Logic$legalMoves = F2(
 	function (gs, roll) {
-		var _v0 = A2(
-			$elm$core$List$partition,
+		var legals = $elm$core$List$filter(
 			function (p) {
 				return A3($author$project$Logic$isLegal, gs.board, p, roll);
-			},
-			gs.whitePawns);
-		var wvalid = _v0.a;
-		var winvalid = _v0.b;
-		var _v1 = A2(
-			$elm$core$List$partition,
-			function (p) {
-				return A3($author$project$Logic$isLegal, gs.board, p, roll);
-			},
-			gs.blackPawns);
-		var bvalid = _v1.a;
-		var binvalid = _v1.b;
-		var _v2 = gs.turn;
-		if (_v2.$ === 'Black') {
-			return bvalid;
+			});
+		var _v0 = gs.turn;
+		if (_v0.$ === 'Black') {
+			return legals(gs.blackPawns);
 		} else {
-			return wvalid;
+			return legals(gs.whitePawns);
 		}
 	});
 var $author$project$Logic$switchTurn = function (gs) {
@@ -6179,17 +6160,6 @@ var $author$project$Logic$clearSquare = F2(
 			board,
 			A3($author$project$BoardTree$setElem, n, $author$project$Board$Free, board));
 	});
-var $elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
-				}),
-			_List_Nil,
-			list);
-	});
 var $author$project$Logic$removePawn = F2(
 	function (p, gs) {
 		var removeListElem = function (x) {
@@ -6219,7 +6189,7 @@ var $author$project$Logic$removePawn = F2(
 var $author$project$Logic$playPawn = F3(
 	function (p, roll, gs) {
 		var n = p.square;
-		var moveToRebirth = function (_v8) {
+		var moveToRebirth = function (_v7) {
 			return A2(
 				$elm$core$Maybe$andThen,
 				function (d) {
@@ -6233,15 +6203,7 @@ var $author$project$Logic$playPawn = F3(
 				return A3($author$project$Logic$pawnSwap, n, m, gs);
 			} else {
 				var destCol = destState.a;
-				if (!_Utils_eq(p.color, destCol)) {
-					return A3($author$project$Logic$pawnSwap, n, m, gs);
-				} else {
-					var _v7 = A2(
-						$elm$core$Debug$log,
-						'same color! (p, destCol)',
-						_Utils_Tuple2(p, destCol));
-					return $elm$core$Maybe$Nothing;
-				}
+				return (!_Utils_eq(p.color, destCol)) ? A3($author$project$Logic$pawnSwap, n, m, gs) : $elm$core$Maybe$Nothing;
 			}
 		};
 		var skippedHappiness = (n < 25) && (m > 25);

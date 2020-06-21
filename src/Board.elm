@@ -199,7 +199,15 @@ boardToString b =
 
 -- debugging purposes
 printBoard : Maybe GameState -> Maybe String
-printBoard = Maybe.map (\g -> boardToString g.board)
+printBoard = Maybe.map (\g ->
+  let
+    (l1, l2, l3) = boardToStrings g.board
+    _ = Debug.log "Row 1" l1
+    _ = Debug.log "Row 2" l2
+    _ = Debug.log "Row 3" l3
+  in
+    l1 ++ "\n" ++ l2 ++ "\n" ++ l3
+  )
 
 
 ------ 5. Board Initialization ------

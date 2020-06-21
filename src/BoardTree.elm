@@ -15,8 +15,9 @@
 --   getElem:  (tries to) return element at a given index
 --   setElem:  (tries to) set the value of an element at a given index
 --   swap:     (tries to) swap the values of two elements
+--   map:      applies a function f to every element
 
-module BoardTree exposing (Tree, fromList, toList, setElem, getElem, swap)
+module BoardTree exposing (Tree, fromList, toList, setElem, getElem, swap, map)
 
 -- comparable is for the index
 -- a is for the contents in the leaf nodes
@@ -116,3 +117,13 @@ swap i j t =
           setElem k w s))
       in
         Just t |> setter j mx |> setter i my
+
+map : (a -> b) -> Tree a -> Tree b
+map f t =
+  case t of
+    Empty ->
+      Empty
+    Leaf i x ->
+      Leaf i (f x)
+    Parent i left right ->
+      Parent i (map f left) (map f right)
