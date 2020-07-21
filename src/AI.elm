@@ -78,7 +78,7 @@ printTSBoard =
 
 -- 0 is the best possible score for black
 -- since it means black has promoted everything
-gsLeafVal : GameState -> Int
+gsLeafVal : GameState -> Float
 gsLeafVal gs =
   let
     -- arbitrarily set black to negative
@@ -110,22 +110,23 @@ gsLeafVal gs =
         _ ->
           (sign sq) * (30-i)
   in
-    case isOver gs of
-      NotDone ->
-        -- maybe could make more efficient with some
-        -- kind of enumerate-toList/map type thing
-        List.range 0 29        |> List.map  (\i ->
-        BT.getElem i gs.board  |> Maybe.map (\sq ->
-        valf i sq
-        ) |> Maybe.withDefault 0)
-        |> List.foldl (+) 0 -- take the sum
-      Won White ->
-        -100
-      Won Black ->
-        100
+    toFloat <|
+      case isOver gs of
+        NotDone ->
+          -- maybe could make more efficient with some
+          -- kind of enumerate-toList/map type thing
+          List.range 0 29        |> List.map  (\i ->
+          BT.getElem i gs.board  |> Maybe.map (\sq ->
+          valf i sq
+          ) |> Maybe.withDefault 0)
+          |> List.foldl (+) 0 -- take the sum
+        Won White ->
+          -100
+        Won Black ->
+          100
 
 -- Wrapper for gsLeafVal to apply to thunkstate
-tsLeafVal : ThunkState -> Int
+tsLeafVal : ThunkState -> Float
 tsLeafVal (N gs tmt) =
   gsLeafVal gs
 
@@ -147,8 +148,8 @@ findMoves gs =
           gs.whitePawns
         Black ->
           gs.blackPawns
-    _ = Debug.log "Finding moves..." pawnList
-    _ = printBoard (Just gs)
+    -- _ = Debug.log "Finding moves..." pawnList
+    -- _ = printBoard (Just gs)
 
     -- in case there are no moves
     listDefault : a -> List a -> List a
@@ -226,8 +227,8 @@ childCount (N _ tmt) =
 getChild : Maybe Pawn -> Int -> ThunkState -> Maybe ThunkState
 getChild mp roll (N gs tmt) =
   let
-    _ = Debug.log "getChild called with (mp, roll)" (mp, roll)
-    _ = Debug.log "current turn:" gs.turn
+    -- _ = Debug.log "getChild called with (mp, roll)" (mp, roll)
+    -- _ = Debug.log "current turn:" gs.turn
     ma =
       case tmt of
         Lazy tma -> force tma
@@ -275,7 +276,7 @@ mmArg isMax f ys =
 
 -- evaluate the state at a given ply, and return the thunkstate to encourage laziness
 -- currently not updating the state properly (just delayed evaluation)
-evalState : Player -> Int -> ThunkState -> Maybe (Int, ThunkState)
+evalState : Player -> Int -> ThunkState -> Maybe (Float, ThunkState)
 evalState col ply (N gs tmt) =
   if ply == 0 then
     -- evaluate the current state without further evaluation
@@ -285,9 +286,25 @@ evalState col ply (N gs tmt) =
     -- then take the best move
     let
       mmArgCol = mmArg (col == gs.turn)
-      minimax =
-        mmArgCol Tuple.first
-        -- (Maybe.map Tuple.first) << mmArgCol Tuple.first
+      -- minimax =
+      --   mmArgCol Tuple.first
+      expect : List (Maybe (Float, ThunkState)) -> Maybe Float
+      expect =
+        let
+          expHelper : Float -> List Float -> List (Maybe (Float, ThunkState)) -> Maybe Float
+          expHelper acc weights moves =
+            case (weights, moves) of
+              (w :: wrest, m :: mrest) ->
+                m |> Maybe.andThen (\(val, _) ->
+                expHelper (acc+w*val) wrest mrest)
+              ([], []) ->
+                Just acc
+              _ ->
+                let _ = Debug.log "Problem taking expectation..." in
+                Nothing
+        in
+          expHelper 0 [1/16, 1/4, 3/8, 1/4, 1/16]
+        
       ma = evalTMT tmt
     in
       case isOver gs of
@@ -318,9 +335,11 @@ evalState col ply (N gs tmt) =
               ) |> mlistConcat
                 |> mmArgCol Tuple.first
               )
-              ) |> mlistConcat
+              )
           in
-            preList |> minimax
+            expect preList |> Maybe.map (\vf ->
+            (vf, N gs (Eval ma))
+            )
 
 
 -- helper function for evalState and handling the list of maybes
@@ -334,7 +353,7 @@ mlistConcat xs =
 
 
 -- like evalState but assumes the given roll to save on computation
-evalRolledState : Player -> Int -> Int -> ThunkState -> Maybe (Int, Maybe Pawn, ThunkState)
+evalRolledState : Player -> Int -> Int -> ThunkState -> Maybe (Float, Maybe Pawn, ThunkState)
 evalRolledState col ply roll (N gs tmt) =
   if ply == 0 then
     Just <| (gsLeafVal gs, Nothing, N gs tmt)
