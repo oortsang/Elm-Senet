@@ -147,8 +147,8 @@ findMoves gs =
           gs.whitePawns
         Black ->
           gs.blackPawns
-    -- _ = Debug.log "Finding moves..." pawnList
-    -- _ = printBoard (Just gs)
+    _ = Debug.log "Finding moves..." pawnList
+    _ = printBoard (Just gs)
 
     -- in case there are no moves
     listDefault : a -> List a -> List a
@@ -163,8 +163,8 @@ findMoves gs =
     else
       -- keep going
       rolls              |> BT.map    (\roll ->
-      pawnList           |> List.concatMap  (\p    ->
-      makeMove p roll gs |> Maybe.map (\js   ->
+      pawnList           |> List.concatMap  (\p ->
+      makeMove p roll gs |> Maybe.map (\js ->
       [(Just p, tsWrapper js)]
       ) |> Maybe.withDefault []
       ) |> listDefault (Nothing, tsWrapper <| switchTurn gs)
@@ -248,52 +248,80 @@ getChild mp roll (N gs tmt) =
     -- getpawn list)
     Maybe.andThen getpawn mlist
 
-evalState : Player -> Int -> ThunkState -> Maybe Int
+mmArg : Bool -> (a -> comparable) -> List a -> Maybe a
+mmArg isMax f ys =
+  let
+    minormax : comparable -> comparable -> comparable
+    minormax =
+      if isMax
+      then max
+      else min
+    mmaHelper : a -> comparable -> List a -> a
+    mmaHelper acc facc xs =
+      case xs of
+        x :: rest ->
+          let fx = (f x) in
+          if fx == minormax facc fx then
+            mmaHelper x fx rest
+          else
+            mmaHelper acc facc rest
+        _ ->
+          acc
+  in
+    case ys of
+      [] -> Nothing
+      y :: rest ->
+        Just <| mmaHelper y (f y) rest
+
+-- evaluate the state at a given ply, and return the thunkstate to encourage laziness
+-- currently not updating the state properly (just delayed evaluation)
+evalState : Player -> Int -> ThunkState -> Maybe (Int, ThunkState)
 evalState col ply (N gs tmt) =
   if ply == 0 then
     -- evaluate the current state without further evaluation
-    -- tsLeafEval ts
-    Just <| gsLeafVal gs
+    Just <| (gsLeafVal gs, N gs tmt)
   else
     -- evaluate each of the possibilities of the children...
     -- then take the best move
     let
-      minimax : List comparable -> Maybe comparable
+      mmArgCol = mmArg (col == gs.turn)
       minimax =
-        if col == gs.turn
-        then List.maximum
-        else List.minimum
+        mmArgCol Tuple.first
+        -- (Maybe.map Tuple.first) << mmArgCol Tuple.first
       ma = evalTMT tmt
     in
-    case isOver gs of
-      Won winner ->
-        Just <|
-          if winner == col
-          then  255
-          else -255
-      NotDone ->
-        -- for each possible roll,
-        -- get the list from the MoveArray ma
-        -- then get element tup : (Maybe Pawn, ThunkState)
-        -- get the next thunkstate
-        let
-          -- _ = Debug.log "options" preList
-          preList =
-            (List.range 1 5)    |> List.map (\roll ->
-            BT.getElem (roll-1) ma  |> Maybe.andThen (\list ->
+      case isOver gs of
+        Won winner ->
+          -- Just <|
+          --   if winner == col
+          --   then  255
+          --   else -255
+          Just <|
+            ( if winner == col
+              then  255
+              else -255
+            , N gs (Eval ma))
+        NotDone ->
+          -- for each possible roll,
+          -- get the list from the MoveArray ma
+          -- then get element tup : (Maybe Pawn, ThunkState)
+          -- get the next thunkstate
+          let
+            -- _ = Debug.log "options" preList
+            preList =
+              List.range 1 5           |> List.map (\roll ->
+              BT.getElem (roll-1) ma   |> Maybe.andThen (\list ->
+              list                     |> List.map  (\(mp, ts) ->
+              evalState col (ply-1) ts |> Maybe.map (\(moveVal, newTS) ->
+              (moveVal, ts)
+              )
+              ) |> mlistConcat
+                |> mmArgCol Tuple.first
+              )
+              ) |> mlistConcat
+          in
+            preList |> minimax
 
-            -- let _=Debug.log "list size" (List.length list) in
-            list                    |> List.map (\(mp, ts) ->
-            evalState col (ply-1) ts
-            -- don't need to fetch child with getChild mp roll ts
-
-            ) |> mlistConcat
-              |> minimax
-            )
-            ) |> mlistConcat
-        in
-          minimax preList
-          -- |> minimax
 
 -- helper function for evalState and handling the list of maybes
 mlistConcat : List (Maybe a) -> List a
@@ -301,70 +329,53 @@ mlistConcat xs =
   xs |> List.concatMap (\mx ->
     case mx of
       Nothing -> []
-      Just x -> [x]
+      Just x  -> [x]
   )
 
 
 -- like evalState but assumes the given roll to save on computation
-evalRolledState : Player -> Int -> Int -> ThunkState -> Maybe (Int, Maybe Pawn)
+evalRolledState : Player -> Int -> Int -> ThunkState -> Maybe (Int, Maybe Pawn, ThunkState)
 evalRolledState col ply roll (N gs tmt) =
   if ply == 0 then
-    Just <| (gsLeafVal gs, Nothing)
+    Just <| (gsLeafVal gs, Nothing, N gs tmt)
   else
     -- evaluate each of the possibilities of the children...
     -- then take the best move
     let
-      minormax =
-        if col == gs.turn
-        then max
-        else min
-      minimax : List (comparable, a) -> Maybe (comparable, a)
-      minimax ys =
-        let
-          minimaxarg acc xs =
-            case (acc, xs) of
-              ((va, pa), (vx, px) :: rest) ->
-                if vx == minormax vx va then
-                  minimaxarg (vx, px) rest
-                else
-                  minimaxarg (va, pa) rest
-              _ ->
-                acc
-        in
-          case ys of
-            [] -> Nothing
-            y :: rest ->
-              Just <| minimaxarg y rest
-
+      mmArgColFirst = mmArg (col == gs.turn) (\(a, _, _) -> a)
       ma = evalTMT tmt
     in
-    case isOver gs of
-      Won winner ->
-        Just <|
-          ( if winner == col
-              then  255
-              else -255
-          , Nothing)
-      NotDone ->
-        BT.getElem (roll-1) ma |> Maybe.andThen (\list ->
-        let
-          _ = Debug.log "" (minimax liszt)
-          _ = Debug.log "number of moves" (List.length list)
-          liszt =
-            list |> List.filterMap (\(mp, ts) ->
-            case evalState col (ply-1) ts of
-              Just val -> Just (val, mp)
-              Nothing  -> Nothing
-            )
-        in
-          liszt |> minimax -- |> Maybe.map Tuple.first
-        )
+      case isOver gs of
+        Won winner ->
+          Just <|
+            ( if winner == col
+                then  255
+                else -255
+            , Nothing
+            , N gs (Eval ma))
+        NotDone ->
+          BT.getElem (roll-1) ma |> Maybe.andThen (\list ->
+          let
+            _ = Debug.log "" (mmArgColFirst liszt)
+            _ = Debug.log "number of moves" (List.length list)
+            liszt =
+              list |> List.filterMap (\(mp, ts) ->
+              evalState col (ply-1) ts |> Maybe.map (\(val, newTS) ->
+              (val, mp, ts)
+              )
+              )
+          in
+            liszt |> mmArgColFirst
+          )
 
-aiChooseMove : Player -> Int -> Int -> ThunkState -> Maybe Pawn
+-- Wrapper that just returns the pawn and thunkstate
+aiChooseMove : Player -> Int -> Int -> ThunkState -> (Maybe Pawn, ThunkState)
 aiChooseMove col ply roll ts =
   let
     res = evalRolledState col ply roll ts
   in
-    Maybe.andThen Tuple.second res
+    ( Maybe.andThen (\(_, b, _) -> b) res
+    , ts)
 
 -- selectMove : Pawn -> Int -> ThunkState -> ThunkState
+-- basically getChild : Maybe Pawn -> Int -> ThunkState -> Maybe ThunkState
