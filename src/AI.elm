@@ -30,11 +30,8 @@ type MoveTree -- comparable
   -- = L comparable GameState -- leaf
   = L GameState
   | P
-      -- comparable -- value
       GameState  -- current gs
       MoveArray  -- next moves
-
-
 
 type alias MoveArray =
   BT.Tree (List (Maybe Pawn, ThunkState))
@@ -69,25 +66,24 @@ printTSBoard =
 
 ------ Minimax ------
 -- TODO:
---   1. Handle game termination situation
---   2. Control how many steps to look forward
---   3. Handle case where there are no legal moves so you need to skip forward...
---   4. Make lazy !
+--   1. Make lazy !
+--   2. Improve heuristic function
 
 
-
--- 0 is the best possible score for black
--- since it means black has promoted everything
+-- score roughly represents the (opposite of) distance that black
+-- needs to move its pieces compared to white
+-- where higher is better for black
 gsLeafVal : GameState -> Float
 gsLeafVal gs =
   let
     -- arbitrarily set black to negative
     -- so that it evaluates from black's perspective
     sign sq =
-      case sq of
-        Free      -> 0
-        Occ Black -> -1
-        Occ White -> 1
+      toFloat <|
+        case sq of
+          Free      ->  0
+          Occ Black -> -1
+          Occ White ->  1
 
     rebirthSquare =
       (lastFreeBy 14 gs)
@@ -95,35 +91,36 @@ gsLeafVal gs =
 
     -- Value Function
     -- Choose values based on distance from the end
-    valf : Int -> SquareState -> Int
+    valf : Int -> SquareState -> Float
     valf i sq =
       case squareType i of
         Spec Horus ->
           -- basically as good as having promoted it
-          0
+          0.0
         Spec Reatoum ->
-          -- worst case is demotion
-          (sign sq) * (30 - rebirthSquare)
+          -- 1/4 chance of success
+          -- 3/4 chance of demotion
+          0.75 * (sign sq) * (toFloat (30 - rebirthSquare))
         Spec Truths ->
-          -- worst case is demotion
-          (sign sq) * (30 - rebirthSquare)
+          -- 1/4 chance of success
+          -- 3/4 chance of demotion
+          0.75 * (sign sq) * (toFloat (30 - rebirthSquare))
         _ ->
-          (sign sq) * (30-i)
+          (sign sq) * (toFloat (30-i))
   in
-    toFloat <|
-      case isOver gs of
-        NotDone ->
-          -- maybe could make more efficient with some
-          -- kind of enumerate-toList/map type thing
-          List.range 0 29        |> List.map  (\i ->
-          BT.getElem i gs.board  |> Maybe.map (\sq ->
-          valf i sq
-          ) |> Maybe.withDefault 0)
-          |> List.foldl (+) 0 -- take the sum
-        Won White ->
-          -100
-        Won Black ->
-          100
+    case isOver gs of
+      NotDone ->
+        -- maybe could make more efficient with some
+        -- kind of enumerate-toList/map type thing
+        List.range 0 29        |> List.map  (\i ->
+        BT.getElem i gs.board  |> Maybe.map (\sq ->
+        valf i sq
+        ) |> Maybe.withDefault 0.0)
+        |> List.foldl (+) 0.0 -- take the sum
+      Won White ->
+        -200.0
+      Won Black ->
+        200.0
 
 -- Wrapper for gsLeafVal to apply to thunkstate
 tsLeafVal : ThunkState -> Float
@@ -304,7 +301,7 @@ evalState col ply (N gs tmt) =
                 Nothing
         in
           expHelper 0 [1/16, 1/4, 3/8, 1/4, 1/16]
-        
+
       ma = evalTMT tmt
     in
       case isOver gs of
