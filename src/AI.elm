@@ -23,16 +23,6 @@ lazy : (() -> a) -> Thunk a
 lazy = Thunk
 
 ------ Move tree definitions ------
--- eager for now
--- also missing the value for now
--- value will be evaluated lazily later...
-type MoveTree -- comparable
-  -- = L comparable GameState -- leaf
-  = L GameState
-  | P
-      GameState  -- current gs
-      MoveArray  -- next moves
-
 type alias MoveArray =
   BT.Tree (List (Maybe Pawn, ThunkState))
 
@@ -285,10 +275,10 @@ evalState col ply (N gs tmt) =
       mmArgCol = mmArg (col == gs.turn)
       -- minimax =
       --   mmArgCol Tuple.first
-      expect : List (Maybe (Float, ThunkState)) -> Maybe Float
+      expect : List (Maybe (Float, a)) -> Maybe Float
       expect =
         let
-          expHelper : Float -> List Float -> List (Maybe (Float, ThunkState)) -> Maybe Float
+          expHelper : Float -> List Float -> List (Maybe (Float, a)) -> Maybe Float
           expHelper acc weights moves =
             case (weights, moves) of
               (w :: wrest, m :: mrest) ->
@@ -306,10 +296,6 @@ evalState col ply (N gs tmt) =
     in
       case isOver gs of
         Won winner ->
-          -- Just <|
-          --   if winner == col
-          --   then  255
-          --   else -255
           Just <|
             ( if winner == col
               then  255
@@ -322,21 +308,43 @@ evalState col ply (N gs tmt) =
           -- get the next thunkstate
           let
             -- _ = Debug.log "options" preList
+            -- _ = Debug.log "depth" (evalDepth <| N gs <| Eval updatedMA)
             preList =
-              List.range 1 5           |> List.map (\roll ->
-              BT.getElem (roll-1) ma   |> Maybe.andThen (\list ->
-              list                     |> List.map  (\(mp, ts) ->
-              evalState col (ply-1) ts |> Maybe.map (\(moveVal, newTS) ->
-              (moveVal, ts)
+              List.range 1 5         |> List.map (\roll ->
+              BT.getElem (roll-1) ma |> Maybe.andThen (\list ->
+              let
+                -- fetch move values and future thunkstates
+                tupList =
+                  list                     |> List.map  (\(mp, ts) ->
+                  evalState col (ply-1) ts |> Maybe.map (\(moveVal, newTS) ->
+                  (moveVal, (mp, newTS))
+                  )
+                  ) |> mlistConcat
+
+                -- track legal future mp/thunkstate pairs
+                movesForRoll =
+                  List.map Tuple.second tupList
+              in
+                -- tupList |> mmArgCol Tuple.first
+                tupList |> mmArgCol Tuple.first |> Maybe.map (\mval ->
+                  (mval, movesForRoll)
+                )
               )
-              ) |> mlistConcat
-                |> mmArgCol Tuple.first
               )
-              )
+            -- move array that integrates the new results
+            updatedMA =
+                preList
+                  |> List.map (Maybe.map Tuple.second)
+                  |> mlistConcat
+                  |> BT.fromList
           in
-            expect preList |> Maybe.map (\vf ->
-            (vf, N gs (Eval ma))
-            )
+            preList
+              |> List.map (Maybe.map Tuple.first)
+              |> expect
+              |> Maybe.map (\vf ->
+                (vf, N gs <| Eval updatedMA)
+                -- (vf, N gs <| Eval ma) -- discard newly computed changes
+              )
 
 
 -- helper function for evalState and handling the list of maybes
@@ -358,7 +366,8 @@ evalRolledState col ply roll (N gs tmt) =
     -- evaluate each of the possibilities of the children...
     -- then take the best move
     let
-      mmArgColFirst = mmArg (col == gs.turn) (\(a, _, _) -> a)
+      mmCol = mmArg (col == gs.turn) (\w->w)
+      mmArgColFirst = mmArg (col == gs.turn) Tuple.first
       ma = evalTMT tmt
     in
       case isOver gs of
@@ -372,16 +381,38 @@ evalRolledState col ply roll (N gs tmt) =
         NotDone ->
           BT.getElem (roll-1) ma |> Maybe.andThen (\list ->
           let
-            _ = Debug.log "" (mmArgColFirst liszt)
-            _ = Debug.log "number of moves" (List.length list)
-            liszt =
-              list |> List.filterMap (\(mp, ts) ->
+            -- _ = Debug.log "" (mmArgColFirst preList)
+            -- _ = Debug.log "number of moves" (List.length list)
+            preList =
+              list                     |> List.filterMap (\(mp, ts) ->
               evalState col (ply-1) ts |> Maybe.map (\(val, newTS) ->
-              (val, mp, ts)
+              -- let _ = Debug.log "tmpdepth" (evalDepth newTS) in
+              (val, (mp, newTS))
               )
               )
+
+            mmElem =
+              preList |> mmArgColFirst
+
+            -- extract move array info
+            updatedMoves =
+              preList
+                |> List.map Tuple.second
           in
-            liszt |> mmArgColFirst
+            mmElem |> Maybe.map (\elem ->
+              ( elem |> Tuple.first
+              , elem |> Tuple.second |> Tuple.first
+              , let
+                  newestTS =
+                    BT.setElem (roll-1) updatedMoves ma
+                      |> Maybe.withDefault ma
+                      |> Eval
+                      |> N gs
+                in
+                  newestTS
+              )
+            )
+
           )
 
 -- Wrapper that just returns the pawn and thunkstate
@@ -390,8 +421,24 @@ aiChooseMove col ply roll ts =
   let
     res = evalRolledState col ply roll ts
   in
-    ( Maybe.andThen (\(_, b, _) -> b) res
-    , ts)
+    ( Maybe.andThen (\(_, mb, _) -> mb) res
+    , Maybe.map (\(_,_,newTS)->newTS) res
+        |> Maybe.withDefault ts
+    )
 
--- selectMove : Pawn -> Int -> ThunkState -> ThunkState
--- basically getChild : Maybe Pawn -> Int -> ThunkState -> Maybe ThunkState
+-- tells how many levels have been evaluated for a given thunkstate
+evalDepth : ThunkState -> Int
+evalDepth (N gs tmt) =
+  let
+    edTail n tmt2 =
+      case tmt2 of
+        Lazy _ ->
+          n
+        Eval ma ->
+          BT.getElem 0 ma |> Maybe.andThen (\list ->
+          List.head list  |> Maybe.map (\(_, (N _ tmt3)) ->
+          edTail (n+1) tmt3
+          )
+          ) |> Maybe.withDefault n
+  in
+    edTail 0 tmt

@@ -114,7 +114,7 @@ update msg model =
           -- no re-rolls!
           (model, Cmd.none)
     GetRoll i ->
-      let 
+      let
         newModel = model |> setRoll i |> highlightPieces
       in
       --(setRoll i model, Cmd.none)
@@ -227,22 +227,22 @@ tryPlay n model =
 highlightPieces : Model -> Model
 highlightPieces model =
   case model.selected of
-    Nothing -> 
-      case model.roll of 
+    Nothing ->
+      case model.roll of
         Nothing -> { model | highlighted = []}
-        Just roll -> 
+        Just roll ->
           case List.map (\p -> p.square) (legalMoves model.gs roll) of
             [] -> { model | gs = switchTurn model.gs}
             moves -> { model | highlighted = moves}
-    Just numpawn -> 
+    Just numpawn ->
       case model.roll of
         Nothing -> { model | highlighted = []}
-        Just roll -> 
+        Just roll ->
           case getPawn numpawn model.gs of
             Nothing -> { model | highlighted = []}
             Just spawn ->
               if isLegal model.gs.board spawn roll then
-                { model | highlighted = 
+                { model | highlighted =
                   spawn.square :: (spawn.square + roll) :: []}
               else { model | highlighted = spawn.square :: [] }
 
@@ -410,12 +410,12 @@ buttonBoard model =
        ++ line2 ++ [newline]
        ++ line3 ++ [newline]
       )
-  
+
 
 scoreboard : Int -> Player -> Html.Html Msg
-scoreboard n color = 
+scoreboard n color =
   let
-    makepiece x y = 
+    makepiece x y =
       [ Svg.circle
         [ SA.cx <| Debug.toString (x + 90//2)
         , SA.cy <| Debug.toString (y + 90//2)
@@ -427,11 +427,11 @@ scoreboard n color =
             else "slategray"
         ] []
       ]
-    centers = 
-      if 0 == modBy 2 n then 
+    centers =
+      if 0 == modBy 2 n then
         --List.map (\x -> (x - (n+1)// 2) * 100) (List.range 1 n)
         List.range 1 n
-      else 
+      else
         --List.map (\x -> (x - (n+1)//2) * 100) (List.range 1 n)
         List.range 1 n
   in
@@ -458,9 +458,9 @@ view model =
             else
             "White has promoted "
             ++ (Debug.toString (7 - model.gs.whitePawnCnt))
-            ++ " pawn(s)! " 
+            ++ " pawn(s)! "
         ]
-    bscoreboard = 
+    bscoreboard =
       Html.h3 [centering]
         [ text <|
             if 7 - model.gs.blackPawnCnt == 7 then "Game Over. Black Wins!"
@@ -470,9 +470,9 @@ view model =
             ++ " pawn(s)! "
         ]
     -- THis image never shows up lol
-    afterlifepic = 
-            -- if existspromotion model.gs model.roll then 
-            div [centering] 
+    afterlifepic =
+            -- if existspromotion model.gs model.roll then
+            div [centering]
             [ Svg.image
               [href "images/rebirth.png"
               , SA.x <| Debug.toString 0

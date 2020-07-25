@@ -85,7 +85,7 @@ setElem i x t =
   case t of
     Empty ->
       Nothing
-    Leaf j _ ->
+    Leaf j y ->
       if i == j then
         Just <| Leaf j x
       else
