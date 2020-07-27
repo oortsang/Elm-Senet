@@ -171,28 +171,23 @@ update msg model =
         ) |> Maybe.withDefault (checkSquare m) -- no roll
         ) |> Maybe.withDefault (select ()) -- no selection
     QueryAI ->
+      -- Selects then plays a piece given by the AI
+      model.roll |> Maybe.andThen (\roll ->
       let
-        newModel =
-          model.roll |> Maybe.map (\roll ->
-          let
-            -- for now don't save results
-            ts = newNode model.gs
-            (mp, newTS) =
-              aiChooseMove
-                model.gs.turn
-                2
-                roll
-                ts
-          in
-            { model
-            | selected =
-                mp |> Maybe.map (\{square} ->
-                  square
-                )
-            }
-          ) |> Maybe.withDefault model
+        -- for now don't save results
+        ts = newNode model.gs
+        (mp, newTS) =
+          aiChooseMove
+            model.gs.turn
+            2
+            roll
+            ts
       in
-        (newModel, Cmd.none)
+        mp    |> Maybe.map (\p ->
+        model |> update (Click p.square)
+              |> opChain (update Play)
+        )
+      ) |> Maybe.withDefault (model, Cmd.none)
     Noop ->
       (model, Cmd.none)
     Unselect ->
@@ -273,6 +268,14 @@ highlightPieces model =
                   spawn.square :: (spawn.square + roll) :: []}
               else { model | highlighted = spawn.square :: [] }
 
+
+-- chain updates more easily
+opChain : (Model -> (Model, Cmd Msg)) -> (Model, Cmd Msg) -> (Model, Cmd Msg)
+opChain op (model, cmsg) =
+  let
+    (newModel, newMsg) = op model
+  in
+    (newModel, Cmd.batch [cmsg, newMsg])
 
 ------ VIEW ------
 
@@ -533,7 +536,8 @@ view model =
           , button [ Html.Events.onClick (Play)]
               [ text <|
                   case model.selected of
-                    Just s  -> "Play piece on square " ++ (Debug.toString s)
+                    Just s  ->
+                      "Play piece on square " ++ (Debug.toString (s+1))
                     Nothing -> "Select a piece"
               ]
           , text "\t"
