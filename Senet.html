@@ -5492,20 +5492,40 @@ var $author$project$Board$initGame = {
 		},
 		A2($elm$core$List$range, 0, $author$project$Board$initPawnCount - 1))
 };
-var $author$project$Main$initModel = {gs: $author$project$Board$initGame, highlighted: _List_Nil, roll: $elm$core$Maybe$Nothing, selected: $elm$core$Maybe$Nothing};
-var $elm$core$Platform$Cmd$batch = _Platform_batch;
-var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
-var $author$project$Main$init = function (_v0) {
-	return _Utils_Tuple2($author$project$Main$initModel, $elm$core$Platform$Cmd$none);
+var $author$project$AI$Lazy = function (a) {
+	return {$: 'Lazy', a: a};
 };
-var $elm$core$Platform$Sub$batch = _Platform_batch;
-var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
-var $author$project$Main$subscriptions = function (model) {
-	return $elm$core$Platform$Sub$none;
+var $author$project$AI$N = F2(
+	function (a, b) {
+		return {$: 'N', a: a, b: b};
+	});
+var $author$project$Board$NotDone = {$: 'NotDone'};
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $elm$core$List$concat = function (lists) {
+	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
 };
-var $author$project$Main$GetRoll = function (a) {
-	return {$: 'GetRoll', a: a};
+var $elm$core$List$concatMap = F2(
+	function (f, list) {
+		return $elm$core$List$concat(
+			A2($elm$core$List$map, f, list));
+	});
+var $author$project$Board$Won = function (a) {
+	return {$: 'Won', a: a};
 };
+var $author$project$Board$isOver = function (gs) {
+	return (!gs.whitePawnCnt) ? $author$project$Board$Won($author$project$Board$White) : ((!gs.blackPawnCnt) ? $author$project$Board$Won($author$project$Board$Black) : $author$project$Board$NotDone);
+};
+var $author$project$AI$Thunk = function (a) {
+	return {$: 'Thunk', a: a};
+};
+var $author$project$AI$lazy = $author$project$AI$Thunk;
 var $elm$core$Maybe$andThen = F2(
 	function (callback, maybeValue) {
 		if (maybeValue.$ === 'Just') {
@@ -5514,114 +5534,6 @@ var $elm$core$Maybe$andThen = F2(
 		} else {
 			return $elm$core$Maybe$Nothing;
 		}
-	});
-var $elm$core$Basics$ge = _Utils_ge;
-var $elm$random$Random$Generate = function (a) {
-	return {$: 'Generate', a: a};
-};
-var $elm$random$Random$Seed = F2(
-	function (a, b) {
-		return {$: 'Seed', a: a, b: b};
-	});
-var $elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
-var $elm$random$Random$next = function (_v0) {
-	var state0 = _v0.a;
-	var incr = _v0.b;
-	return A2($elm$random$Random$Seed, ((state0 * 1664525) + incr) >>> 0, incr);
-};
-var $elm$random$Random$initialSeed = function (x) {
-	var _v0 = $elm$random$Random$next(
-		A2($elm$random$Random$Seed, 0, 1013904223));
-	var state1 = _v0.a;
-	var incr = _v0.b;
-	var state2 = (state1 + x) >>> 0;
-	return $elm$random$Random$next(
-		A2($elm$random$Random$Seed, state2, incr));
-};
-var $elm$time$Time$Name = function (a) {
-	return {$: 'Name', a: a};
-};
-var $elm$time$Time$Offset = function (a) {
-	return {$: 'Offset', a: a};
-};
-var $elm$time$Time$Zone = F2(
-	function (a, b) {
-		return {$: 'Zone', a: a, b: b};
-	});
-var $elm$time$Time$customZone = $elm$time$Time$Zone;
-var $elm$time$Time$Posix = function (a) {
-	return {$: 'Posix', a: a};
-};
-var $elm$time$Time$millisToPosix = $elm$time$Time$Posix;
-var $elm$time$Time$now = _Time_now($elm$time$Time$millisToPosix);
-var $elm$time$Time$posixToMillis = function (_v0) {
-	var millis = _v0.a;
-	return millis;
-};
-var $elm$random$Random$init = A2(
-	$elm$core$Task$andThen,
-	function (time) {
-		return $elm$core$Task$succeed(
-			$elm$random$Random$initialSeed(
-				$elm$time$Time$posixToMillis(time)));
-	},
-	$elm$time$Time$now);
-var $elm$random$Random$step = F2(
-	function (_v0, seed) {
-		var generator = _v0.a;
-		return generator(seed);
-	});
-var $elm$random$Random$onEffects = F3(
-	function (router, commands, seed) {
-		if (!commands.b) {
-			return $elm$core$Task$succeed(seed);
-		} else {
-			var generator = commands.a.a;
-			var rest = commands.b;
-			var _v1 = A2($elm$random$Random$step, generator, seed);
-			var value = _v1.a;
-			var newSeed = _v1.b;
-			return A2(
-				$elm$core$Task$andThen,
-				function (_v2) {
-					return A3($elm$random$Random$onEffects, router, rest, newSeed);
-				},
-				A2($elm$core$Platform$sendToApp, router, value));
-		}
-	});
-var $elm$random$Random$onSelfMsg = F3(
-	function (_v0, _v1, seed) {
-		return $elm$core$Task$succeed(seed);
-	});
-var $elm$random$Random$Generator = function (a) {
-	return {$: 'Generator', a: a};
-};
-var $elm$random$Random$map = F2(
-	function (func, _v0) {
-		var genA = _v0.a;
-		return $elm$random$Random$Generator(
-			function (seed0) {
-				var _v1 = genA(seed0);
-				var a = _v1.a;
-				var seed1 = _v1.b;
-				return _Utils_Tuple2(
-					func(a),
-					seed1);
-			});
-	});
-var $elm$random$Random$cmdMap = F2(
-	function (func, _v0) {
-		var generator = _v0.a;
-		return $elm$random$Random$Generate(
-			A2($elm$random$Random$map, func, generator));
-	});
-_Platform_effectManagers['Random'] = _Platform_createManager($elm$random$Random$init, $elm$random$Random$onEffects, $elm$random$Random$onSelfMsg, $elm$random$Random$cmdMap);
-var $elm$random$Random$command = _Platform_leaf('Random');
-var $elm$random$Random$generate = F2(
-	function (tagger, generator) {
-		return $elm$random$Random$command(
-			$elm$random$Random$Generate(
-				A2($elm$random$Random$map, tagger, generator)));
 	});
 var $author$project$BoardTree$getElem = F2(
 	function (i, t) {
@@ -5654,324 +5566,6 @@ var $author$project$BoardTree$getElem = F2(
 			}
 		}
 	});
-var $author$project$Board$getPawn = F2(
-	function (i, gs) {
-		var squarePawn = function (sq) {
-			if (sq.$ === 'Free') {
-				return $elm$core$Maybe$Nothing;
-			} else {
-				var c = sq.a;
-				return $elm$core$Maybe$Just(
-					{color: c, square: i});
-			}
-		};
-		return A2(
-			$elm$core$Maybe$andThen,
-			squarePawn,
-			A2($author$project$BoardTree$getElem, i, gs.board));
-	});
-var $author$project$Logic$legalBySquareType = F2(
-	function (square, m) {
-		if (square.$ === 'Spec') {
-			switch (square.a.$) {
-				case 'Happy':
-					var _v1 = square.a;
-					return true;
-				case 'Water':
-					var _v2 = square.a;
-					return true;
-				case 'Truths':
-					var _v3 = square.a;
-					return m === 30;
-				case 'Reatoum':
-					var _v4 = square.a;
-					return m === 30;
-				default:
-					var _v5 = square.a;
-					return true;
-			}
-		} else {
-			return true;
-		}
-	});
-var $elm$core$Debug$log = _Debug_log;
-var $elm$core$Basics$neq = _Utils_notEqual;
-var $elm$core$Basics$not = _Basics_not;
-var $author$project$Board$Happy = {$: 'Happy'};
-var $author$project$Board$Horus = {$: 'Horus'};
-var $author$project$Board$Reatoum = {$: 'Reatoum'};
-var $author$project$Board$Rebirth = {$: 'Rebirth'};
-var $author$project$Board$Reg = {$: 'Reg'};
-var $author$project$Board$Spec = function (a) {
-	return {$: 'Spec', a: a};
-};
-var $author$project$Board$Truths = {$: 'Truths'};
-var $author$project$Board$Water = {$: 'Water'};
-var $author$project$Board$squareType = function (n) {
-	switch (n) {
-		case 14:
-			return $author$project$Board$Rebirth;
-		case 25:
-			return $author$project$Board$Spec($author$project$Board$Happy);
-		case 26:
-			return $author$project$Board$Spec($author$project$Board$Water);
-		case 27:
-			return $author$project$Board$Spec($author$project$Board$Truths);
-		case 28:
-			return $author$project$Board$Spec($author$project$Board$Reatoum);
-		case 29:
-			return $author$project$Board$Spec($author$project$Board$Horus);
-		default:
-			return $author$project$Board$Reg;
-	}
-};
-var $author$project$Logic$isLegal = F3(
-	function (board, p, roll) {
-		var n = p.square;
-		var m = n + roll;
-		var skippedHappiness = (n < 25) && (m > 25);
-		var legalSqType = A2(
-			$author$project$Logic$legalBySquareType,
-			$author$project$Board$squareType(n),
-			m);
-		var attemptedLeave = m >= 30;
-		if (!legalSqType) {
-			return false;
-		} else {
-			if (skippedHappiness) {
-				return false;
-			} else {
-				if (attemptedLeave) {
-					return true;
-				} else {
-					var _v0 = A2($author$project$BoardTree$getElem, m, board);
-					if (_v0.$ === 'Nothing') {
-						var _v1 = A2($elm$core$Debug$log, 'Yikes, out-of-bounds m not handled...', m);
-						return false;
-					} else {
-						if (_v0.a.$ === 'Free') {
-							var _v2 = _v0.a;
-							return true;
-						} else {
-							var destCol = _v0.a.a;
-							return !_Utils_eq(p.color, destCol);
-						}
-					}
-				}
-			}
-		}
-	});
-var $elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
-				}),
-			_List_Nil,
-			list);
-	});
-var $author$project$Logic$legalMoves = F2(
-	function (gs, roll) {
-		var legals = $elm$core$List$filter(
-			function (p) {
-				return A3($author$project$Logic$isLegal, gs.board, p, roll);
-			});
-		var _v0 = gs.turn;
-		if (_v0.$ === 'Black') {
-			return legals(gs.blackPawns);
-		} else {
-			return legals(gs.whitePawns);
-		}
-	});
-var $author$project$Logic$switchTurn = function (gs) {
-	var _v0 = gs.turn;
-	if (_v0.$ === 'White') {
-		return _Utils_update(
-			gs,
-			{turn: $author$project$Board$Black});
-	} else {
-		return _Utils_update(
-			gs,
-			{turn: $author$project$Board$White});
-	}
-};
-var $author$project$Main$highlightPieces = function (model) {
-	var _v0 = model.selected;
-	if (_v0.$ === 'Nothing') {
-		var _v1 = model.roll;
-		if (_v1.$ === 'Nothing') {
-			return _Utils_update(
-				model,
-				{highlighted: _List_Nil});
-		} else {
-			var roll = _v1.a;
-			var _v2 = A2(
-				$elm$core$List$map,
-				function (p) {
-					return p.square;
-				},
-				A2($author$project$Logic$legalMoves, model.gs, roll));
-			if (!_v2.b) {
-				return _Utils_update(
-					model,
-					{
-						gs: $author$project$Logic$switchTurn(model.gs)
-					});
-			} else {
-				var moves = _v2;
-				return _Utils_update(
-					model,
-					{highlighted: moves});
-			}
-		}
-	} else {
-		var numpawn = _v0.a;
-		var _v3 = model.roll;
-		if (_v3.$ === 'Nothing') {
-			return _Utils_update(
-				model,
-				{highlighted: _List_Nil});
-		} else {
-			var roll = _v3.a;
-			var _v4 = A2($author$project$Board$getPawn, numpawn, model.gs);
-			if (_v4.$ === 'Nothing') {
-				return _Utils_update(
-					model,
-					{highlighted: _List_Nil});
-			} else {
-				var spawn = _v4.a;
-				return A3($author$project$Logic$isLegal, model.gs.board, spawn, roll) ? _Utils_update(
-					model,
-					{
-						highlighted: A2(
-							$elm$core$List$cons,
-							spawn.square,
-							A2($elm$core$List$cons, spawn.square + roll, _List_Nil))
-					}) : _Utils_update(
-					model,
-					{
-						highlighted: A2($elm$core$List$cons, spawn.square, _List_Nil)
-					});
-			}
-		}
-	}
-};
-var $elm$core$Maybe$map = F2(
-	function (f, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return $elm$core$Maybe$Just(
-				f(value));
-		} else {
-			return $elm$core$Maybe$Nothing;
-		}
-	});
-var $elm$core$Basics$negate = function (n) {
-	return -n;
-};
-var $elm$core$Basics$abs = function (n) {
-	return (n < 0) ? (-n) : n;
-};
-var $elm$core$Bitwise$and = _Bitwise_and;
-var $elm$core$Bitwise$xor = _Bitwise_xor;
-var $elm$random$Random$peel = function (_v0) {
-	var state = _v0.a;
-	var word = (state ^ (state >>> ((state >>> 28) + 4))) * 277803737;
-	return ((word >>> 22) ^ word) >>> 0;
-};
-var $elm$random$Random$float = F2(
-	function (a, b) {
-		return $elm$random$Random$Generator(
-			function (seed0) {
-				var seed1 = $elm$random$Random$next(seed0);
-				var range = $elm$core$Basics$abs(b - a);
-				var n1 = $elm$random$Random$peel(seed1);
-				var n0 = $elm$random$Random$peel(seed0);
-				var lo = (134217727 & n1) * 1.0;
-				var hi = (67108863 & n0) * 1.0;
-				var val = ((hi * 134217728.0) + lo) / 9007199254740992.0;
-				var scaled = (val * range) + a;
-				return _Utils_Tuple2(
-					scaled,
-					$elm$random$Random$next(seed1));
-			});
-	});
-var $elm$random$Random$getByWeight = F3(
-	function (_v0, others, countdown) {
-		getByWeight:
-		while (true) {
-			var weight = _v0.a;
-			var value = _v0.b;
-			if (!others.b) {
-				return value;
-			} else {
-				var second = others.a;
-				var otherOthers = others.b;
-				if (_Utils_cmp(
-					countdown,
-					$elm$core$Basics$abs(weight)) < 1) {
-					return value;
-				} else {
-					var $temp$_v0 = second,
-						$temp$others = otherOthers,
-						$temp$countdown = countdown - $elm$core$Basics$abs(weight);
-					_v0 = $temp$_v0;
-					others = $temp$others;
-					countdown = $temp$countdown;
-					continue getByWeight;
-				}
-			}
-		}
-	});
-var $elm$core$List$sum = function (numbers) {
-	return A3($elm$core$List$foldl, $elm$core$Basics$add, 0, numbers);
-};
-var $elm$random$Random$weighted = F2(
-	function (first, others) {
-		var normalize = function (_v0) {
-			var weight = _v0.a;
-			return $elm$core$Basics$abs(weight);
-		};
-		var total = normalize(first) + $elm$core$List$sum(
-			A2($elm$core$List$map, normalize, others));
-		return A2(
-			$elm$random$Random$map,
-			A2($elm$random$Random$getByWeight, first, others),
-			A2($elm$random$Random$float, 0, total));
-	});
-var $author$project$Main$rollGenerator = A2(
-	$elm$random$Random$weighted,
-	_Utils_Tuple2(4, 1),
-	_List_fromArray(
-		[
-			_Utils_Tuple2(6, 2),
-			_Utils_Tuple2(4, 3),
-			_Utils_Tuple2(1, 4),
-			_Utils_Tuple2(1, 5)
-		]));
-var $author$project$Main$selectPiece = F2(
-	function (n, model) {
-		return _Utils_update(
-			model,
-			{
-				selected: $elm$core$Maybe$Just(n)
-			});
-	});
-var $author$project$Main$setRoll = F2(
-	function (i, model) {
-		return _Utils_update(
-			model,
-			{
-				roll: $elm$core$Maybe$Just(i)
-			});
-	});
-var $author$project$Main$clearRoll = function (model) {
-	return _Utils_update(
-		model,
-		{roll: $elm$core$Maybe$Nothing});
-};
 var $author$project$Logic$lastFreeBy = F2(
 	function (sq, gs) {
 		lastFreeBy:
@@ -5993,6 +5587,16 @@ var $author$project$Logic$lastFreeBy = F2(
 			}
 		}
 	});
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
 var $author$project$Board$getSquareColor = function (p) {
 	if (p.$ === 'Free') {
 		return $elm$core$Maybe$Nothing;
@@ -6001,6 +5605,7 @@ var $author$project$Board$getSquareColor = function (p) {
 		return $elm$core$Maybe$Just(col);
 	}
 };
+var $elm$core$Debug$log = _Debug_log;
 var $author$project$BoardTree$setElem = F3(
 	function (i, x, t) {
 		switch (t.$) {
@@ -6008,6 +5613,7 @@ var $author$project$BoardTree$setElem = F3(
 				return $elm$core$Maybe$Nothing;
 			case 'Leaf':
 				var j = t.a;
+				var y = t.b;
 				return _Utils_eq(i, j) ? $elm$core$Maybe$Just(
 					A2($author$project$BoardTree$Leaf, j, x)) : $elm$core$Maybe$Nothing;
 			default:
@@ -6144,6 +5750,33 @@ var $author$project$Logic$pawnSwap = F3(
 			}
 		}
 	});
+var $elm$core$Basics$ge = _Utils_ge;
+var $author$project$Logic$legalBySquareType = F2(
+	function (square, m) {
+		if (square.$ === 'Spec') {
+			switch (square.a.$) {
+				case 'Happy':
+					var _v1 = square.a;
+					return true;
+				case 'Water':
+					var _v2 = square.a;
+					return true;
+				case 'Truths':
+					var _v3 = square.a;
+					return m === 30;
+				case 'Reatoum':
+					var _v4 = square.a;
+					return m === 30;
+				default:
+					var _v5 = square.a;
+					return true;
+			}
+		} else {
+			return true;
+		}
+	});
+var $elm$core$Basics$neq = _Utils_notEqual;
+var $elm$core$Basics$not = _Basics_not;
 var $elm$core$Maybe$withDefault = F2(
 	function (_default, maybe) {
 		if (maybe.$ === 'Just') {
@@ -6159,6 +5792,17 @@ var $author$project$Logic$clearSquare = F2(
 			$elm$core$Maybe$withDefault,
 			board,
 			A3($author$project$BoardTree$setElem, n, $author$project$Board$Free, board));
+	});
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
 	});
 var $author$project$Logic$removePawn = F2(
 	function (p, gs) {
@@ -6186,6 +5830,34 @@ var $author$project$Logic$removePawn = F2(
 				});
 		}
 	});
+var $author$project$Board$Happy = {$: 'Happy'};
+var $author$project$Board$Horus = {$: 'Horus'};
+var $author$project$Board$Reatoum = {$: 'Reatoum'};
+var $author$project$Board$Rebirth = {$: 'Rebirth'};
+var $author$project$Board$Reg = {$: 'Reg'};
+var $author$project$Board$Spec = function (a) {
+	return {$: 'Spec', a: a};
+};
+var $author$project$Board$Truths = {$: 'Truths'};
+var $author$project$Board$Water = {$: 'Water'};
+var $author$project$Board$squareType = function (n) {
+	switch (n) {
+		case 14:
+			return $author$project$Board$Rebirth;
+		case 25:
+			return $author$project$Board$Spec($author$project$Board$Happy);
+		case 26:
+			return $author$project$Board$Spec($author$project$Board$Water);
+		case 27:
+			return $author$project$Board$Spec($author$project$Board$Truths);
+		case 28:
+			return $author$project$Board$Spec($author$project$Board$Reatoum);
+		case 29:
+			return $author$project$Board$Spec($author$project$Board$Horus);
+		default:
+			return $author$project$Board$Reg;
+	}
+};
 var $author$project$Logic$playPawn = F3(
 	function (p, roll, gs) {
 		var n = p.square;
@@ -6249,6 +5921,18 @@ var $author$project$Logic$playPawn = F3(
 			}
 		}
 	});
+var $author$project$Logic$switchTurn = function (gs) {
+	var _v0 = gs.turn;
+	if (_v0.$ === 'White') {
+		return _Utils_update(
+			gs,
+			{turn: $author$project$Board$Black});
+	} else {
+		return _Utils_update(
+			gs,
+			{turn: $author$project$Board$White});
+	}
+};
 var $author$project$Logic$makeMove = F3(
 	function (p, roll, gs) {
 		var endOrContinueTurn = function (_v1) {
@@ -6295,6 +5979,863 @@ var $author$project$Logic$makeMove = F3(
 				sendBack,
 				A3($author$project$Logic$playPawn, p, roll, gs)));
 	});
+var $author$project$BoardTree$map = F2(
+	function (f, t) {
+		switch (t.$) {
+			case 'Empty':
+				return $author$project$BoardTree$Empty;
+			case 'Leaf':
+				var i = t.a;
+				var x = t.b;
+				return A2(
+					$author$project$BoardTree$Leaf,
+					i,
+					f(x));
+			default:
+				var i = t.a;
+				var left = t.b;
+				var right = t.c;
+				return A3(
+					$author$project$BoardTree$Parent,
+					i,
+					A2($author$project$BoardTree$map, f, left),
+					A2($author$project$BoardTree$map, f, right));
+		}
+	});
+var $author$project$AI$findMoves = function (gs) {
+	var rolls = $author$project$BoardTree$fromList(
+		A2($elm$core$List$range, 1, 5));
+	var pawnList = function () {
+		var _v2 = gs.turn;
+		if (_v2.$ === 'White') {
+			return gs.whitePawns;
+		} else {
+			return gs.blackPawns;
+		}
+	}();
+	var listDefault = F2(
+		function (def, xs) {
+			if (!xs.b) {
+				return _List_fromArray(
+					[def]);
+			} else {
+				return xs;
+			}
+		});
+	return (!_Utils_eq(
+		$author$project$Board$isOver(gs),
+		$author$project$Board$NotDone)) ? $author$project$BoardTree$fromList(
+		A2($elm$core$List$repeat, 5, _List_Nil)) : A2(
+		$author$project$BoardTree$map,
+		function (roll) {
+			return A2(
+				listDefault,
+				_Utils_Tuple2(
+					$elm$core$Maybe$Nothing,
+					$author$project$AI$tsWrapper(
+						$author$project$Logic$switchTurn(gs))),
+				A2(
+					$elm$core$List$concatMap,
+					function (p) {
+						return A2(
+							$elm$core$Maybe$withDefault,
+							_List_Nil,
+							A2(
+								$elm$core$Maybe$map,
+								function (js) {
+									return _List_fromArray(
+										[
+											_Utils_Tuple2(
+											$elm$core$Maybe$Just(p),
+											$author$project$AI$tsWrapper(js))
+										]);
+								},
+								A3($author$project$Logic$makeMove, p, roll, gs)));
+					},
+					pawnList));
+		},
+		rolls);
+};
+var $author$project$AI$tsWrapper = function (gs) {
+	return A2(
+		$author$project$AI$N,
+		gs,
+		$author$project$AI$Lazy(
+			$author$project$AI$lazy(
+				function (_v0) {
+					return $author$project$AI$findMoves(gs);
+				})));
+};
+var $author$project$AI$newNode = function (gs) {
+	return A2(
+		$author$project$AI$N,
+		gs,
+		$author$project$AI$Lazy(
+			$author$project$AI$lazy(
+				function (_v0) {
+					return $author$project$AI$findMoves(gs);
+				})));
+};
+var $author$project$Main$initModel = {
+	gs: $author$project$Board$initGame,
+	highlighted: _List_Nil,
+	roll: $elm$core$Maybe$Nothing,
+	selected: $elm$core$Maybe$Nothing,
+	ts: $author$project$AI$newNode($author$project$Board$initGame)
+};
+var $elm$core$Platform$Cmd$batch = _Platform_batch;
+var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $author$project$Main$init = function (_v0) {
+	return _Utils_Tuple2($author$project$Main$initModel, $elm$core$Platform$Cmd$none);
+};
+var $elm$core$Platform$Sub$batch = _Platform_batch;
+var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
+var $author$project$Main$subscriptions = function (model) {
+	return $elm$core$Platform$Sub$none;
+};
+var $author$project$Main$GetRoll = function (a) {
+	return {$: 'GetRoll', a: a};
+};
+var $author$project$AI$Eval = function (a) {
+	return {$: 'Eval', a: a};
+};
+var $author$project$AI$force = function (_v0) {
+	var f = _v0.a;
+	return f(_Utils_Tuple0);
+};
+var $author$project$AI$evalTMT = function (tmt) {
+	if (tmt.$ === 'Lazy') {
+		var tma = tmt.a;
+		return $author$project$AI$force(tma);
+	} else {
+		var rma = tmt.a;
+		return rma;
+	}
+};
+var $elm$core$Basics$negate = function (n) {
+	return -n;
+};
+var $author$project$AI$gsLeafVal = function (gs) {
+	var sign = function (sq) {
+		if (sq.$ === 'Free') {
+			return 0;
+		} else {
+			if (sq.a.$ === 'Black') {
+				var _v8 = sq.a;
+				return -1;
+			} else {
+				var _v9 = sq.a;
+				return 1;
+			}
+		}
+	};
+	var rebirthSquare = A2(
+		$elm$core$Maybe$withDefault,
+		0,
+		A2($author$project$Logic$lastFreeBy, 14, gs));
+	var valf = F2(
+		function (i, sq) {
+			var _v3 = $author$project$Board$squareType(i);
+			_v3$3:
+			while (true) {
+				if (_v3.$ === 'Spec') {
+					switch (_v3.a.$) {
+						case 'Horus':
+							var _v4 = _v3.a;
+							return 0.0;
+						case 'Reatoum':
+							var _v5 = _v3.a;
+							return (0.75 * sign(sq)) * (30 - rebirthSquare);
+						case 'Truths':
+							var _v6 = _v3.a;
+							return (0.75 * sign(sq)) * (30 - rebirthSquare);
+						default:
+							break _v3$3;
+					}
+				} else {
+					break _v3$3;
+				}
+			}
+			return sign(sq) * (30 - i);
+		});
+	var _v0 = $author$project$Board$isOver(gs);
+	if (_v0.$ === 'NotDone') {
+		return A3(
+			$elm$core$List$foldl,
+			$elm$core$Basics$add,
+			0.0,
+			A2(
+				$elm$core$List$map,
+				function (i) {
+					return A2(
+						$elm$core$Maybe$withDefault,
+						0.0,
+						A2(
+							$elm$core$Maybe$map,
+							function (sq) {
+								return A2(valf, i, sq);
+							},
+							A2($author$project$BoardTree$getElem, i, gs.board)));
+				},
+				A2($elm$core$List$range, 0, 29)));
+	} else {
+		if (_v0.a.$ === 'White') {
+			var _v1 = _v0.a;
+			return -200.0;
+		} else {
+			var _v2 = _v0.a;
+			return 200.0;
+		}
+	}
+};
+var $author$project$AI$mlistConcat = function (xs) {
+	return A2(
+		$elm$core$List$concatMap,
+		function (mx) {
+			if (mx.$ === 'Nothing') {
+				return _List_Nil;
+			} else {
+				var x = mx.a;
+				return _List_fromArray(
+					[x]);
+			}
+		},
+		xs);
+};
+var $elm$core$Basics$min = F2(
+	function (x, y) {
+		return (_Utils_cmp(x, y) < 0) ? x : y;
+	});
+var $author$project$AI$mmArg = F3(
+	function (isMax, f, ys) {
+		var minormax = isMax ? $elm$core$Basics$max : $elm$core$Basics$min;
+		var mmaHelper = F3(
+			function (acc, facc, xs) {
+				mmaHelper:
+				while (true) {
+					if (xs.b) {
+						var x = xs.a;
+						var rest = xs.b;
+						var fx = f(x);
+						if (_Utils_eq(
+							fx,
+							A2(minormax, facc, fx))) {
+							var $temp$acc = x,
+								$temp$facc = fx,
+								$temp$xs = rest;
+							acc = $temp$acc;
+							facc = $temp$facc;
+							xs = $temp$xs;
+							continue mmaHelper;
+						} else {
+							var $temp$acc = acc,
+								$temp$facc = facc,
+								$temp$xs = rest;
+							acc = $temp$acc;
+							facc = $temp$facc;
+							xs = $temp$xs;
+							continue mmaHelper;
+						}
+					} else {
+						return acc;
+					}
+				}
+			});
+		if (!ys.b) {
+			return $elm$core$Maybe$Nothing;
+		} else {
+			var y = ys.a;
+			var rest = ys.b;
+			return $elm$core$Maybe$Just(
+				A3(
+					mmaHelper,
+					y,
+					f(y),
+					rest));
+		}
+	});
+var $elm$core$Tuple$second = function (_v0) {
+	var y = _v0.b;
+	return y;
+};
+var $author$project$AI$evalState = F3(
+	function (col, ply, _v0) {
+		var gs = _v0.a;
+		var tmt = _v0.b;
+		if (!ply) {
+			return $elm$core$Maybe$Just(
+				_Utils_Tuple2(
+					$author$project$AI$gsLeafVal(gs),
+					A2($author$project$AI$N, gs, tmt)));
+		} else {
+			var mmArgCol = $author$project$AI$mmArg(
+				_Utils_eq(col, gs.turn));
+			var ma = $author$project$AI$evalTMT(tmt);
+			var expect = function () {
+				var expHelper = F3(
+					function (acc, weights, moves) {
+						var _v4 = _Utils_Tuple2(weights, moves);
+						_v4$2:
+						while (true) {
+							if (_v4.a.b) {
+								if (_v4.b.b) {
+									var _v5 = _v4.a;
+									var w = _v5.a;
+									var wrest = _v5.b;
+									var _v6 = _v4.b;
+									var m = _v6.a;
+									var mrest = _v6.b;
+									return A2(
+										$elm$core$Maybe$andThen,
+										function (_v7) {
+											var val = _v7.a;
+											return A3(expHelper, acc + (w * val), wrest, mrest);
+										},
+										m);
+								} else {
+									break _v4$2;
+								}
+							} else {
+								if (!_v4.b.b) {
+									return $elm$core$Maybe$Just(acc);
+								} else {
+									break _v4$2;
+								}
+							}
+						}
+						var _v8 = $elm$core$Debug$log('Problem taking expectation...');
+						return $elm$core$Maybe$Nothing;
+					});
+				return A2(
+					expHelper,
+					0,
+					_List_fromArray(
+						[1 / 16, 1 / 4, 3 / 8, 1 / 4, 1 / 16]));
+			}();
+			var _v1 = $author$project$Board$isOver(gs);
+			if (_v1.$ === 'Won') {
+				var winner = _v1.a;
+				return $elm$core$Maybe$Just(
+					_Utils_Tuple2(
+						_Utils_eq(winner, col) ? 255 : (-255),
+						A2(
+							$author$project$AI$N,
+							gs,
+							$author$project$AI$Eval(ma))));
+			} else {
+				var preList = A2(
+					$elm$core$List$map,
+					function (roll) {
+						return A2(
+							$elm$core$Maybe$andThen,
+							function (list) {
+								var tupList = $author$project$AI$mlistConcat(
+									A2(
+										$elm$core$List$map,
+										function (_v2) {
+											var mp = _v2.a;
+											var ts = _v2.b;
+											return A2(
+												$elm$core$Maybe$map,
+												function (_v3) {
+													var moveVal = _v3.a;
+													var newTS = _v3.b;
+													return _Utils_Tuple2(
+														moveVal,
+														_Utils_Tuple2(mp, newTS));
+												},
+												A3($author$project$AI$evalState, col, ply - 1, ts));
+										},
+										list));
+								var movesForRoll = A2($elm$core$List$map, $elm$core$Tuple$second, tupList);
+								return A2(
+									$elm$core$Maybe$map,
+									function (mval) {
+										return _Utils_Tuple2(mval, movesForRoll);
+									},
+									A2(mmArgCol, $elm$core$Tuple$first, tupList));
+							},
+							A2($author$project$BoardTree$getElem, roll - 1, ma));
+					},
+					A2($elm$core$List$range, 1, 5));
+				var updatedMA = $author$project$BoardTree$fromList(
+					$author$project$AI$mlistConcat(
+						A2(
+							$elm$core$List$map,
+							$elm$core$Maybe$map($elm$core$Tuple$second),
+							preList)));
+				return A2(
+					$elm$core$Maybe$map,
+					function (vf) {
+						return _Utils_Tuple2(
+							vf,
+							A2(
+								$author$project$AI$N,
+								gs,
+								$author$project$AI$Eval(updatedMA)));
+					},
+					expect(
+						A2(
+							$elm$core$List$map,
+							$elm$core$Maybe$map($elm$core$Tuple$first),
+							preList)));
+			}
+		}
+	});
+var $elm$core$List$maybeCons = F3(
+	function (f, mx, xs) {
+		var _v0 = f(mx);
+		if (_v0.$ === 'Just') {
+			var x = _v0.a;
+			return A2($elm$core$List$cons, x, xs);
+		} else {
+			return xs;
+		}
+	});
+var $elm$core$List$filterMap = F2(
+	function (f, xs) {
+		return A3(
+			$elm$core$List$foldr,
+			$elm$core$List$maybeCons(f),
+			_List_Nil,
+			xs);
+	});
+var $author$project$AI$evalRolledState = F4(
+	function (col, ply, roll, _v0) {
+		var gs = _v0.a;
+		var tmt = _v0.b;
+		if (!ply) {
+			return $elm$core$Maybe$Just(
+				_Utils_Tuple3(
+					$author$project$AI$gsLeafVal(gs),
+					$elm$core$Maybe$Nothing,
+					A2($author$project$AI$N, gs, tmt)));
+		} else {
+			var mmCol = A2(
+				$author$project$AI$mmArg,
+				_Utils_eq(col, gs.turn),
+				function (w) {
+					return w;
+				});
+			var mmArgColFirst = A2(
+				$author$project$AI$mmArg,
+				_Utils_eq(col, gs.turn),
+				$elm$core$Tuple$first);
+			var ma = $author$project$AI$evalTMT(tmt);
+			var _v1 = $author$project$Board$isOver(gs);
+			if (_v1.$ === 'Won') {
+				var winner = _v1.a;
+				return $elm$core$Maybe$Just(
+					_Utils_Tuple3(
+						_Utils_eq(winner, col) ? 255 : (-255),
+						$elm$core$Maybe$Nothing,
+						A2(
+							$author$project$AI$N,
+							gs,
+							$author$project$AI$Eval(ma))));
+			} else {
+				return A2(
+					$elm$core$Maybe$andThen,
+					function (list) {
+						var preList = A2(
+							$elm$core$List$filterMap,
+							function (_v2) {
+								var mp = _v2.a;
+								var ts = _v2.b;
+								return A2(
+									$elm$core$Maybe$map,
+									function (_v3) {
+										var val = _v3.a;
+										var newTS = _v3.b;
+										return _Utils_Tuple2(
+											val,
+											_Utils_Tuple2(mp, newTS));
+									},
+									A3($author$project$AI$evalState, col, ply - 1, ts));
+							},
+							list);
+						var updatedMoves = A2($elm$core$List$map, $elm$core$Tuple$second, preList);
+						var mmElem = mmArgColFirst(preList);
+						return A2(
+							$elm$core$Maybe$map,
+							function (elem) {
+								return _Utils_Tuple3(
+									elem.a,
+									elem.b.a,
+									function () {
+										var newestTS = A2(
+											$author$project$AI$N,
+											gs,
+											$author$project$AI$Eval(
+												A2(
+													$elm$core$Maybe$withDefault,
+													ma,
+													A3($author$project$BoardTree$setElem, roll - 1, updatedMoves, ma))));
+										return newestTS;
+									}());
+							},
+							mmElem);
+					},
+					A2($author$project$BoardTree$getElem, roll - 1, ma));
+			}
+		}
+	});
+var $author$project$AI$aiChooseMove = F4(
+	function (col, ply, roll, ts) {
+		var res = A4($author$project$AI$evalRolledState, col, ply, roll, ts);
+		return _Utils_Tuple2(
+			A2(
+				$elm$core$Maybe$andThen,
+				function (_v0) {
+					var mb = _v0.b;
+					return mb;
+				},
+				res),
+			A2(
+				$elm$core$Maybe$withDefault,
+				ts,
+				A2(
+					$elm$core$Maybe$map,
+					function (_v1) {
+						var newTS = _v1.c;
+						return newTS;
+					},
+					res)));
+	});
+var $elm$random$Random$Generate = function (a) {
+	return {$: 'Generate', a: a};
+};
+var $elm$random$Random$Seed = F2(
+	function (a, b) {
+		return {$: 'Seed', a: a, b: b};
+	});
+var $elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
+var $elm$random$Random$next = function (_v0) {
+	var state0 = _v0.a;
+	var incr = _v0.b;
+	return A2($elm$random$Random$Seed, ((state0 * 1664525) + incr) >>> 0, incr);
+};
+var $elm$random$Random$initialSeed = function (x) {
+	var _v0 = $elm$random$Random$next(
+		A2($elm$random$Random$Seed, 0, 1013904223));
+	var state1 = _v0.a;
+	var incr = _v0.b;
+	var state2 = (state1 + x) >>> 0;
+	return $elm$random$Random$next(
+		A2($elm$random$Random$Seed, state2, incr));
+};
+var $elm$time$Time$Name = function (a) {
+	return {$: 'Name', a: a};
+};
+var $elm$time$Time$Offset = function (a) {
+	return {$: 'Offset', a: a};
+};
+var $elm$time$Time$Zone = F2(
+	function (a, b) {
+		return {$: 'Zone', a: a, b: b};
+	});
+var $elm$time$Time$customZone = $elm$time$Time$Zone;
+var $elm$time$Time$Posix = function (a) {
+	return {$: 'Posix', a: a};
+};
+var $elm$time$Time$millisToPosix = $elm$time$Time$Posix;
+var $elm$time$Time$now = _Time_now($elm$time$Time$millisToPosix);
+var $elm$time$Time$posixToMillis = function (_v0) {
+	var millis = _v0.a;
+	return millis;
+};
+var $elm$random$Random$init = A2(
+	$elm$core$Task$andThen,
+	function (time) {
+		return $elm$core$Task$succeed(
+			$elm$random$Random$initialSeed(
+				$elm$time$Time$posixToMillis(time)));
+	},
+	$elm$time$Time$now);
+var $elm$random$Random$step = F2(
+	function (_v0, seed) {
+		var generator = _v0.a;
+		return generator(seed);
+	});
+var $elm$random$Random$onEffects = F3(
+	function (router, commands, seed) {
+		if (!commands.b) {
+			return $elm$core$Task$succeed(seed);
+		} else {
+			var generator = commands.a.a;
+			var rest = commands.b;
+			var _v1 = A2($elm$random$Random$step, generator, seed);
+			var value = _v1.a;
+			var newSeed = _v1.b;
+			return A2(
+				$elm$core$Task$andThen,
+				function (_v2) {
+					return A3($elm$random$Random$onEffects, router, rest, newSeed);
+				},
+				A2($elm$core$Platform$sendToApp, router, value));
+		}
+	});
+var $elm$random$Random$onSelfMsg = F3(
+	function (_v0, _v1, seed) {
+		return $elm$core$Task$succeed(seed);
+	});
+var $elm$random$Random$Generator = function (a) {
+	return {$: 'Generator', a: a};
+};
+var $elm$random$Random$map = F2(
+	function (func, _v0) {
+		var genA = _v0.a;
+		return $elm$random$Random$Generator(
+			function (seed0) {
+				var _v1 = genA(seed0);
+				var a = _v1.a;
+				var seed1 = _v1.b;
+				return _Utils_Tuple2(
+					func(a),
+					seed1);
+			});
+	});
+var $elm$random$Random$cmdMap = F2(
+	function (func, _v0) {
+		var generator = _v0.a;
+		return $elm$random$Random$Generate(
+			A2($elm$random$Random$map, func, generator));
+	});
+_Platform_effectManagers['Random'] = _Platform_createManager($elm$random$Random$init, $elm$random$Random$onEffects, $elm$random$Random$onSelfMsg, $elm$random$Random$cmdMap);
+var $elm$random$Random$command = _Platform_leaf('Random');
+var $elm$random$Random$generate = F2(
+	function (tagger, generator) {
+		return $elm$random$Random$command(
+			$elm$random$Random$Generate(
+				A2($elm$random$Random$map, tagger, generator)));
+	});
+var $author$project$Board$getPawn = F2(
+	function (i, gs) {
+		var squarePawn = function (sq) {
+			if (sq.$ === 'Free') {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var c = sq.a;
+				return $elm$core$Maybe$Just(
+					{color: c, square: i});
+			}
+		};
+		return A2(
+			$elm$core$Maybe$andThen,
+			squarePawn,
+			A2($author$project$BoardTree$getElem, i, gs.board));
+	});
+var $author$project$Logic$isLegal = F3(
+	function (board, p, roll) {
+		var n = p.square;
+		var m = n + roll;
+		var skippedHappiness = (n < 25) && (m > 25);
+		var legalSqType = A2(
+			$author$project$Logic$legalBySquareType,
+			$author$project$Board$squareType(n),
+			m);
+		var attemptedLeave = m >= 30;
+		if (!legalSqType) {
+			return false;
+		} else {
+			if (skippedHappiness) {
+				return false;
+			} else {
+				if (attemptedLeave) {
+					return true;
+				} else {
+					var _v0 = A2($author$project$BoardTree$getElem, m, board);
+					if (_v0.$ === 'Nothing') {
+						var _v1 = A2($elm$core$Debug$log, 'Yikes, out-of-bounds m not handled...', m);
+						return false;
+					} else {
+						if (_v0.a.$ === 'Free') {
+							var _v2 = _v0.a;
+							return true;
+						} else {
+							var destCol = _v0.a.a;
+							return !_Utils_eq(p.color, destCol);
+						}
+					}
+				}
+			}
+		}
+	});
+var $author$project$Logic$legalMoves = F2(
+	function (gs, roll) {
+		var legals = $elm$core$List$filter(
+			function (p) {
+				return A3($author$project$Logic$isLegal, gs.board, p, roll);
+			});
+		var _v0 = gs.turn;
+		if (_v0.$ === 'Black') {
+			return legals(gs.blackPawns);
+		} else {
+			return legals(gs.whitePawns);
+		}
+	});
+var $author$project$Main$highlightPieces = function (model) {
+	var _v0 = model.selected;
+	if (_v0.$ === 'Nothing') {
+		var _v1 = model.roll;
+		if (_v1.$ === 'Nothing') {
+			return _Utils_update(
+				model,
+				{highlighted: _List_Nil});
+		} else {
+			var roll = _v1.a;
+			var _v2 = A2(
+				$elm$core$List$map,
+				function (p) {
+					return p.square;
+				},
+				A2($author$project$Logic$legalMoves, model.gs, roll));
+			if (!_v2.b) {
+				return _Utils_update(
+					model,
+					{
+						gs: $author$project$Logic$switchTurn(model.gs)
+					});
+			} else {
+				var moves = _v2;
+				return _Utils_update(
+					model,
+					{highlighted: moves});
+			}
+		}
+	} else {
+		var numpawn = _v0.a;
+		var _v3 = model.roll;
+		if (_v3.$ === 'Nothing') {
+			return _Utils_update(
+				model,
+				{highlighted: _List_Nil});
+		} else {
+			var roll = _v3.a;
+			var _v4 = A2($author$project$Board$getPawn, numpawn, model.gs);
+			if (_v4.$ === 'Nothing') {
+				return _Utils_update(
+					model,
+					{highlighted: _List_Nil});
+			} else {
+				var spawn = _v4.a;
+				return A3($author$project$Logic$isLegal, model.gs.board, spawn, roll) ? _Utils_update(
+					model,
+					{
+						highlighted: A2(
+							$elm$core$List$cons,
+							spawn.square,
+							A2($elm$core$List$cons, spawn.square + roll, _List_Nil))
+					}) : _Utils_update(
+					model,
+					{
+						highlighted: A2($elm$core$List$cons, spawn.square, _List_Nil)
+					});
+			}
+		}
+	}
+};
+var $elm$core$Basics$abs = function (n) {
+	return (n < 0) ? (-n) : n;
+};
+var $elm$core$Bitwise$and = _Bitwise_and;
+var $elm$core$Bitwise$xor = _Bitwise_xor;
+var $elm$random$Random$peel = function (_v0) {
+	var state = _v0.a;
+	var word = (state ^ (state >>> ((state >>> 28) + 4))) * 277803737;
+	return ((word >>> 22) ^ word) >>> 0;
+};
+var $elm$random$Random$float = F2(
+	function (a, b) {
+		return $elm$random$Random$Generator(
+			function (seed0) {
+				var seed1 = $elm$random$Random$next(seed0);
+				var range = $elm$core$Basics$abs(b - a);
+				var n1 = $elm$random$Random$peel(seed1);
+				var n0 = $elm$random$Random$peel(seed0);
+				var lo = (134217727 & n1) * 1.0;
+				var hi = (67108863 & n0) * 1.0;
+				var val = ((hi * 134217728.0) + lo) / 9007199254740992.0;
+				var scaled = (val * range) + a;
+				return _Utils_Tuple2(
+					scaled,
+					$elm$random$Random$next(seed1));
+			});
+	});
+var $elm$random$Random$getByWeight = F3(
+	function (_v0, others, countdown) {
+		getByWeight:
+		while (true) {
+			var weight = _v0.a;
+			var value = _v0.b;
+			if (!others.b) {
+				return value;
+			} else {
+				var second = others.a;
+				var otherOthers = others.b;
+				if (_Utils_cmp(
+					countdown,
+					$elm$core$Basics$abs(weight)) < 1) {
+					return value;
+				} else {
+					var $temp$_v0 = second,
+						$temp$others = otherOthers,
+						$temp$countdown = countdown - $elm$core$Basics$abs(weight);
+					_v0 = $temp$_v0;
+					others = $temp$others;
+					countdown = $temp$countdown;
+					continue getByWeight;
+				}
+			}
+		}
+	});
+var $elm$core$List$sum = function (numbers) {
+	return A3($elm$core$List$foldl, $elm$core$Basics$add, 0, numbers);
+};
+var $elm$random$Random$weighted = F2(
+	function (first, others) {
+		var normalize = function (_v0) {
+			var weight = _v0.a;
+			return $elm$core$Basics$abs(weight);
+		};
+		var total = normalize(first) + $elm$core$List$sum(
+			A2($elm$core$List$map, normalize, others));
+		return A2(
+			$elm$random$Random$map,
+			A2($elm$random$Random$getByWeight, first, others),
+			A2($elm$random$Random$float, 0, total));
+	});
+var $author$project$Main$rollGenerator = A2(
+	$elm$random$Random$weighted,
+	_Utils_Tuple2(4, 1),
+	_List_fromArray(
+		[
+			_Utils_Tuple2(6, 2),
+			_Utils_Tuple2(4, 3),
+			_Utils_Tuple2(1, 4),
+			_Utils_Tuple2(1, 5)
+		]));
+var $author$project$Main$selectPiece = F2(
+	function (n, model) {
+		return _Utils_update(
+			model,
+			{
+				selected: $elm$core$Maybe$Just(n)
+			});
+	});
+var $author$project$Main$setRoll = F2(
+	function (i, model) {
+		return _Utils_update(
+			model,
+			{
+				roll: $elm$core$Maybe$Just(i)
+			});
+	});
+var $author$project$Main$clearRoll = function (model) {
+	return _Utils_update(
+		model,
+		{roll: $elm$core$Maybe$Nothing});
+};
 var $author$project$Main$tryPlay = F2(
 	function (n, model) {
 		return A2(
@@ -6397,6 +6938,31 @@ var $author$project$Main$update = F2(
 									model.roll));
 						},
 						model.selected));
+			case 'QueryAI':
+				var newModel = A2(
+					$elm$core$Maybe$withDefault,
+					model,
+					A2(
+						$elm$core$Maybe$map,
+						function (roll) {
+							var ts = $author$project$AI$newNode(model.gs);
+							var _v6 = A4($author$project$AI$aiChooseMove, model.gs.turn, 2, roll, ts);
+							var mp = _v6.a;
+							var newTS = _v6.b;
+							return _Utils_update(
+								model,
+								{
+									selected: A2(
+										$elm$core$Maybe$map,
+										function (_v7) {
+											var square = _v7.square;
+											return square;
+										},
+										mp)
+								});
+						},
+						model.roll));
+				return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
 			case 'Noop':
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 			case 'Unselect':
@@ -6426,8 +6992,8 @@ var $author$project$Main$Click = function (a) {
 	return {$: 'Click', a: a};
 };
 var $author$project$Main$Play = {$: 'Play'};
+var $author$project$Main$QueryAI = {$: 'QueryAI'};
 var $author$project$Main$QueryRoll = {$: 'QueryRoll'};
-var $author$project$Main$Reset = {$: 'Reset'};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
@@ -6526,22 +7092,6 @@ var $elm$svg$Svg$Events$onClick = function (msg) {
 		$elm$json$Json$Decode$succeed(msg));
 };
 var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
-var $elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
-		}
-	});
-var $elm$core$List$concat = function (lists) {
-	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
-};
-var $elm$core$List$concatMap = F2(
-	function (f, list) {
-		return $elm$core$List$concat(
-			A2($elm$core$List$map, f, list));
-	});
 var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
 var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
 var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
@@ -6616,6 +7166,7 @@ var $elm$core$List$member = F2(
 	});
 var $elm$svg$Svg$Attributes$rx = _VirtualDom_attribute('rx');
 var $elm$svg$Svg$Attributes$ry = _VirtualDom_attribute('ry');
+var $elm$svg$Svg$Attributes$strokeWidth = _VirtualDom_attribute('stroke-width');
 var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
 var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
 var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
@@ -6645,6 +7196,8 @@ var $author$project$Main$svgSquare = F5(
 						$elm$core$Debug$toString(rlen)),
 						$elm$svg$Svg$Attributes$stroke(
 						A2($elm$core$List$member, n, model.highlighted) ? 'pink' : 'black'),
+						$elm$svg$Svg$Attributes$strokeWidth(
+						A2($elm$core$List$member, n, model.highlighted) ? '5' : '1'),
 						$elm$svg$Svg$Attributes$fill(
 						(!A2($elm$core$Basics$modBy, 2, n)) ? 'beige' : 'burlywood'),
 						$elm$svg$Svg$Events$onClick(
@@ -6679,7 +7232,7 @@ var $author$project$Main$svgSquare = F5(
 				return _List_Nil;
 			}
 		};
-		var picSize = '88';
+		var picSize = '90';
 		var sqImage = function () {
 			var attrList = _List_fromArray(
 				[
@@ -6701,7 +7254,7 @@ var $author$project$Main$svgSquare = F5(
 							$elm$svg$Svg$image,
 							A2(
 								$elm$core$List$cons,
-								$author$project$Main$href('images/rebirth.png'),
+								$author$project$Main$href('images/rebirth.svg'),
 								attrList),
 							_List_Nil)
 						]);
@@ -6715,7 +7268,7 @@ var $author$project$Main$svgSquare = F5(
 									$elm$svg$Svg$image,
 									A2(
 										$elm$core$List$cons,
-										$author$project$Main$href('images/happy.png'),
+										$author$project$Main$href('images/happy.svg'),
 										attrList),
 									_List_Nil)
 								]);
@@ -6727,7 +7280,7 @@ var $author$project$Main$svgSquare = F5(
 									$elm$svg$Svg$image,
 									A2(
 										$elm$core$List$cons,
-										$author$project$Main$href('images/water.png'),
+										$author$project$Main$href('images/water.svg'),
 										attrList),
 									_List_Nil)
 								]);
@@ -6739,7 +7292,7 @@ var $author$project$Main$svgSquare = F5(
 									$elm$svg$Svg$image,
 									A2(
 										$elm$core$List$cons,
-										$author$project$Main$href('images/three.png'),
+										$author$project$Main$href('images/three.svg'),
 										attrList),
 									_List_Nil)
 								]);
@@ -6751,7 +7304,7 @@ var $author$project$Main$svgSquare = F5(
 									$elm$svg$Svg$image,
 									A2(
 										$elm$core$List$cons,
-										$author$project$Main$href('images/two.png'),
+										$author$project$Main$href('images/two.svg'),
 										attrList),
 									_List_Nil)
 								]);
@@ -6763,7 +7316,7 @@ var $author$project$Main$svgSquare = F5(
 									$elm$svg$Svg$image,
 									A2(
 										$elm$core$List$cons,
-										$author$project$Main$href('images/horus.png'),
+										$author$project$Main$href('images/horus.svg'),
 										attrList),
 									_List_Nil)
 								]);
@@ -7062,11 +7615,11 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$button,
 						_List_fromArray(
 							[
-								$elm$html$Html$Events$onClick($author$project$Main$Reset)
+								$elm$html$Html$Events$onClick($author$project$Main$QueryAI)
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('Reset')
+								$elm$html$Html$text('Ask the AI!')
 							]))
 					])),
 				A2(

@@ -1,0 +1,62 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Just for the outline -->
+  <!-- <rect -->
+  <!--     fill   = "none" -->
+  <!--     stroke = "black" -->
+  <!--     x      = "0" -->
+  <!--     y      = "0" -->
+  <!--     width  = "100" -->
+  <!--     height = "100"/> -->
+
+  <!-- one person -->
+  <path
+      fill   = "none"
+      stroke = "black"
+      d      =
+      "M  15  75
+       l  30   0
+       m -10   0
+       c  10 -25
+         -10 -20
+         -15  -1
+       l   0 -35
+       c  -8  -3
+          -8 -14
+           0 -15
+       c   8   2
+           8  14
+           0  15
+       l  -5  15
+       l  15  -4
+       m -10  -9
+       l   3  12
+       l  15 -10
+      "
+  />
+
+  <!-- one person -->
+  <path
+      fill   = "none"
+      stroke = "black"
+      d      =
+      "M  55  75
+       l  30   0
+       m -10   0
+       c  10 -25
+         -10 -20
+         -15  -1
+       l   0 -35
+       c  -8  -3
+          -8 -14
+           0 -15
+       c   8   2
+           8  14
+           0  15
+       l  -5  15
+       l  15  -4
+       m -10  -9
+       l   3  12
+       l  15 -10
+      "
+  />
+</svg>

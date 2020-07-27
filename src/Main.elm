@@ -16,9 +16,10 @@
 module Main exposing (..)
 
 -- From our project
+import BoardTree as BT exposing (..)
 import Board exposing (..)
 import Logic exposing (..)
-import BoardTree as BT exposing (..)
+import AI    exposing (..)
 
 -- For html-side
 import Browser
@@ -59,6 +60,7 @@ type alias Model =
   , roll        : Maybe Int
   , selected    : Maybe Int
   , highlighted : List Int -- or BT.Tree
+  , ts          : ThunkState
   -- maybe something else??
   }
 
@@ -68,12 +70,14 @@ initModel =
   , roll = Nothing
   , selected = Nothing
   , highlighted = []
+  , ts = newNode initGame
   }
 
 type Msg
   = QueryRoll   -- request random number
   | GetRoll Int -- receive random number
-  | Click Int  -- select piece
+  | Click Int   -- select piece
+  | QueryAI     -- ask the AI to select and play piece
   | Noop
     -- Deprecated for new interface:
   | Unselect -- unselect piece (if you click elsewhere)
@@ -166,6 +170,29 @@ update msg model =
           checkSquare m
         ) |> Maybe.withDefault (checkSquare m) -- no roll
         ) |> Maybe.withDefault (select ()) -- no selection
+    QueryAI ->
+      let
+        newModel =
+          model.roll |> Maybe.map (\roll ->
+          let
+            -- for now don't save results
+            ts = newNode model.gs
+            (mp, newTS) =
+              aiChooseMove
+                model.gs.turn
+                2
+                roll
+                ts
+          in
+            { model
+            | selected =
+                mp |> Maybe.map (\{square} ->
+                  square
+                )
+            }
+          ) |> Maybe.withDefault model
+      in
+        (newModel, Cmd.none)
     Noop ->
       (model, Cmd.none)
     Unselect ->
@@ -276,6 +303,9 @@ svgSquare length model n i j =
         , SA.stroke <|
             if List.member n model.highlighted then "pink"
             else "black"
+        , SA.strokeWidth <|
+            if List.member n model.highlighted then "5"
+            else "1"
         , SA.fill <|
             if 0 == modBy 2 n
             then "beige"
@@ -302,7 +332,7 @@ svgSquare length model n i j =
         Nothing ->
           []
     maybePawn = getPawn n model.gs
-    picSize = "88"
+    picSize = "90"
     sqImage =
       let
         attrList =
@@ -315,27 +345,33 @@ svgSquare length model n i j =
         case squareType n of
           Rebirth ->
             [ Svg.image
-              ((href "images/rebirth.png") :: attrList) []
+              ((href "images/rebirth.svg") :: attrList) []
+              -- ((href "images/rebirth.png") :: attrList) []
             ]
           Spec Happy ->
             [ Svg.image
-              ((href "images/happy.png") :: attrList) []
+              ((href "images/happy.svg") :: attrList) []
+              -- ((href "images/happy.png") :: attrList) []
             ]
           Spec Water ->
             [ Svg.image
-              ((href "images/water.png") :: attrList) []
+              ((href "images/water.svg") :: attrList) []
+              -- ((href "images/water.png") :: attrList) []
             ]
           Spec Truths ->
             [ Svg.image
-              ((href "images/three.png") :: attrList) []
+              ((href "images/three.svg") :: attrList) []
+              -- ((href "images/three.png") :: attrList) []
             ]
           Spec Reatoum ->
             [ Svg.image
-              ((href "images/two.png") :: attrList) []
+              ((href "images/two.svg") :: attrList) []
+              -- ((href "images/two.png") :: attrList) []
             ]
           Spec Horus ->
             [ Svg.image
-              ((href "images/horus.png") :: attrList) []
+              ((href "images/horus.svg") :: attrList) []
+              -- ((href "images/horus.png") :: attrList) []
             ]
           _ ->
             []
@@ -481,7 +517,6 @@ view model =
               , SE.onClick (Click 30)] []
             ]
             -- else newline
-
   in
     div
       []
@@ -502,11 +537,17 @@ view model =
                     Nothing -> "Select a piece"
               ]
           , text "\t"
-          , button [ Html.Events.onClick (Reset)]
+          , button [ Html.Events.onClick (QueryAI)]
               [ text <|
-                  "Reset"
+                  "Ask the AI!"
               ]
-              -- "Play piece: " ++ Debug.toString model.selected]
+          -- -- No reset button for now!
+          -- , text "\t"
+          -- , button [ Html.Events.onClick (Reset)]
+          --     [ text <|
+          --         "Reset"
+          --     ]
+          --     -- "Play piece: " ++ Debug.toString model.selected]
           ]
       , div [centering] [svgBoard model]
 

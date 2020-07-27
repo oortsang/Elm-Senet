@@ -1,0 +1,28 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Just for the outline -->
+  <!-- <rect -->
+  <!--     fill   = "none" -->
+  <!--     stroke = "black" -->
+  <!--     x      = "0" -->
+  <!--     y      = "0" -->
+  <!--     width  = "100" -->
+  <!--     height = "100"/> -->
+  <path
+    fill   = "none"
+    stroke = "black"
+    stroke-width = "1.5"
+    d =
+      "M  50  85
+       l   0 -40
+       m -20   0
+       l  40   0
+       m -20   0
+       c -12 -14
+         -12 -28
+           0 -28
+       c  12   0
+          12  14
+           0  28
+       "
+  />
+</svg>
