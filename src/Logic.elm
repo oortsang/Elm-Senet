@@ -393,7 +393,7 @@ playPawn p roll gs =
       moveToRebirth ()
     -- Enforce landing on house of happiness
     else if skippedHappiness then
-      let _ = Debug.log "skippedHappiness" skippedHappiness in
+      -- let _ = Debug.log "skippedHappiness" skippedHappiness in
       Nothing
     -- Let the pawn leave the board
     else if attemptedLeave then

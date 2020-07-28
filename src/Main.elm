@@ -4,12 +4,10 @@
 
 -- TODO:
 --   0. Add a way to promote the pawns
---   1. Figure out highlighting/selection logic
---   2. Also fix the rng to be not uniform
---   3. Should there be a button to ask for the roll?
---   3.5. Skip moves that don't have legal moves
---   4. Add images for the board
---   5. Check for game termination!
+--   1. Should there be a button to ask for the roll?
+--   2. Skip moves that don't have legal moves
+--   3. Check for game termination!
+--   4. Save computation of thunkstates!
 
 
 
@@ -179,7 +177,7 @@ update msg model =
         (mp, newTS) =
           aiChooseMove
             model.gs.turn
-            2
+            3
             roll
             ts
       in
@@ -304,7 +302,7 @@ svgSquare length model n i j =
         , SA.ry <| Debug.toString rlen
         -- pick colors
         , SA.stroke <|
-            if List.member n model.highlighted then "pink"
+            if List.member n model.highlighted then "lightgreen"
             else "black"
         , SA.strokeWidth <|
             if List.member n model.highlighted then "5"
@@ -486,9 +484,15 @@ view model =
     turn =
       Html.h2 [centering]
         [ text <|
-            if model.gs.turn == White
-            then "White's turn"
-            else "Black's turn"
+            case isOver model.gs of
+              NotDone ->
+                if model.gs.turn == White
+                then "White's turn"
+                else "Black's turn"
+              Won White ->
+                "White won!"
+              Won Black ->
+                "Black won!"
         ]
     wscoreboard =
       Html.h3 [centering]
@@ -533,17 +537,17 @@ view model =
                     Nothing -> "Roll!"
               ]
           , text "\t"
+          , button [ Html.Events.onClick (QueryAI)]
+              [ text <|
+                  "Ask the AI!"
+              ]
+          , text "\t"
           , button [ Html.Events.onClick (Play)]
               [ text <|
                   case model.selected of
                     Just s  ->
                       "Play piece on square " ++ (Debug.toString (s+1))
                     Nothing -> "Select a piece"
-              ]
-          , text "\t"
-          , button [ Html.Events.onClick (QueryAI)]
-              [ text <|
-                  "Ask the AI!"
               ]
           -- -- No reset button for now!
           -- , text "\t"

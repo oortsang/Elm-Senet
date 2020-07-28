@@ -3,6 +3,8 @@
 -- AI.elm: an artificial intelligence player
 -- currently based on minimax and alpha-beta pruning
 
+
+
 module AI exposing (..)
 
 import BoardTree as BT exposing (..)
@@ -63,9 +65,15 @@ printTSBoard =
 -- score roughly represents the (opposite of) distance that black
 -- needs to move its pieces compared to white
 -- where higher is better for black
-gsLeafVal : GameState -> Float
-gsLeafVal gs =
+gsLeafVal : Player -> GameState -> Float
+gsLeafVal col gs =
   let
+    colCorrection =
+      toFloat <|
+        case col of
+          Black ->  1
+          White -> -1
+
     -- arbitrarily set black to negative
     -- so that it evaluates from black's perspective
     sign sq =
@@ -79,14 +87,19 @@ gsLeafVal gs =
       (lastFreeBy 14 gs)
       |> Maybe.withDefault 0
 
+    pawnAdv =
+      20 * toFloat (gs.whitePawnCnt - gs.blackPawnCnt)
+
     -- Value Function
     -- Choose values based on distance from the end
     valf : Int -> SquareState -> Float
     valf i sq =
       case squareType i of
+        Spec Happy ->
+          (sign sq) * -3.0 -- want to provide an extra incentive to go heernat
         Spec Horus ->
           -- basically as good as having promoted it
-          0.0
+          (sign sq) * -12.0
         Spec Reatoum ->
           -- 1/4 chance of success
           -- 3/4 chance of demotion
@@ -98,24 +111,25 @@ gsLeafVal gs =
         _ ->
           (sign sq) * (toFloat (30-i))
   in
+    (*) colCorrection <|
     case isOver gs of
       NotDone ->
         -- maybe could make more efficient with some
         -- kind of enumerate-toList/map type thing
         List.range 0 29        |> List.map  (\i ->
         BT.getElem i gs.board  |> Maybe.map (\sq ->
-        valf i sq
+        (valf i sq) + (pawnAdv)
         ) |> Maybe.withDefault 0.0)
         |> List.foldl (+) 0.0 -- take the sum
       Won White ->
-        -200.0
+        -1000.0
       Won Black ->
-        200.0
+        1000.0
 
 -- Wrapper for gsLeafVal to apply to thunkstate
-tsLeafVal : ThunkState -> Float
-tsLeafVal (N gs tmt) =
-  gsLeafVal gs
+tsLeafVal : Player -> ThunkState -> Float
+tsLeafVal col (N gs tmt) =
+  gsLeafVal col gs
 
 
 -- For each possible roll, find the possible moves and outcomes
@@ -267,7 +281,7 @@ evalState : Player -> Int -> ThunkState -> Maybe (Float, ThunkState)
 evalState col ply (N gs tmt) =
   if ply == 0 then
     -- evaluate the current state without further evaluation
-    Just <| (gsLeafVal gs, N gs tmt)
+    Just <| (gsLeafVal col gs, N gs tmt)
   else
     -- evaluate each of the possibilities of the children...
     -- then take the best move
@@ -361,7 +375,7 @@ mlistConcat xs =
 evalRolledState : Player -> Int -> Int -> ThunkState -> Maybe (Float, Maybe Pawn, ThunkState)
 evalRolledState col ply roll (N gs tmt) =
   if ply == 0 then
-    Just <| (gsLeafVal gs, Nothing, N gs tmt)
+    Just <| (gsLeafVal col gs, Nothing, N gs tmt)
   else
     -- evaluate each of the possibilities of the children...
     -- then take the best move
@@ -398,6 +412,12 @@ evalRolledState col ply roll (N gs tmt) =
             updatedMoves =
               preList
                 |> List.map Tuple.second
+
+            _ = Debug.log "Options" optionDescription
+            optionDescription =
+              preList |> List.map (\(v, (mp, newts)) ->
+              (mp, v)
+              )
           in
             mmElem |> Maybe.map (\elem ->
               ( elem |> Tuple.first
