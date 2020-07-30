@@ -118,7 +118,7 @@ squareType n =
 -- Jequier's rules use 5, while Kendall's rules use 7.
 -- For testing purposes, fewer may be easier
 initPawnCount : Int
-initPawnCount = 7
+initPawnCount = 1
 
 -- Not sure whether we need to track alive/dead or happy/not happy
 -- we should just be able to control movement past 26

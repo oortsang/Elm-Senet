@@ -24,7 +24,7 @@ import Browser
 import Browser.Events
 
 import Html exposing (Html, text, button, div, br, h3)
-import Html.Attributes
+import Html.Attributes as HA
 import Html.Events
 
 import Svg
@@ -59,16 +59,18 @@ type alias Model =
   , selected    : Maybe Int
   , highlighted : List Int -- or BT.Tree
   , ts          : ThunkState
+  , skippedMove : Bool
   -- maybe something else??
   }
 
 initModel : Model
 initModel =
-  { gs = initGame
-  , roll = Nothing
-  , selected = Nothing
+  { gs          = initGame
+  , roll        = Nothing
+  , selected    = Nothing
   , highlighted = []
-  , ts = newNode initGame
+  , ts          = newNode initGame
+  , skippedMove = False
   }
 
 type Msg
@@ -76,11 +78,12 @@ type Msg
   | GetRoll Int -- receive random number
   | Click Int   -- select piece
   | QueryAI     -- ask the AI to select and play piece
+  | Reset
+  | Skip
   | Noop
-    -- Deprecated for new interface:
+    -- Somewhat redundant for new interface:
   | Unselect -- unselect piece (if you click elsewhere)
   | Play     -- deprecated -- use Click instead
-  | Reset
 
 ------ INIT ------
 init : Flags -> (Model, Cmd Msg)
@@ -111,7 +114,9 @@ update msg model =
       -- if not, the turn should be skipped
       case model.roll of
         Nothing ->
-          (model, Random.generate GetRoll rollGenerator)
+          ( { model | skippedMove = False}
+          , Random.generate GetRoll rollGenerator
+          )
         _ ->
           -- no re-rolls!
           (model, Cmd.none)
@@ -119,7 +124,6 @@ update msg model =
       let
         newModel = model |> setRoll i |> highlightPieces
       in
-      --(setRoll i model, Cmd.none)
       (newModel, Cmd.none)
     Click n ->
       let
@@ -138,13 +142,9 @@ update msg model =
               if col == currTurn then
                 (selectPiece n model |> highlightPieces, Cmd.none)
               else
-                -- nothing ()
                 unselect ()
             _ ->
-              -- nothing ()
               unselect ()
-        nothing () =
-          (model, Cmd.none)
         currTurn = model.gs.turn
 
         checkSquare : Int -> (Model, Cmd Msg)
@@ -170,7 +170,7 @@ update msg model =
         ) |> Maybe.withDefault (select ()) -- no selection
     QueryAI ->
       -- Selects then plays a piece given by the AI
-      model.roll |> Maybe.andThen (\roll ->
+      model.roll |> Maybe.map (\roll ->
       let
         -- for now don't save results
         ts = newNode model.gs
@@ -181,11 +181,23 @@ update msg model =
             roll
             ts
       in
-        mp    |> Maybe.map (\p ->
-        model |> update (Click p.square)
-              |> opChain (update Play)
-        )
+        case mp of
+          Just p ->
+            model |> update (Click p.square)
+                  |> opChain (update Play)
+          Nothing ->
+            model |> update Skip
+        -- mp    |> Maybe.map (\p ->
+        -- model |> update (Click p.square)
+        --       |> opChain (update Play)
+        -- )
       ) |> Maybe.withDefault (model, Cmd.none)
+    Skip ->
+      ( { model
+        | gs = switchTurn model.gs
+        } |> clearRoll
+      , Cmd.none
+      )
     Noop ->
       (model, Cmd.none)
     Unselect ->
@@ -235,36 +247,45 @@ unselectPiece : Model -> Model
 unselectPiece model =
   { model | selected = Nothing }
 
--- calls Board.makeMove and clears the model's roll
+-- calls Logic.makeMove and clears the model's roll
 tryPlay : Int -> Model -> Maybe Model
 tryPlay n model =
   model.roll            |> Maybe.andThen (\r ->
   getPawn  n model.gs   |> Maybe.andThen (\p ->
   makeMove p r model.gs |> Maybe.map (\js ->
-  clearRoll { model | gs = js })))
-  -- { model | gs = js, roll = Nothing })))
+  clearRoll { model | gs = js }
+  ) -- perhaps catch the empty case
+  ))
+
 
 highlightPieces : Model -> Model
 highlightPieces model =
-  case model.selected of
-    Nothing ->
-      case model.roll of
-        Nothing -> { model | highlighted = []}
-        Just roll ->
-          case List.map (\p -> p.square) (legalMoves model.gs roll) of
-            [] -> { model | gs = switchTurn model.gs}
-            moves -> { model | highlighted = moves}
-    Just numpawn ->
-      case model.roll of
-        Nothing -> { model | highlighted = []}
-        Just roll ->
-          case getPawn numpawn model.gs of
-            Nothing -> { model | highlighted = []}
-            Just spawn ->
-              if isLegal model.gs.board spawn roll then
-                { model | highlighted =
-                  spawn.square :: (spawn.square + roll) :: []}
-              else { model | highlighted = spawn.square :: [] }
+  Maybe.withDefault { model | highlighted = [] } <|
+    case model.selected of
+      Nothing ->
+        model.roll |> Maybe.map (\roll ->
+        case List.map (\p -> p.square) (legalMoves model.gs roll) of
+          [] ->
+            -- if there are no moves, switch to the next turn
+            -- but also send back pieces in the end zone
+            -- and leave an indicator
+            -- clearRoll { model | gs = switchTurn model.gs }
+            { model | skippedMove = True }
+          moves ->
+            { model | highlighted = moves }
+        )
+      Just numpawn ->
+        model.roll               |> Maybe.andThen (\roll ->
+        getPawn numpawn model.gs |> Maybe.map (\spawn ->
+        if isLegal model.gs.board spawn roll then
+          { model
+          | highlighted = [spawn.square, (spawn.square + roll)]
+          }
+        else
+          { model
+          | highlighted = [spawn.square]
+          }
+        ))
 
 
 -- chain updates more easily
@@ -278,8 +299,8 @@ opChain op (model, cmsg) =
 ------ VIEW ------
 
 newline = br [] []
-centering = Html.Attributes.align "center"
-monospace = Html.Attributes.style "font-family" "monospace"
+centering = HA.align "center"
+monospace = HA.style "font-family" "monospace"
 
 
 svgSquare : Int -> Model -> Int -> Int -> Int -> Html.Html Msg
@@ -512,7 +533,7 @@ view model =
             ++ (Debug.toString (7 - model.gs.blackPawnCnt))
             ++ " pawn(s)! "
         ]
-    -- THis image never shows up lol
+    -- This image never shows up lol
     afterlifepic =
             -- if existspromotion model.gs model.roll then
             div [centering]
@@ -524,11 +545,51 @@ view model =
               , SE.onClick (Click 30)] []
             ]
             -- else newline
+    selector col =
+      Html.select
+        [ HA.name <|
+            case col of
+              Black -> "Player 1 (Black)"
+              White -> "Player 2 (Whtie)"
+        ]
+        [ Html.option
+            [HA.value "human"]
+            [text "Human"]
+        , Html.option
+            [HA.value "AI"]
+            [text "AI (fast)"]
+        ]
   in
     div
       []
       [ title
       , turn
+      , div []
+          [ Html.table
+              [ HA.style "width" "100%" ]
+              [ Html.tr []
+                  [ Html.td [HA.style "width" "80%"] []
+                  , Html.td [HA.style "width" "20%"]
+                      [text   "Player 1 (Black): ", selector Black]
+                  ]
+              , Html.tr []
+                  [ Html.td [] []
+                  , Html.td []
+                      [text "\tPlayer 2 (White): ", selector White]
+                  ]
+              , Html.tr []
+                  [ Html.td [] []
+                  , Html.td []
+                      [ button
+                          [Html.Events.onClick Skip
+                          , HA.disabled
+                              (NotDone == isOver model.gs)
+                          ]
+                          [ text "New game" ]
+                      ]
+                  ]
+              ]
+        ]
       , div [centering]
           [ button [ Html.Events.onClick (QueryRoll)]
               [ text <|
@@ -542,34 +603,32 @@ view model =
                   "Ask the AI!"
               ]
           , text "\t"
-          , button [ Html.Events.onClick (Play)]
+          , button
+              [ Html.Events.onClick (Play)
+              , HA.disabled
+                  (Nothing == model.selected)
+              ]
               [ text <|
                   case model.selected of
                     Just s  ->
-                      "Play piece on square " ++ (Debug.toString (s+1))
+                      if existsPromotion model.gs model.roll then
+                        "Promote pawn on square " ++ (Debug.toString (s+1))
+                      else
+                        "Play piece on square " ++ (Debug.toString (s+1))
                     Nothing -> "Select a piece"
               ]
-          -- -- No reset button for now!
-          -- , text "\t"
-          -- , button [ Html.Events.onClick (Reset)]
-          --     [ text <|
-          --         "Reset"
-          --     ]
-          --     -- "Play piece: " ++ Debug.toString model.selected]
+          , button
+              [Html.Events.onClick Skip
+              , HA.disabled
+                  (not model.skippedMove)
+              ]
+              [ text "Skip turn" ]
           ]
       , div [centering] [svgBoard model]
-
-      -- , div [centering]
-      --     [ button [ Html.Events.onClick (Play)]
-      --         [text <| "Play piece: " ++ Debug.toString model.selected]
-      --     , newline
-      --     ]
-      -- , newline
-      -- , buttonBoard model
       , div [centering]
           [ button [ Html.Events.onClick (Click 30)]
               [ text <|
-                  if existspromotion model.gs model.roll then "Promote"
+                  if existsPromotion model.gs model.roll then "Promote"
                   else "No Promotion Available"
               ]
           ]

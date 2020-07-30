@@ -134,18 +134,37 @@ allMoves gs roll =
         makeMove p roll gs |> maybeToList
         ) |> List.concat
 
-existspromotion : GameState -> Maybe Int -> Bool
-existspromotion gs roll =
+existsPromotion : GameState -> Maybe Int -> Bool
+existsPromotion gs roll =
   case roll of
     Nothing -> False
     Just i ->
       let
-        bpotential = List.filter (\p -> p.square + i >= 30) gs.blackPawns
-        wpotential = List.filter (\p -> p.square + i >= 30) gs.whitePawns
+        checkPawn sq =
+          case sq of
+            25 -> i==5
+            26 -> False
+            27 -> i==3
+            28 -> i==2
+            29 -> True
+            _  -> False
+        plist =
+          case gs.turn of
+            Black -> gs.blackPawns
+            White -> gs.whitePawns
       in
-      case gs.turn of
-        Black -> List.foldr (||) False (List.map (\p -> isLegal gs.board p i) bpotential)
-        White -> List.foldr (||) False (List.map (\p -> isLegal gs.board p i) wpotential)
+        plist
+          |> List.map (\p -> checkPawn p.square)
+          |> List.foldr (||) False
+
+
+      -- let
+      --   bpotential = List.filter (\p -> p.square + i >= 30) gs.blackPawns
+      --   wpotential = List.filter (\p -> p.square + i >= 30) gs.whitePawns
+      -- in
+      -- case gs.turn of
+      --   Black -> List.foldr (||) False (List.map (\p -> isLegal gs.board p i) bpotential)
+      --   White -> List.foldr (||) False (List.map (\p -> isLegal gs.board p i) wpotential)
 
 
 ------ 2. Pawn Movement and Game Logic ------
