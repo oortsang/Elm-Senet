@@ -336,10 +336,9 @@ makeMove p roll gs =
           if (c1==c2) && (c1 == p.color) then
             -- boot pawn on square sq to the
             -- the last open spot before rebirth
-            lastFreeBy 14 js |>
-              Maybe.andThen (\lf ->
-              pawnSwap sq lf js) |>
-              Maybe.withDefault js
+            lastFreeBy 14 js |> Maybe.andThen (\lf ->
+            pawnSwap sq lf js
+            ) |> Maybe.withDefault js
           else
             js
         _ ->

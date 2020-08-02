@@ -5435,7 +5435,7 @@ var $author$project$BoardTree$fromList = function (xs) {
 		$elm$core$List$length(xs),
 		xs);
 };
-var $author$project$Board$initPawnCount = 7;
+var $author$project$Board$initPawnCount = 5;
 var $elm$core$Basics$modBy = _Basics_modBy;
 var $elm$core$List$repeatHelp = F3(
 	function (result, n, value) {
@@ -6724,6 +6724,38 @@ var $author$project$Logic$legalMoves = F2(
 			return legals(gs.whitePawns);
 		}
 	});
+var $author$project$Main$pawnSendBack = function (model) {
+	var dest = A2($author$project$Logic$lastFreeBy, 14, model.gs);
+	var trySendFrom = F2(
+		function (sq, js) {
+			return A2(
+				$elm$core$Maybe$withDefault,
+				js,
+				A2(
+					$elm$core$Maybe$andThen,
+					function (lf) {
+						var _v0 = A2($author$project$BoardTree$getElem, sq, js.board);
+						if ((_v0.$ === 'Just') && (_v0.a.$ === 'Occ')) {
+							var col = _v0.a.a;
+							return _Utils_eq(col, js.turn) ? A3($author$project$Logic$pawnSwap, sq, lf, js) : $elm$core$Maybe$Nothing;
+						} else {
+							return $elm$core$Maybe$Nothing;
+						}
+					},
+					dest));
+		});
+	return _Utils_update(
+		model,
+		{
+			gs: A2(
+				trySendFrom,
+				29,
+				A2(
+					trySendFrom,
+					28,
+					A2(trySendFrom, 27, model.gs)))
+		});
+};
 var $author$project$Main$highlightPieces = function (model) {
 	return A2(
 		$elm$core$Maybe$withDefault,
@@ -6743,8 +6775,9 @@ var $author$project$Main$highlightPieces = function (model) {
 							},
 							A2($author$project$Logic$legalMoves, model.gs, roll));
 						if (!_v1.b) {
+							var newModel = $author$project$Main$pawnSendBack(model);
 							return _Utils_update(
-								model,
+								newModel,
 								{skippedMove: true});
 						} else {
 							var moves = _v1;
@@ -7152,48 +7185,6 @@ var $elm$html$Html$Attributes$boolProperty = F2(
 	});
 var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
 var $elm$html$Html$div = _VirtualDom_node('div');
-var $author$project$Logic$existsPromotion = F2(
-	function (gs, roll) {
-		if (roll.$ === 'Nothing') {
-			return false;
-		} else {
-			var i = roll.a;
-			var plist = function () {
-				var _v2 = gs.turn;
-				if (_v2.$ === 'Black') {
-					return gs.blackPawns;
-				} else {
-					return gs.whitePawns;
-				}
-			}();
-			var checkPawn = function (sq) {
-				switch (sq) {
-					case 25:
-						return i === 5;
-					case 26:
-						return false;
-					case 27:
-						return i === 3;
-					case 28:
-						return i === 2;
-					case 29:
-						return true;
-					default:
-						return false;
-				}
-			};
-			return A3(
-				$elm$core$List$foldr,
-				$elm$core$Basics$or,
-				false,
-				A2(
-					$elm$core$List$map,
-					function (p) {
-						return checkPawn(p.square);
-					},
-					plist));
-		}
-	});
 var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
 var $elm$html$Html$h1 = _VirtualDom_node('h1');
 var $elm$html$Html$h2 = _VirtualDom_node('h2');
@@ -7281,7 +7272,7 @@ var $author$project$Main$scoreboard = F2(
 	function (n, color) {
 		var rlen = ((2 * 90) / 7) | 0;
 		var spacing = ((2 * rlen) / 3) | 0;
-		var width = ((($author$project$Board$initPawnCount - 1) * spacing) + (2 * rlen)) + 4;
+		var width = (((($author$project$Board$initPawnCount - 1) + 2) * spacing) + (2 * rlen)) + 4;
 		var outline = A2(
 			$elm$svg$Svg$rect,
 			_List_fromArray(
@@ -7335,9 +7326,7 @@ var $author$project$Main$scoreboard = F2(
 			$elm$svg$Svg$svg,
 			_List_fromArray(
 				[
-					$elm$svg$Svg$Attributes$width(
-					$elm$core$Debug$toString(width)),
-					$elm$svg$Svg$Attributes$height('100'),
+					$elm$svg$Svg$Attributes$width('80%'),
 					$elm$svg$Svg$Attributes$viewBox(
 					'0 0 ' + ($elm$core$Debug$toString(width) + ' 100'))
 				]),
@@ -7582,11 +7571,22 @@ var $author$project$Main$svgBoard = function (model) {
 				$elm$svg$Svg$Attributes$fill('gray')
 			]),
 		_List_Nil);
+	var afterlife = A2(
+		$elm$svg$Svg$image,
+		_List_fromArray(
+			[
+				$elm$svg$Svg$Attributes$x('1050'),
+				$elm$svg$Svg$Attributes$y('100'),
+				$author$project$Main$href('images/afterlife.jfif'),
+				$elm$svg$Svg$Events$onClick(
+				$author$project$Main$Click(30))
+			]),
+		_List_Nil);
 	return A2(
 		$elm$svg$Svg$svg,
 		_List_fromArray(
 			[
-				$elm$svg$Svg$Attributes$viewBox('-50 -20 1100 350')
+				$elm$svg$Svg$Attributes$viewBox('-50 -20 1060 350')
 			]),
 		_Utils_ap(
 			_List_fromArray(
@@ -7600,132 +7600,20 @@ var $elm$html$Html$td = _VirtualDom_node('td');
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$html$Html$tr = _VirtualDom_node('tr');
-var $elm$core$String$fromList = _String_fromList;
-var $elm$core$List$intersperse = F2(
-	function (sep, xs) {
-		if (!xs.b) {
-			return _List_Nil;
-		} else {
-			var hd = xs.a;
-			var tl = xs.b;
-			var step = F2(
-				function (x, rest) {
-					return A2(
-						$elm$core$List$cons,
-						sep,
-						A2($elm$core$List$cons, x, rest));
-				});
-			var spersed = A3($elm$core$List$foldr, step, _List_Nil, tl);
-			return A2($elm$core$List$cons, hd, spersed);
-		}
-	});
-var $author$project$Board$squareToChar = F2(
-	function (i, s) {
-		var pawnRep = function (p) {
-			if (p.$ === 'White') {
-				return _Utils_chr('P');
-			} else {
-				return _Utils_chr('Q');
-			}
-		};
-		var blankRep = function (sq) {
-			switch (sq.$) {
-				case 'Reg':
-					return _Utils_chr('.');
-				case 'Rebirth':
-					return _Utils_chr(',');
-				default:
-					switch (sq.a.$) {
-						case 'Happy':
-							var _v3 = sq.a;
-							return _Utils_chr('&');
-						case 'Water':
-							var _v4 = sq.a;
-							return _Utils_chr('w');
-						case 'Truths':
-							var _v5 = sq.a;
-							return _Utils_chr('3');
-						case 'Reatoum':
-							var _v6 = sq.a;
-							return _Utils_chr('2');
-						default:
-							var _v7 = sq.a;
-							return _Utils_chr('.');
-					}
-			}
-		};
-		if (s.$ === 'Just') {
-			if (s.a.$ === 'Occ') {
-				var p = s.a.a;
-				return pawnRep(p);
-			} else {
-				var _v1 = s.a;
-				return blankRep(
-					$author$project$Board$squareType(i));
-			}
-		} else {
-			return _Utils_chr('.');
-		}
-	});
-var $author$project$Board$boardToStrings = function (board) {
-	var space = $elm$core$List$intersperse(
-		_Utils_chr(' '));
-	var rep = function (n) {
-		return A2(
-			$author$project$Board$squareToChar,
-			n,
-			A2($author$project$BoardTree$getElem, n, board));
-	};
-	var nums3 = A2($elm$core$List$range, 20, 29);
-	var nums2 = $elm$core$List$reverse(
-		A2($elm$core$List$range, 10, 19));
-	var nums1 = A2($elm$core$List$range, 0, 9);
-	var line = function (ns) {
-		return $elm$core$String$fromList(
-			space(
-				A2($elm$core$List$map, rep, ns)));
-	};
-	return _Utils_Tuple3(
-		line(nums1),
-		line(nums2),
-		line(nums3));
-};
-var $author$project$Main$monospace = A2($elm$html$Html$Attributes$style, 'font-family', 'monospace');
-var $author$project$Main$txtBoard = function (model) {
-	var _v0 = $author$project$Board$boardToStrings(model.gs.board);
-	var l1 = _v0.a;
-	var l2 = _v0.b;
-	var l3 = _v0.c;
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[$author$project$Main$centering, $author$project$Main$monospace]),
-		_List_fromArray(
-			[
-				$elm$html$Html$text('Mini ASCII Board'),
-				$author$project$Main$newline,
-				$elm$html$Html$text(' (P=White; Q=Black)'),
-				$author$project$Main$newline,
-				$author$project$Main$newline,
-				$elm$html$Html$text(l1),
-				$author$project$Main$newline,
-				$elm$html$Html$text(l2),
-				$author$project$Main$newline,
-				$elm$html$Html$text(l3),
-				$author$project$Main$newline
-			]));
-};
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$view = function (model) {
-	var wscoreboard = A2(
-		$elm$html$Html$h3,
-		_List_fromArray(
-			[$author$project$Main$centering]),
-		_List_fromArray(
-			[
-				$elm$html$Html$text(
-				((7 - model.gs.whitePawnCnt) === 7) ? 'Game Over. White Wins!' : ('White has promoted ' + ($elm$core$Debug$toString(7 - model.gs.whitePawnCnt) + ' pawn(s)! ')))
-			]));
+	var wscoreboard = function () {
+		var wpawn = $author$project$Board$initPawnCount - model.gs.whitePawnCnt;
+		return A2(
+			$elm$html$Html$h3,
+			_List_fromArray(
+				[$author$project$Main$centering]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text(
+					'White: ' + $elm$core$Debug$toString(wpawn))
+				]));
+	}();
 	var turn = A2(
 		$elm$html$Html$h2,
 		_List_fromArray(
@@ -7822,6 +7710,20 @@ var $author$project$Main$view = function (model) {
 						]))
 				]));
 	};
+	var promotionImminent = A2(
+		$elm$core$Maybe$withDefault,
+		false,
+		A2(
+			$elm$core$Maybe$andThen,
+			function (p) {
+				return A2(
+					$elm$core$Maybe$map,
+					function (roll) {
+						return A2($author$project$Logic$promotablePawn, p, roll);
+					},
+					model.roll);
+			},
+			model.selected));
 	var centerHeader = A2(
 		$elm$html$Html$div,
 		_List_Nil,
@@ -7839,7 +7741,11 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$button,
 						_List_fromArray(
 							[
-								$elm$html$Html$Events$onClick($author$project$Main$QueryRoll)
+								$elm$html$Html$Events$onClick($author$project$Main$QueryRoll),
+								$elm$html$Html$Attributes$disabled(
+								!_Utils_eq(
+									$author$project$Board$NotDone,
+									$author$project$Board$isOver(model.gs)))
 							]),
 						_List_fromArray(
 							[
@@ -7859,7 +7765,11 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$button,
 						_List_fromArray(
 							[
-								$elm$html$Html$Events$onClick($author$project$Main$QueryAI)
+								$elm$html$Html$Events$onClick($author$project$Main$QueryAI),
+								$elm$html$Html$Attributes$disabled(
+								!_Utils_eq(
+									$author$project$Board$NotDone,
+									$author$project$Board$isOver(model.gs)))
 							]),
 						_List_fromArray(
 							[
@@ -7872,7 +7782,9 @@ var $author$project$Main$view = function (model) {
 							[
 								$elm$html$Html$Events$onClick($author$project$Main$Play),
 								$elm$html$Html$Attributes$disabled(
-								_Utils_eq($elm$core$Maybe$Nothing, model.selected))
+								_Utils_eq($elm$core$Maybe$Nothing, model.selected) || (!_Utils_eq(
+									$author$project$Board$NotDone,
+									$author$project$Board$isOver(model.gs))))
 							]),
 						_List_fromArray(
 							[
@@ -7881,7 +7793,7 @@ var $author$project$Main$view = function (model) {
 									var _v1 = model.selected;
 									if (_v1.$ === 'Just') {
 										var s = _v1.a;
-										return (A2($author$project$Logic$existsPromotion, model.gs, model.roll) && (s >= 25)) ? ('Promote pawn on square ' + $elm$core$Debug$toString(s + 1)) : ('Play piece on square ' + $elm$core$Debug$toString(s + 1));
+										return promotionImminent ? ('Promote pawn on square ' + $elm$core$Debug$toString(s + 1)) : ('Play piece on square ' + $elm$core$Debug$toString(s + 1));
 									} else {
 										return 'Select a piece';
 									}
@@ -7892,7 +7804,10 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$Events$onClick($author$project$Main$Skip),
-								$elm$html$Html$Attributes$disabled(!model.skippedMove)
+								$elm$html$Html$Attributes$disabled(
+								(!model.skippedMove) || (!_Utils_eq(
+									$author$project$Board$NotDone,
+									$author$project$Board$isOver(model.gs))))
 							]),
 						_List_fromArray(
 							[
@@ -7900,6 +7815,18 @@ var $author$project$Main$view = function (model) {
 							]))
 					]))
 			]));
+	var bscoreboard = function () {
+		var bpawn = $author$project$Board$initPawnCount - model.gs.blackPawnCnt;
+		return A2(
+			$elm$html$Html$h3,
+			_List_fromArray(
+				[$author$project$Main$centering]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text(
+					'Black: ' + $elm$core$Debug$toString(bpawn))
+				]));
+	}();
 	var header = A2(
 		$elm$html$Html$div,
 		_List_Nil,
@@ -7922,17 +7849,49 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$td,
 								_List_fromArray(
 									[
-										A2($elm$html$Html$Attributes$style, 'width', '20%')
+										A2($elm$html$Html$Attributes$style, 'width', '5%'),
+										$author$project$Main$centering
 									]),
 								_List_Nil),
 								A2(
 								$elm$html$Html$td,
 								_List_fromArray(
 									[
-										A2($elm$html$Html$Attributes$style, 'width', '60%')
+										A2($elm$html$Html$Attributes$style, 'width', '15%'),
+										$author$project$Main$centering
+									]),
+								_List_fromArray(
+									[
+										bscoreboard,
+										A2($author$project$Main$scoreboard, $author$project$Board$initPawnCount - model.gs.blackPawnCnt, $author$project$Board$Black)
+									])),
+								A2(
+								$elm$html$Html$td,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'width', '15%'),
+										$author$project$Main$centering
+									]),
+								_List_fromArray(
+									[
+										wscoreboard,
+										A2($author$project$Main$scoreboard, $author$project$Board$initPawnCount - model.gs.whitePawnCnt, $author$project$Board$White)
+									])),
+								A2(
+								$elm$html$Html$td,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'width', '30%')
 									]),
 								_List_fromArray(
 									[centerHeader])),
+								A2(
+								$elm$html$Html$td,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'width', '15%')
+									]),
+								_List_Nil),
 								A2(
 								$elm$html$Html$td,
 								_List_fromArray(
@@ -7965,14 +7924,54 @@ var $author$project$Main$view = function (model) {
 							]))
 					]))
 			]));
-	var bscoreboard = A2(
-		$elm$html$Html$h3,
-		_List_fromArray(
-			[$author$project$Main$centering]),
+	var afterlifeRect = A2(
+		$elm$html$Html$div,
+		_List_Nil,
 		_List_fromArray(
 			[
 				$elm$html$Html$text(
-				((7 - model.gs.blackPawnCnt) === 7) ? 'Game Over. Black Wins!' : ('Black has promoted ' + ($elm$core$Debug$toString(7 - model.gs.blackPawnCnt) + ' pawn(s)! ')))
+				promotionImminent ? 'Promotion available!' : 'No promotion available'),
+				A2(
+				$elm$svg$Svg$svg,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$x('-10'),
+						$elm$svg$Svg$Attributes$y('-10'),
+						$elm$svg$Svg$Attributes$width('100%'),
+						$elm$svg$Svg$Attributes$viewBox('-10 -10 210 285'),
+						$elm$svg$Svg$Events$onClick(
+						$author$project$Main$Click(30))
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$svg$Svg$image,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$x('0'),
+								$elm$svg$Svg$Attributes$y('0'),
+								$author$project$Main$href('images/afterlife.jfif'),
+								$elm$svg$Svg$Events$onClick(
+								$author$project$Main$Click(30))
+							]),
+						_List_Nil),
+						A2(
+						$elm$svg$Svg$rect,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$x('-10'),
+								$elm$svg$Svg$Attributes$y('-10'),
+								$elm$svg$Svg$Attributes$rx('10'),
+								$elm$svg$Svg$Attributes$ry('10'),
+								$elm$svg$Svg$Attributes$width('210'),
+								$elm$svg$Svg$Attributes$height('285'),
+								$elm$svg$Svg$Attributes$fill('none'),
+								$elm$svg$Svg$Attributes$strokeWidth('10'),
+								$elm$svg$Svg$Attributes$stroke(
+								promotionImminent ? 'lightgreen' : 'none')
+							]),
+						_List_Nil)
+					]))
 			]));
 	var pawnView = A2(
 		$elm$html$Html$div,
@@ -8002,6 +8001,17 @@ var $author$project$Main$view = function (model) {
 									]),
 								_List_fromArray(
 									[
+										bscoreboard,
+										A2($author$project$Main$scoreboard, $author$project$Board$initPawnCount - model.gs.blackPawnCnt, $author$project$Board$Black)
+									])),
+								A2(
+								$elm$html$Html$td,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'width', '35%')
+									]),
+								_List_fromArray(
+									[
 										wscoreboard,
 										A2($author$project$Main$scoreboard, $author$project$Board$initPawnCount - model.gs.whitePawnCnt, $author$project$Board$White)
 									])),
@@ -8012,98 +8022,9 @@ var $author$project$Main$view = function (model) {
 										A2($elm$html$Html$Attributes$style, 'width', '30%')
 									]),
 								_List_fromArray(
-									[
-										A2(
-										$elm$svg$Svg$svg,
-										_List_fromArray(
-											[
-												$elm$svg$Svg$Attributes$x('-10'),
-												$elm$svg$Svg$Attributes$y('-10'),
-												$elm$svg$Svg$Attributes$width('210'),
-												$elm$svg$Svg$Attributes$height('285'),
-												$elm$svg$Svg$Attributes$viewBox('-10 -10 210 285'),
-												$elm$svg$Svg$Events$onClick(
-												$author$project$Main$Click(30))
-											]),
-										_List_fromArray(
-											[
-												A2(
-												$elm$svg$Svg$image,
-												_List_fromArray(
-													[
-														$elm$svg$Svg$Attributes$x('0'),
-														$elm$svg$Svg$Attributes$y('0'),
-														$author$project$Main$href('images/afterlife.jfif'),
-														$elm$svg$Svg$Events$onClick(
-														$author$project$Main$Click(30))
-													]),
-												_List_Nil),
-												A2(
-												$elm$svg$Svg$rect,
-												_List_fromArray(
-													[
-														$elm$svg$Svg$Attributes$x('-10'),
-														$elm$svg$Svg$Attributes$y('-10'),
-														$elm$svg$Svg$Attributes$rx('10'),
-														$elm$svg$Svg$Attributes$ry('10'),
-														$elm$svg$Svg$Attributes$width('210'),
-														$elm$svg$Svg$Attributes$height('285'),
-														$elm$svg$Svg$Attributes$fill('none'),
-														$elm$svg$Svg$Attributes$strokeWidth('10'),
-														$elm$svg$Svg$Attributes$stroke(
-														A2(
-															$elm$core$Maybe$withDefault,
-															'none',
-															A2(
-																$elm$core$Maybe$andThen,
-																function (p) {
-																	return A2(
-																		$elm$core$Maybe$map,
-																		function (roll) {
-																			return A2($author$project$Logic$promotablePawn, p, roll) ? 'lightgreen' : 'none';
-																		},
-																		model.roll);
-																},
-																model.selected)))
-													]),
-												_List_Nil)
-											]))
-									])),
-								A2(
-								$elm$html$Html$td,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'width', '35%')
-									]),
-								_List_fromArray(
-									[
-										bscoreboard,
-										A2($author$project$Main$scoreboard, $author$project$Board$initPawnCount - model.gs.blackPawnCnt, $author$project$Board$Black)
-									]))
+									[afterlifeRect]))
 							]))
 					]))
-			]));
-	var afterlifepic = A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[$author$project$Main$centering]),
-		_List_fromArray(
-			[
-				A2(
-				$elm$svg$Svg$image,
-				_List_fromArray(
-					[
-						$author$project$Main$href('images/rebirth.png'),
-						$elm$svg$Svg$Attributes$x(
-						$elm$core$Debug$toString(0)),
-						$elm$svg$Svg$Attributes$y(
-						$elm$core$Debug$toString(0)),
-						$elm$svg$Svg$Attributes$width('190'),
-						$elm$svg$Svg$Attributes$height('265'),
-						$elm$svg$Svg$Events$onClick(
-						$author$project$Main$Click(30))
-					]),
-				_List_Nil)
 			]));
 	return A2(
 		$elm$html$Html$div,
@@ -8112,17 +8033,39 @@ var $author$project$Main$view = function (model) {
 			[
 				header,
 				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[$author$project$Main$centering]),
+				$elm$html$Html$table,
 				_List_fromArray(
 					[
-						$author$project$Main$svgBoard(model)
-					])),
-				afterlifepic,
-				pawnView,
-				$author$project$Main$txtBoard(model),
-				$author$project$Main$newline
+						A2($elm$html$Html$Attributes$style, 'width', '100%')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$tr,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$td,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'width', '85%')
+									]),
+								_List_fromArray(
+									[
+										$author$project$Main$svgBoard(model)
+									])),
+								A2(
+								$elm$html$Html$td,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'width', '15%'),
+										$author$project$Main$centering
+									]),
+								_List_fromArray(
+									[afterlifeRect]))
+							]))
+					]))
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(

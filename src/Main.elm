@@ -320,6 +320,29 @@ tryPlay n model =
   ))
 
 
+pawnSendBack : Model -> Model
+pawnSendBack model =
+  let
+    dest = lastFreeBy 14 model.gs
+    trySendFrom sq js =
+      dest |> Maybe.andThen (\lf ->
+      case BT.getElem sq js.board of
+        Just (Occ col) ->
+          if col == js.turn then
+            pawnSwap sq lf js
+          else
+            Nothing
+        _ -> Nothing
+      ) |> Maybe.withDefault js
+  in
+    { model
+    | gs = model.gs
+      |> trySendFrom 27
+      |> trySendFrom 28
+      |> trySendFrom 29
+    }
+
+
 highlightPieces : Model -> Model
 highlightPieces model =
   Maybe.withDefault { model | highlighted = [] } <|
@@ -331,8 +354,12 @@ highlightPieces model =
             -- if there are no moves, switch to the next turn
             -- but also send back pieces in the end zone
             -- and leave an indicator
-            -- clearRoll { model | gs = switchTurn model.gs }
-            { model | skippedMove = True }
+            -- { model | skippedMove = True }
+            --   |> pawnSendBack
+            let
+              newModel = pawnSendBack model
+            in
+              { newModel | skippedMove = True }
           moves ->
             { model | highlighted = moves }
         )
@@ -480,13 +507,16 @@ svgBoard model =
       svgSquare length model (20+i) 2 i)
     background =
       Svg.rect [SA.x "-10", SA.y "-10", SA.width "1020", SA.height "320", SA.fill "gray"] []
-    -- afterlife =
-      -- svgSquare length model 30 3 9
+    afterlife =
+      Svg.image
+        [ SA.x "1050", SA.y "100"
+        , href "images/afterlife.jfif"
+        , SE.onClick (Click 30)
+        ] []
   in
-    Svg.svg [ SA.viewBox "-50 -20 1100 350"]
+    Svg.svg [ SA.viewBox "-50 -20 1060 350"]
       ( [background]
       ++ line1 ++ line2 ++ line3
-      -- ++ [afterlife]
       )
 
 txtBoard : Model -> Html Msg
@@ -537,7 +567,7 @@ scoreboard n color =
   let
     rlen = (2*90//7)
     spacing = 2*rlen//3
-    width = (initPawnCount-1) * spacing + 2*rlen + 4
+    width = (initPawnCount-1+2) * spacing + 2*rlen + 4
     makepiece x y =
       [ Svg.circle
         [ SA.cx <| Debug.toString (x + 1)
@@ -571,8 +601,7 @@ scoreboard n color =
         ] []
   in
   Svg.svg
-    [ SA.width  <| Debug.toString width
-    , SA.height "100"
+    [ SA.width "80%"
     , SA.viewBox ("0 0 " ++ Debug.toString width ++ " 100")
     ]
     (outline :: (List.concatMap (\x -> makepiece x 0) centers))
@@ -598,35 +627,13 @@ view model =
                 "Black won!"
         ]
     wscoreboard =
+      let wpawn = (initPawnCount - model.gs.whitePawnCnt) in
       Html.h3 [centering]
-        [ text <|
-            if 7 - model.gs.whitePawnCnt == 7 then "Game Over. White Wins!"
-            else
-            "White has promoted "
-            ++ (Debug.toString (7 - model.gs.whitePawnCnt))
-            ++ " pawn(s)! "
-        ]
+        [ text <| "White: " ++ (Debug.toString wpawn) ]
     bscoreboard =
+      let bpawn = (initPawnCount - model.gs.blackPawnCnt) in
       Html.h3 [centering]
-        [ text <|
-            if 7 - model.gs.blackPawnCnt == 7 then "Game Over. Black Wins!"
-            else
-            "Black has promoted "
-            ++ (Debug.toString (7 - model.gs.blackPawnCnt))
-            ++ " pawn(s)! "
-        ]
-    -- This image never shows up lol
-    afterlifepic =
-      -- if existsPromotion model.gs model.roll then
-      div [centering]
-      [ Svg.image
-        [ href "images/rebirth.png"
-        , SA.x <| Debug.toString 0
-        , SA.y <| Debug.toString 0
-        , SA.width "190" , SA.height "265"
-        , SE.onClick (Click 30)] []
-      ]
-      -- else newline
+        [ text <| "Black: " ++ (Debug.toString bpawn) ]
     selector col =
       Html.select
         [ HA.name <|
@@ -651,54 +658,60 @@ view model =
           , Html.Events.onClick (ChangePlayer col AISlow)]
           [text "AI (slow)"]
         ]
+    afterlifeRect =
+      div []
+        [ text <|
+          if promotionImminent then
+            "Promotion available!"
+          else "No promotion available"
+        , Svg.svg
+          [ SA.x "-10"
+          , SA.y "-10"
+          , SA.width "100%"
+          , SA.viewBox "-10 -10 210 285"
+          , SE.onClick (Click 30)
+          ]
+          [ Svg.image
+            [ SA.x "0", SA.y "0"
+            , href "images/afterlife.jfif"
+            , SE.onClick (Click 30)
+            ] []
+          , Svg.rect
+            [ SA.x "-10"
+            , SA.y "-10"
+            , SA.rx "10"
+            , SA.ry "10"
+            , SA.width "210"
+            , SA.height "285"
+            , SA.fill "none"
+            , SA.strokeWidth "10"
+            , SA.stroke <|
+                if   promotionImminent
+                then "lightgreen"
+                else "none"
+            ] []
+          ]
+        ]
+    promotionImminent =
+      model.selected |> Maybe.andThen (\p ->
+      model.roll     |> Maybe.map     (\roll ->
+      promotablePawn p roll
+      )) |> Maybe.withDefault False
     pawnView =
       div [centering]
         [ Html.table
           [ HA.style "width" "80%" ]
           [ Html.tr [centering]
             [ Html.td [HA.style "width" "35%"]
+              [ bscoreboard
+              , scoreboard (initPawnCount - model.gs.blackPawnCnt) Black
+              ]
+            ,  Html.td [HA.style "width" "35%"]
               [ wscoreboard
               , scoreboard (initPawnCount - model.gs.whitePawnCnt) White
               ]
             , Html.td [HA.style "width" "30%"]
-              [ Svg.svg
-                [ SA.x "-10"
-                , SA.y "-10"
-                , SA.width "210", SA.height "285"
-                , SA.viewBox "-10 -10 210 285"
-                , SE.onClick (Click 30)
-
-                ]
-                [ Svg.image
-                  [ SA.x "0", SA.y "0"
-                  , href "images/afterlife.jfif"
-                  , SE.onClick (Click 30)
-                  ] []
-                , Svg.rect
-                  [ SA.x "-10"
-                  , SA.y "-10"
-                  , SA.rx "10"
-                  , SA.ry "10"
-                  , SA.width "210"
-                  , SA.height "285"
-                  , SA.fill "none"
-                  , SA.strokeWidth "10"
-                  , SA.stroke (
-                    model.selected |> Maybe.andThen (\p ->
-                    model.roll     |> Maybe.map     (\roll ->
-                    if promotablePawn p roll
-                    then "lightgreen"
-                    else "none"
-                    )
-                    ) |> Maybe.withDefault "none"
-                    )
-                  ] []
-                ]
-              ]
-            , Html.td [HA.style "width" "35%"]
-              [ bscoreboard
-              , scoreboard (initPawnCount - model.gs.blackPawnCnt) Black
-              ]
+              [afterlifeRect]
             ]
           ]
         ]
@@ -707,10 +720,18 @@ view model =
         [ Html.table
           [ HA.style "width" "100%" ]
           [ Html.tr []
-            [ Html.td [HA.style "width" "20%"] []
-            , Html.td [HA.style "width" "60%"]
-              [ centerHeader
+            [ Html.td [HA.style "width" "5%", centering] []
+            , Html.td [HA.style "width" "15%", centering]
+              [ bscoreboard
+              , scoreboard (initPawnCount - model.gs.blackPawnCnt) Black
               ]
+            , Html.td [HA.style "width" "15%", centering]
+              [ wscoreboard
+              , scoreboard (initPawnCount - model.gs.whitePawnCnt) White
+              ]
+            , Html.td [HA.style "width" "30%"]
+              [ centerHeader ]
+            , Html.td [HA.style "width" "15%"] []
             , Html.td [HA.style "width" "20%"]
               [ text   "Player 1 (Black): ", selector Black
               , newline
@@ -731,34 +752,40 @@ view model =
         [ title
         , turn
         , div [centering]
-          [ button [ Html.Events.onClick (QueryRoll)]
+          [ button
+            [ Html.Events.onClick (QueryRoll)
+            , HA.disabled (NotDone /= isOver model.gs)]
             [ text <|
               case model.roll of
                 Just r  -> "Roll: " ++ (Debug.toString r)
                 Nothing -> "Roll!"
             ]
           , text "\t"
-          , button [ Html.Events.onClick (QueryAI)]
+          , button
+            [ Html.Events.onClick (QueryAI)
+            , HA.disabled (NotDone /= isOver model.gs)]
             [ text <| "Ask the AI!"]
           , text "\t"
           , button
             [ Html.Events.onClick (Play)
             , HA.disabled
-                (Nothing == model.selected)
+                (Nothing == model.selected
+                || NotDone /= isOver model.gs)
             ]
             [ text <|
               case model.selected of
                 Just s ->
-                  if existsPromotion model.gs model.roll && s>=25 then
+                  if promotionImminent then
                     "Promote pawn on square " ++ (Debug.toString (s+1))
                   else
                     "Play piece on square " ++ (Debug.toString (s+1))
                 Nothing -> "Select a piece"
             ]
           , button
-            [Html.Events.onClick Skip
+            [ Html.Events.onClick Skip
             , HA.disabled
-                (not model.skippedMove)
+                (not model.skippedMove
+                || NotDone /= isOver model.gs)
             ]
             [ text "Skip turn" ]
           ]
@@ -767,9 +794,46 @@ view model =
     div
       []
       [ header
-      , div [centering] [svgBoard model]
-      , afterlifepic
-      , pawnView
-      , txtBoard model
-      , newline
+      , Html.table
+        [ HA.style "width" "100%" ]
+        [ Html.tr []
+          [ Html.td [HA.style "width" "85%"]
+            [svgBoard model]
+          , Html.td [HA.style "width" "15%", centering]
+            [afterlifeRect]
+            -- [ -- text <|
+            -- --   if promotionImminent then
+            -- --     "Promotion available!"
+            -- --   else "No promotion available"
+            -- -- ,
+            -- Svg.svg
+            --   [ SA.x "-10"
+            --   , SA.y "-10"
+            --   , SA.width "210", SA.height "285"
+            --   , SA.viewBox "-10 -10 210 285"
+            --   , SE.onClick (Click 30)
+            --   ]
+            --   [ Svg.image
+            --     [ SA.x "0", SA.y "0"
+            --     , href "images/afterlife.jfif"
+            --     , SE.onClick (Click 30)
+            --     ] []
+            --   , Svg.rect
+            --     [ SA.x "-10"
+            --     , SA.y "-10"
+            --     , SA.rx "10"
+            --     , SA.ry "10"
+            --     , SA.width "210"
+            --     , SA.height "285"
+            --     , SA.fill "none"
+            --     , SA.strokeWidth "10"
+            --     , SA.stroke <|
+            --         if   promotionImminent
+            --         then "lightgreen"
+            --         else "none"
+            --     ] []
+            --   ]
+            -- ]
+          ]
+        ]
       ]
