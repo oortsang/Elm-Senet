@@ -60,8 +60,16 @@ type alias Model =
   , highlighted : List Int -- or BT.Tree
   , ts          : ThunkState
   , skippedMove : Bool
+  , whitePlayer : PlayerType
+  , blackPlayer : PlayerType
   -- maybe something else??
   }
+
+type PlayerType
+  = Human
+  | AIFast
+  | AIMed
+  | AISlow
 
 initModel : Model
 initModel =
@@ -71,19 +79,23 @@ initModel =
   , highlighted = []
   , ts          = newNode initGame
   , skippedMove = False
+  , blackPlayer = Human
+  , whitePlayer = Human
   }
 
 type Msg
-  = QueryRoll   -- request random number
+  = NewTurn     -- things to do at the beginning of a new turn
+  | QueryRoll   -- request random number
   | GetRoll Int -- receive random number
   | Click Int   -- select piece
   | QueryAI     -- ask the AI to select and play piece
-  | Reset
+  | Play
   | Skip
+  | ChangePlayer Player PlayerType -- choose who's playing
   | Noop
+  | Reset
     -- Somewhat redundant for new interface:
-  | Unselect -- unselect piece (if you click elsewhere)
-  | Play     -- deprecated -- use Click instead
+  | Unselect    -- unselect piece (if you click elsewhere)
 
 ------ INIT ------
 init : Flags -> (Model, Cmd Msg)
@@ -109,11 +121,21 @@ subscriptions model =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
+    NewTurn ->
+      -- let _=Debug.log "NewTurn for color" model.gs.turn in
+      -- let _=Debug.log "playertype" (getPlayerType model) in
+      case getPlayerType model of
+        Human ->
+          (model, Cmd.none)
+        _ ->
+          -- (model, Cmd.none)
+          update QueryRoll model
     QueryRoll ->
       -- make sure that there are legal moves available!!
       -- if not, the turn should be skipped
       case model.roll of
         Nothing ->
+          let _=Debug.log "Roll queried for color" model.gs.turn in
           ( { model | skippedMove = False}
           , Random.generate GetRoll rollGenerator
           )
@@ -122,9 +144,14 @@ update msg model =
           (model, Cmd.none)
     GetRoll i ->
       let
+        _ = Debug.log "Rolled" i
         newModel = model |> setRoll i |> highlightPieces
       in
-      (newModel, Cmd.none)
+        case getPlayerType newModel of
+          Human ->
+            (newModel, Cmd.none)
+          _ ->
+            update QueryAI newModel
     Click n ->
       let
         play m =
@@ -132,7 +159,8 @@ update msg model =
                 |> unselectPiece
                 |> tryPlay m
                 |> Maybe.withDefault model
-            , Cmd.none)
+            , Cmd.none
+            ) |> opChain (update NewTurn)
         unselect () =
           (unselectPiece model |> highlightPieces, Cmd.none)
         -- select the piece if it's the right color
@@ -174,10 +202,21 @@ update msg model =
       let
         -- for now don't save results
         ts = newNode model.gs
+        -- _ = Debug.log "Using ply" ply
+
+        -- Or for medium it could evaluate
+        -- with ply 4 if any piece is on square 25
+        ply =
+          case getPlayerType model of
+            Human  -> 2 -- for now
+            AIFast -> 2
+            AISlow -> 4
+            AIMed  -> 3
+
         (mp, newTS) =
           aiChooseMove
             model.gs.turn
-            3
+            ply
             roll
             ts
       in
@@ -187,21 +226,8 @@ update msg model =
                   |> opChain (update Play)
           Nothing ->
             model |> update Skip
-        -- mp    |> Maybe.map (\p ->
-        -- model |> update (Click p.square)
-        --       |> opChain (update Play)
-        -- )
+                  |> opChain (update NewTurn)
       ) |> Maybe.withDefault (model, Cmd.none)
-    Skip ->
-      ( { model
-        | gs = switchTurn model.gs
-        } |> clearRoll
-      , Cmd.none
-      )
-    Noop ->
-      (model, Cmd.none)
-    Unselect ->
-      (unselectPiece model |> highlightPieces, Cmd.none)
     Play ->
       let
         newModel =
@@ -209,11 +235,30 @@ update msg model =
             model
             |> unselectPiece
             |> tryPlay nn
-          ) |> Maybe.withDefault model
+          )
       in
-        (newModel, Cmd.none)
+        case newModel of
+          Nothing ->
+            (model, Cmd.none)
+          Just nm ->
+            update NewTurn nm
+    Skip ->
+      ( { model
+        | gs = switchTurn model.gs
+        } |> clearRoll
+      , Cmd.none
+      ) |> opChain (update NewTurn)
+    ChangePlayer col ptype ->
+      (setPlayerType col ptype model
+      , Cmd.none)
+    Noop ->
+      (model, Cmd.none)
     Reset ->
       (initModel, Cmd.none)
+    Unselect ->
+      (unselectPiece model |> highlightPieces, Cmd.none)
+
+
 ------ Helper functions for Update ------
 
 -- Equivalent to throwing 4 coins (0/1)
@@ -246,6 +291,23 @@ selectPiece n model =
 unselectPiece : Model -> Model
 unselectPiece model =
   { model | selected = Nothing }
+
+setPlayerType : Player -> PlayerType -> Model -> Model
+setPlayerType col ptype model =
+  let _=Debug.log "setPlayerType was called!" (col, ptype) in
+  case col of
+    White ->
+      { model | whitePlayer = ptype}
+    Black ->
+      { model | blackPlayer = ptype}
+
+getPlayerType : Model -> PlayerType
+getPlayerType model =
+  case model.gs.turn of
+    White ->
+      model.whitePlayer
+    Black ->
+      model.blackPlayer
 
 -- calls Logic.makeMove and clears the model's roll
 tryPlay : Int -> Model -> Maybe Model
@@ -421,7 +483,7 @@ svgBoard model =
     -- afterlife =
       -- svgSquare length model 30 3 9
   in
-    Svg.svg [ SA.viewBox "-50 -50 1100 500"]
+    Svg.svg [ SA.viewBox "-50 -20 1100 350"]
       ( [background]
       ++ line1 ++ line2 ++ line3
       -- ++ [afterlife]
@@ -473,11 +535,14 @@ buttonBoard model =
 scoreboard : Int -> Player -> Html.Html Msg
 scoreboard n color =
   let
+    rlen = (2*90//7)
+    spacing = 2*rlen//3
+    width = (initPawnCount-1) * spacing + 2*rlen + 4
     makepiece x y =
       [ Svg.circle
-        [ SA.cx <| Debug.toString (x + 90//2)
-        , SA.cy <| Debug.toString (y + 90//2)
-        , SA.r  <| Debug.toString (2*90//7)
+        [ SA.cx <| Debug.toString (x + 1)
+        , SA.cy <| Debug.toString (y + 50)
+        , SA.r  <| Debug.toString rlen
         , SA.stroke "black"
         , SA.fill <|
             if color == White
@@ -486,15 +551,32 @@ scoreboard n color =
         ] []
       ]
     centers =
+      -- List.range 1 n
+      --   |> List.map ((*) 25)
       if 0 == modBy 2 n then
-        --List.map (\x -> (x - (n+1)// 2) * 100) (List.range 1 n)
-        List.range 1 n
+        List.map (\x -> width//2 + (x - n//2) * spacing) (List.range 1 n)
       else
-        --List.map (\x -> (x - (n+1)//2) * 100) (List.range 1 n)
-        List.range 1 n
+        List.map (\x -> width//2 + (x - (n+1)//2) * spacing) (List.range 1 n)
+    outline =
+      Svg.rect
+        [ SA.x "0"
+        , SA.y "0"
+        , SA.rx "10"
+        , SA.ry "10"
+        , SA.height "100"
+        , SA.fill "antiquewhite"
+        , SA.stroke "none"
+        , SA.width <| Debug.toString width
+        , Html.Events.onClick (Click 30)
+        ] []
   in
-  Svg.svg []
-   (List.concatMap (\x -> makepiece x 0) centers)
+  Svg.svg
+    [ SA.width  <| Debug.toString width
+    , SA.height "100"
+    , SA.viewBox ("0 0 " ++ Debug.toString width ++ " 100")
+    ]
+    (outline :: (List.concatMap (\x -> makepiece x 0) centers))
+    -- ((List.concatMap (\x -> makepiece x 0) centers) ++ [outline])
 
 view : Model -> Html Msg
 view model =
@@ -535,108 +617,159 @@ view model =
         ]
     -- This image never shows up lol
     afterlifepic =
-            -- if existspromotion model.gs model.roll then
-            div [centering]
-            [ Svg.image
-              [href "images/rebirth.png"
-              , SA.x <| Debug.toString 0
-              , SA.y <| Debug.toString 0
-              , SA.width "190" , SA.height "265"
-              , SE.onClick (Click 30)] []
-            ]
-            -- else newline
+      -- if existsPromotion model.gs model.roll then
+      div [centering]
+      [ Svg.image
+        [ href "images/rebirth.png"
+        , SA.x <| Debug.toString 0
+        , SA.y <| Debug.toString 0
+        , SA.width "190" , SA.height "265"
+        , SE.onClick (Click 30)] []
+      ]
+      -- else newline
     selector col =
       Html.select
         [ HA.name <|
             case col of
               Black -> "Player 1 (Black)"
-              White -> "Player 2 (Whtie)"
+              White -> "Player 2 (White)"
         ]
         [ Html.option
-            [HA.value "human"]
-            [text "Human"]
+          [HA.value "Human"
+          , Html.Events.onClick (ChangePlayer col Human)]
+          [text "Human"]
         , Html.option
-            [HA.value "AI"]
-            [text "AI (fast)"]
+          [HA.value "AIFast"
+          , Html.Events.onClick (ChangePlayer col AIFast)]
+          [text "AI (fast)"]
+        , Html.option
+          [HA.value "AIMed"
+          , Html.Events.onClick (ChangePlayer col AIMed)]
+          [text "AI (medium)"]
+        , Html.option
+          [HA.value "AISlow"
+          , Html.Events.onClick (ChangePlayer col AISlow)]
+          [text "AI (slow)"]
+        ]
+    pawnView =
+      div [centering]
+        [ Html.table
+          [ HA.style "width" "80%" ]
+          [ Html.tr [centering]
+            [ Html.td [HA.style "width" "35%"]
+              [ wscoreboard
+              , scoreboard (initPawnCount - model.gs.whitePawnCnt) White
+              ]
+            , Html.td [HA.style "width" "30%"]
+              [ Svg.svg
+                [ SA.x "-10"
+                , SA.y "-10"
+                , SA.width "210", SA.height "285"
+                , SA.viewBox "-10 -10 210 285"
+                , SE.onClick (Click 30)
+
+                ]
+                [ Svg.image
+                  [ SA.x "0", SA.y "0"
+                  , href "images/afterlife.jfif"
+                  , SE.onClick (Click 30)
+                  ] []
+                , Svg.rect
+                  [ SA.x "-10"
+                  , SA.y "-10"
+                  , SA.rx "10"
+                  , SA.ry "10"
+                  , SA.width "210"
+                  , SA.height "285"
+                  , SA.fill "none"
+                  , SA.strokeWidth "10"
+                  , SA.stroke (
+                    model.selected |> Maybe.andThen (\p ->
+                    model.roll     |> Maybe.map     (\roll ->
+                    if promotablePawn p roll
+                    then "lightgreen"
+                    else "none"
+                    )
+                    ) |> Maybe.withDefault "none"
+                    )
+                  ] []
+                ]
+              ]
+            , Html.td [HA.style "width" "35%"]
+              [ bscoreboard
+              , scoreboard (initPawnCount - model.gs.blackPawnCnt) Black
+              ]
+            ]
+          ]
+        ]
+    header =
+      div []
+        [ Html.table
+          [ HA.style "width" "100%" ]
+          [ Html.tr []
+            [ Html.td [HA.style "width" "20%"] []
+            , Html.td [HA.style "width" "60%"]
+              [ centerHeader
+              ]
+            , Html.td [HA.style "width" "20%"]
+              [ text   "Player 1 (Black): ", selector Black
+              , newline
+              , text "\tPlayer 2 (White): ", selector White
+              , newline
+              , button
+                [ Html.Events.onClick Skip
+                , HA.disabled
+                    (NotDone == isOver model.gs)
+                ]
+                [ text "New game" ]
+              ]
+            ]
+          ]
+        ]
+    centerHeader =
+      div []
+        [ title
+        , turn
+        , div [centering]
+          [ button [ Html.Events.onClick (QueryRoll)]
+            [ text <|
+              case model.roll of
+                Just r  -> "Roll: " ++ (Debug.toString r)
+                Nothing -> "Roll!"
+            ]
+          , text "\t"
+          , button [ Html.Events.onClick (QueryAI)]
+            [ text <| "Ask the AI!"]
+          , text "\t"
+          , button
+            [ Html.Events.onClick (Play)
+            , HA.disabled
+                (Nothing == model.selected)
+            ]
+            [ text <|
+              case model.selected of
+                Just s ->
+                  if existsPromotion model.gs model.roll && s>=25 then
+                    "Promote pawn on square " ++ (Debug.toString (s+1))
+                  else
+                    "Play piece on square " ++ (Debug.toString (s+1))
+                Nothing -> "Select a piece"
+            ]
+          , button
+            [Html.Events.onClick Skip
+            , HA.disabled
+                (not model.skippedMove)
+            ]
+            [ text "Skip turn" ]
+          ]
         ]
   in
     div
       []
-      [ title
-      , turn
-      , div []
-          [ Html.table
-              [ HA.style "width" "100%" ]
-              [ Html.tr []
-                  [ Html.td [HA.style "width" "80%"] []
-                  , Html.td [HA.style "width" "20%"]
-                      [text   "Player 1 (Black): ", selector Black]
-                  ]
-              , Html.tr []
-                  [ Html.td [] []
-                  , Html.td []
-                      [text "\tPlayer 2 (White): ", selector White]
-                  ]
-              , Html.tr []
-                  [ Html.td [] []
-                  , Html.td []
-                      [ button
-                          [Html.Events.onClick Skip
-                          , HA.disabled
-                              (NotDone == isOver model.gs)
-                          ]
-                          [ text "New game" ]
-                      ]
-                  ]
-              ]
-        ]
-      , div [centering]
-          [ button [ Html.Events.onClick (QueryRoll)]
-              [ text <|
-                  case model.roll of
-                    Just r  -> "Roll: " ++ (Debug.toString r)
-                    Nothing -> "Roll!"
-              ]
-          , text "\t"
-          , button [ Html.Events.onClick (QueryAI)]
-              [ text <|
-                  "Ask the AI!"
-              ]
-          , text "\t"
-          , button
-              [ Html.Events.onClick (Play)
-              , HA.disabled
-                  (Nothing == model.selected)
-              ]
-              [ text <|
-                  case model.selected of
-                    Just s  ->
-                      if existsPromotion model.gs model.roll then
-                        "Promote pawn on square " ++ (Debug.toString (s+1))
-                      else
-                        "Play piece on square " ++ (Debug.toString (s+1))
-                    Nothing -> "Select a piece"
-              ]
-          , button
-              [Html.Events.onClick Skip
-              , HA.disabled
-                  (not model.skippedMove)
-              ]
-              [ text "Skip turn" ]
-          ]
+      [ header
       , div [centering] [svgBoard model]
-      , div [centering]
-          [ button [ Html.Events.onClick (Click 30)]
-              [ text <|
-                  if existsPromotion model.gs model.roll then "Promote"
-                  else "No Promotion Available"
-              ]
-          ]
       , afterlifepic
+      , pawnView
       , txtBoard model
       , newline
-      , wscoreboard
-      , div [centering] [scoreboard (7 - model.gs.whitePawnCnt) White]
-      , bscoreboard
-      , div [centering] [scoreboard (7 - model.gs.blackPawnCnt) Black]
       ]

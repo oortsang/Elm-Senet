@@ -157,7 +157,6 @@ existsPromotion gs roll =
           |> List.map (\p -> checkPawn p.square)
           |> List.foldr (||) False
 
-
       -- let
       --   bpotential = List.filter (\p -> p.square + i >= 30) gs.blackPawns
       --   wpotential = List.filter (\p -> p.square + i >= 30) gs.whitePawns
@@ -166,6 +165,15 @@ existsPromotion gs roll =
       --   Black -> List.foldr (||) False (List.map (\p -> isLegal gs.board p i) bpotential)
       --   White -> List.foldr (||) False (List.map (\p -> isLegal gs.board p i) wpotential)
 
+promotablePawn : Int -> Int -> Bool
+promotablePawn pSquare roll =
+  case squareType pSquare of
+    Spec Happy   -> roll==5
+    Spec Water   -> False
+    Spec Truths  -> roll==3
+    Spec Reatoum -> roll==2
+    Spec Horus   -> True
+    _            -> False
 
 ------ 2. Pawn Movement and Game Logic ------
 -- Mini table of contents:

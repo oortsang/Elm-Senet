@@ -5241,6 +5241,7 @@ var $elm$core$Task$perform = F2(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
 var $elm$browser$Browser$element = _Browser_element;
+var $author$project$Main$Human = {$: 'Human'};
 var $author$project$Board$Black = {$: 'Black'};
 var $author$project$Board$White = {$: 'White'};
 var $author$project$Board$Free = {$: 'Free'};
@@ -6076,11 +6077,14 @@ var $author$project$AI$newNode = function (gs) {
 				})));
 };
 var $author$project$Main$initModel = {
+	blackPlayer: $author$project$Main$Human,
 	gs: $author$project$Board$initGame,
 	highlighted: _List_Nil,
 	roll: $elm$core$Maybe$Nothing,
 	selected: $elm$core$Maybe$Nothing,
-	ts: $author$project$AI$newNode($author$project$Board$initGame)
+	skippedMove: false,
+	ts: $author$project$AI$newNode($author$project$Board$initGame),
+	whitePlayer: $author$project$Main$Human
 };
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
@@ -6098,7 +6102,11 @@ var $author$project$Main$Click = function (a) {
 var $author$project$Main$GetRoll = function (a) {
 	return {$: 'GetRoll', a: a};
 };
+var $author$project$Main$NewTurn = {$: 'NewTurn'};
 var $author$project$Main$Play = {$: 'Play'};
+var $author$project$Main$QueryAI = {$: 'QueryAI'};
+var $author$project$Main$QueryRoll = {$: 'QueryRoll'};
+var $author$project$Main$Skip = {$: 'Skip'};
 var $author$project$AI$Eval = function (a) {
 	return {$: 'Eval', a: a};
 };
@@ -6137,6 +6145,7 @@ var $author$project$AI$gsLeafVal = F2(
 			$elm$core$Maybe$withDefault,
 			0,
 			A2($author$project$Logic$lastFreeBy, 14, gs));
+		var pawnBounty = 20;
 		var valf = F2(
 			function (i, sq) {
 				var _v4 = $author$project$Board$squareType(i);
@@ -6149,13 +6158,13 @@ var $author$project$AI$gsLeafVal = F2(
 								return sign(sq) * (-3.0);
 							case 'Horus':
 								var _v6 = _v4.a;
-								return sign(sq) * (-12.0);
+								return sign(sq) * (-pawnBounty);
 							case 'Reatoum':
 								var _v7 = _v4.a;
-								return (0.75 * sign(sq)) * (30 - rebirthSquare);
+								return sign(sq) * ((0.75 * (30 - rebirthSquare)) - (0.25 * pawnBounty));
 							case 'Truths':
 								var _v8 = _v4.a;
-								return (0.75 * sign(sq)) * (30 - rebirthSquare);
+								return sign(sq) * ((0.625 * (30 - rebirthSquare)) - (0.375 * pawnBounty));
 							default:
 								break _v4$4;
 						}
@@ -6165,7 +6174,7 @@ var $author$project$AI$gsLeafVal = F2(
 				}
 				return sign(sq) * (30 - i);
 			});
-		var pawnAdv = 20 * (gs.whitePawnCnt - gs.blackPawnCnt);
+		var pawnAdv = pawnBounty * (gs.whitePawnCnt - gs.blackPawnCnt);
 		var colCorrection = function () {
 			if (col.$ === 'Black') {
 				return 1;
@@ -6530,6 +6539,11 @@ var $author$project$AI$aiChooseMove = F4(
 					},
 					res)));
 	});
+var $author$project$Main$clearRoll = function (model) {
+	return _Utils_update(
+		model,
+		{roll: $elm$core$Maybe$Nothing});
+};
 var $elm$random$Random$Generate = function (a) {
 	return {$: 'Generate', a: a};
 };
@@ -6637,6 +6651,14 @@ var $elm$random$Random$generate = F2(
 			$elm$random$Random$Generate(
 				A2($elm$random$Random$map, tagger, generator)));
 	});
+var $author$project$Main$getPlayerType = function (model) {
+	var _v0 = model.gs.turn;
+	if (_v0.$ === 'White') {
+		return model.whitePlayer;
+	} else {
+		return model.blackPlayer;
+	}
+};
 var $author$project$Board$getPawn = F2(
 	function (i, gs) {
 		var squarePawn = function (sq) {
@@ -6703,65 +6725,60 @@ var $author$project$Logic$legalMoves = F2(
 		}
 	});
 var $author$project$Main$highlightPieces = function (model) {
-	var _v0 = model.selected;
-	if (_v0.$ === 'Nothing') {
-		var _v1 = model.roll;
-		if (_v1.$ === 'Nothing') {
-			return _Utils_update(
-				model,
-				{highlighted: _List_Nil});
-		} else {
-			var roll = _v1.a;
-			var _v2 = A2(
-				$elm$core$List$map,
-				function (p) {
-					return p.square;
-				},
-				A2($author$project$Logic$legalMoves, model.gs, roll));
-			if (!_v2.b) {
-				return _Utils_update(
-					model,
-					{
-						gs: $author$project$Logic$switchTurn(model.gs)
-					});
+	return A2(
+		$elm$core$Maybe$withDefault,
+		_Utils_update(
+			model,
+			{highlighted: _List_Nil}),
+		function () {
+			var _v0 = model.selected;
+			if (_v0.$ === 'Nothing') {
+				return A2(
+					$elm$core$Maybe$map,
+					function (roll) {
+						var _v1 = A2(
+							$elm$core$List$map,
+							function (p) {
+								return p.square;
+							},
+							A2($author$project$Logic$legalMoves, model.gs, roll));
+						if (!_v1.b) {
+							return _Utils_update(
+								model,
+								{skippedMove: true});
+						} else {
+							var moves = _v1;
+							return _Utils_update(
+								model,
+								{highlighted: moves});
+						}
+					},
+					model.roll);
 			} else {
-				var moves = _v2;
-				return _Utils_update(
-					model,
-					{highlighted: moves});
+				var numpawn = _v0.a;
+				return A2(
+					$elm$core$Maybe$andThen,
+					function (roll) {
+						return A2(
+							$elm$core$Maybe$map,
+							function (spawn) {
+								return A3($author$project$Logic$isLegal, model.gs.board, spawn, roll) ? _Utils_update(
+									model,
+									{
+										highlighted: _List_fromArray(
+											[spawn.square, spawn.square + roll])
+									}) : _Utils_update(
+									model,
+									{
+										highlighted: _List_fromArray(
+											[spawn.square])
+									});
+							},
+							A2($author$project$Board$getPawn, numpawn, model.gs));
+					},
+					model.roll);
 			}
-		}
-	} else {
-		var numpawn = _v0.a;
-		var _v3 = model.roll;
-		if (_v3.$ === 'Nothing') {
-			return _Utils_update(
-				model,
-				{highlighted: _List_Nil});
-		} else {
-			var roll = _v3.a;
-			var _v4 = A2($author$project$Board$getPawn, numpawn, model.gs);
-			if (_v4.$ === 'Nothing') {
-				return _Utils_update(
-					model,
-					{highlighted: _List_Nil});
-			} else {
-				var spawn = _v4.a;
-				return A3($author$project$Logic$isLegal, model.gs.board, spawn, roll) ? _Utils_update(
-					model,
-					{
-						highlighted: A2(
-							$elm$core$List$cons,
-							spawn.square,
-							A2($elm$core$List$cons, spawn.square + roll, _List_Nil))
-					}) : _Utils_update(
-					model,
-					{
-						highlighted: A2($elm$core$List$cons, spawn.square, _List_Nil)
-					});
-			}
-		}
-	}
+		}());
 };
 var $author$project$Main$opChain = F2(
 	function (op, _v0) {
@@ -6864,6 +6881,22 @@ var $author$project$Main$selectPiece = F2(
 				selected: $elm$core$Maybe$Just(n)
 			});
 	});
+var $author$project$Main$setPlayerType = F3(
+	function (col, ptype, model) {
+		var _v0 = A2(
+			$elm$core$Debug$log,
+			'setPlayerType was called!',
+			_Utils_Tuple2(col, ptype));
+		if (col.$ === 'White') {
+			return _Utils_update(
+				model,
+				{whitePlayer: ptype});
+		} else {
+			return _Utils_update(
+				model,
+				{blackPlayer: ptype});
+		}
+	});
 var $author$project$Main$setRoll = F2(
 	function (i, model) {
 		return _Utils_update(
@@ -6872,11 +6905,6 @@ var $author$project$Main$setRoll = F2(
 				roll: $elm$core$Maybe$Just(i)
 			});
 	});
-var $author$project$Main$clearRoll = function (model) {
-	return _Utils_update(
-		model,
-		{roll: $elm$core$Maybe$Nothing});
-};
 var $author$project$Main$tryPlay = F2(
 	function (n, model) {
 		return A2(
@@ -6906,93 +6934,131 @@ var $author$project$Main$unselectPiece = function (model) {
 };
 var $author$project$Main$update = F2(
 	function (msg, model) {
-		switch (msg.$) {
-			case 'QueryRoll':
-				var _v1 = model.roll;
-				if (_v1.$ === 'Nothing') {
-					return _Utils_Tuple2(
-						model,
-						A2($elm$random$Random$generate, $author$project$Main$GetRoll, $author$project$Main$rollGenerator));
-				} else {
-					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-				}
-			case 'GetRoll':
-				var i = msg.a;
-				var newModel = $author$project$Main$highlightPieces(
-					A2($author$project$Main$setRoll, i, model));
-				return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
-			case 'Click':
-				var n = msg.a;
-				var unselect = function (_v5) {
-					return _Utils_Tuple2(
-						$author$project$Main$highlightPieces(
-							$author$project$Main$unselectPiece(model)),
-						$elm$core$Platform$Cmd$none);
-				};
-				var play = function (m) {
-					return _Utils_Tuple2(
-						A2(
-							$elm$core$Maybe$withDefault,
-							model,
-							A2(
-								$author$project$Main$tryPlay,
-								m,
-								$author$project$Main$unselectPiece(model))),
-						$elm$core$Platform$Cmd$none);
-				};
-				var nothing = function (_v4) {
-					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-				};
-				var currTurn = model.gs.turn;
-				var select = function (_v3) {
-					var _v2 = A2($author$project$BoardTree$getElem, n, model.gs.board);
-					if ((_v2.$ === 'Just') && (_v2.a.$ === 'Occ')) {
-						var col = _v2.a.a;
-						return _Utils_eq(col, currTurn) ? _Utils_Tuple2(
-							$author$project$Main$highlightPieces(
-								A2($author$project$Main$selectPiece, n, model)),
-							$elm$core$Platform$Cmd$none) : unselect(_Utils_Tuple0);
+		update:
+		while (true) {
+			switch (msg.$) {
+				case 'NewTurn':
+					var _v1 = $author$project$Main$getPlayerType(model);
+					if (_v1.$ === 'Human') {
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 					} else {
-						return unselect(_Utils_Tuple0);
+						var $temp$msg = $author$project$Main$QueryRoll,
+							$temp$model = model;
+						msg = $temp$msg;
+						model = $temp$model;
+						continue update;
 					}
-				};
-				var checkSquare = function (m) {
-					return (!_Utils_eq(n, m)) ? select(_Utils_Tuple0) : unselect(_Utils_Tuple0);
-				};
-				return A2(
-					$elm$core$Maybe$withDefault,
-					select(_Utils_Tuple0),
-					A2(
-						$elm$core$Maybe$map,
-						function (m) {
-							return A2(
-								$elm$core$Maybe$withDefault,
-								checkSquare(m),
+				case 'QueryRoll':
+					var _v2 = model.roll;
+					if (_v2.$ === 'Nothing') {
+						var _v3 = A2($elm$core$Debug$log, 'Roll queried for color', model.gs.turn);
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{skippedMove: false}),
+							A2($elm$random$Random$generate, $author$project$Main$GetRoll, $author$project$Main$rollGenerator));
+					} else {
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					}
+				case 'GetRoll':
+					var i = msg.a;
+					var newModel = $author$project$Main$highlightPieces(
+						A2($author$project$Main$setRoll, i, model));
+					var _v4 = A2($elm$core$Debug$log, 'Rolled', i);
+					var _v5 = $author$project$Main$getPlayerType(newModel);
+					if (_v5.$ === 'Human') {
+						return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
+					} else {
+						var $temp$msg = $author$project$Main$QueryAI,
+							$temp$model = newModel;
+						msg = $temp$msg;
+						model = $temp$model;
+						continue update;
+					}
+				case 'Click':
+					var n = msg.a;
+					var unselect = function (_v8) {
+						return _Utils_Tuple2(
+							$author$project$Main$highlightPieces(
+								$author$project$Main$unselectPiece(model)),
+							$elm$core$Platform$Cmd$none);
+					};
+					var play = function (m) {
+						return A2(
+							$author$project$Main$opChain,
+							$author$project$Main$update($author$project$Main$NewTurn),
+							_Utils_Tuple2(
 								A2(
-									$elm$core$Maybe$map,
-									function (r) {
-										return (_Utils_eq(n, m + r) || (n >= 30)) ? ((!_Utils_eq(
-											$elm$core$Maybe$Just(
-												$author$project$Board$Occ(model.gs.turn)),
-											A2($author$project$BoardTree$getElem, n, model.gs.board))) ? play(m) : select(_Utils_Tuple0)) : checkSquare(m);
-									},
-									model.roll));
-						},
-						model.selected));
-			case 'QueryAI':
-				return A2(
-					$elm$core$Maybe$withDefault,
-					_Utils_Tuple2(model, $elm$core$Platform$Cmd$none),
-					A2(
-						$elm$core$Maybe$andThen,
-						function (roll) {
-							var ts = $author$project$AI$newNode(model.gs);
-							var _v6 = A4($author$project$AI$aiChooseMove, model.gs.turn, 3, roll, ts);
-							var mp = _v6.a;
-							var newTS = _v6.b;
-							return A2(
-								$elm$core$Maybe$map,
-								function (p) {
+									$elm$core$Maybe$withDefault,
+									model,
+									A2(
+										$author$project$Main$tryPlay,
+										m,
+										$author$project$Main$unselectPiece(model))),
+								$elm$core$Platform$Cmd$none));
+					};
+					var currTurn = model.gs.turn;
+					var select = function (_v7) {
+						var _v6 = A2($author$project$BoardTree$getElem, n, model.gs.board);
+						if ((_v6.$ === 'Just') && (_v6.a.$ === 'Occ')) {
+							var col = _v6.a.a;
+							return _Utils_eq(col, currTurn) ? _Utils_Tuple2(
+								$author$project$Main$highlightPieces(
+									A2($author$project$Main$selectPiece, n, model)),
+								$elm$core$Platform$Cmd$none) : unselect(_Utils_Tuple0);
+						} else {
+							return unselect(_Utils_Tuple0);
+						}
+					};
+					var checkSquare = function (m) {
+						return (!_Utils_eq(n, m)) ? select(_Utils_Tuple0) : unselect(_Utils_Tuple0);
+					};
+					return A2(
+						$elm$core$Maybe$withDefault,
+						select(_Utils_Tuple0),
+						A2(
+							$elm$core$Maybe$map,
+							function (m) {
+								return A2(
+									$elm$core$Maybe$withDefault,
+									checkSquare(m),
+									A2(
+										$elm$core$Maybe$map,
+										function (r) {
+											return (_Utils_eq(n, m + r) || (n >= 30)) ? ((!_Utils_eq(
+												$elm$core$Maybe$Just(
+													$author$project$Board$Occ(model.gs.turn)),
+												A2($author$project$BoardTree$getElem, n, model.gs.board))) ? play(m) : select(_Utils_Tuple0)) : checkSquare(m);
+										},
+										model.roll));
+							},
+							model.selected));
+				case 'QueryAI':
+					return A2(
+						$elm$core$Maybe$withDefault,
+						_Utils_Tuple2(model, $elm$core$Platform$Cmd$none),
+						A2(
+							$elm$core$Maybe$map,
+							function (roll) {
+								var ts = $author$project$AI$newNode(model.gs);
+								var ply = function () {
+									var _v11 = $author$project$Main$getPlayerType(model);
+									switch (_v11.$) {
+										case 'Human':
+											return 2;
+										case 'AIFast':
+											return 2;
+										case 'AISlow':
+											return 4;
+										default:
+											return 3;
+									}
+								}();
+								var _v9 = A4($author$project$AI$aiChooseMove, model.gs.turn, ply, roll, ts);
+								var mp = _v9.a;
+								var newTS = _v9.b;
+								if (mp.$ === 'Just') {
+									var p = mp.a;
 									return A2(
 										$author$project$Main$opChain,
 										$author$project$Main$update($author$project$Main$Play),
@@ -7000,22 +7066,16 @@ var $author$project$Main$update = F2(
 											$author$project$Main$update,
 											$author$project$Main$Click(p.square),
 											model));
-								},
-								mp);
-						},
-						model.roll));
-			case 'Noop':
-				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-			case 'Unselect':
-				return _Utils_Tuple2(
-					$author$project$Main$highlightPieces(
-						$author$project$Main$unselectPiece(model)),
-					$elm$core$Platform$Cmd$none);
-			case 'Play':
-				var newModel = A2(
-					$elm$core$Maybe$withDefault,
-					model,
-					A2(
+								} else {
+									return A2(
+										$author$project$Main$opChain,
+										$author$project$Main$update($author$project$Main$NewTurn),
+										A2($author$project$Main$update, $author$project$Main$Skip, model));
+								}
+							},
+							model.roll));
+				case 'Play':
+					var newModel = A2(
 						$elm$core$Maybe$andThen,
 						function (nn) {
 							return A2(
@@ -7023,14 +7083,54 @@ var $author$project$Main$update = F2(
 								nn,
 								$author$project$Main$unselectPiece(model));
 						},
-						model.selected));
-				return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
-			default:
-				return _Utils_Tuple2($author$project$Main$initModel, $elm$core$Platform$Cmd$none);
+						model.selected);
+					if (newModel.$ === 'Nothing') {
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					} else {
+						var nm = newModel.a;
+						var $temp$msg = $author$project$Main$NewTurn,
+							$temp$model = nm;
+						msg = $temp$msg;
+						model = $temp$model;
+						continue update;
+					}
+				case 'Skip':
+					return A2(
+						$author$project$Main$opChain,
+						$author$project$Main$update($author$project$Main$NewTurn),
+						_Utils_Tuple2(
+							$author$project$Main$clearRoll(
+								_Utils_update(
+									model,
+									{
+										gs: $author$project$Logic$switchTurn(model.gs)
+									})),
+							$elm$core$Platform$Cmd$none));
+				case 'ChangePlayer':
+					var col = msg.a;
+					var ptype = msg.b;
+					return _Utils_Tuple2(
+						A3($author$project$Main$setPlayerType, col, ptype, model),
+						$elm$core$Platform$Cmd$none);
+				case 'Noop':
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				case 'Reset':
+					return _Utils_Tuple2($author$project$Main$initModel, $elm$core$Platform$Cmd$none);
+				default:
+					return _Utils_Tuple2(
+						$author$project$Main$highlightPieces(
+							$author$project$Main$unselectPiece(model)),
+						$elm$core$Platform$Cmd$none);
+			}
 		}
 	});
-var $author$project$Main$QueryAI = {$: 'QueryAI'};
-var $author$project$Main$QueryRoll = {$: 'QueryRoll'};
+var $author$project$Main$AIFast = {$: 'AIFast'};
+var $author$project$Main$AIMed = {$: 'AIMed'};
+var $author$project$Main$AISlow = {$: 'AISlow'};
+var $author$project$Main$ChangePlayer = F2(
+	function (a, b) {
+		return {$: 'ChangePlayer', a: a, b: b};
+	});
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
@@ -7042,51 +7142,59 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 	});
 var $elm$html$Html$Attributes$align = $elm$html$Html$Attributes$stringProperty('align');
 var $author$project$Main$centering = $elm$html$Html$Attributes$align('center');
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
 var $elm$html$Html$div = _VirtualDom_node('div');
-var $author$project$Logic$existspromotion = F2(
+var $author$project$Logic$existsPromotion = F2(
 	function (gs, roll) {
 		if (roll.$ === 'Nothing') {
 			return false;
 		} else {
 			var i = roll.a;
-			var wpotential = A2(
-				$elm$core$List$filter,
-				function (p) {
-					return (p.square + i) >= 30;
-				},
-				gs.whitePawns);
-			var bpotential = A2(
-				$elm$core$List$filter,
-				function (p) {
-					return (p.square + i) >= 30;
-				},
-				gs.blackPawns);
-			var _v1 = gs.turn;
-			if (_v1.$ === 'Black') {
-				return A3(
-					$elm$core$List$foldr,
-					$elm$core$Basics$or,
-					false,
-					A2(
-						$elm$core$List$map,
-						function (p) {
-							return A3($author$project$Logic$isLegal, gs.board, p, i);
-						},
-						bpotential));
-			} else {
-				return A3(
-					$elm$core$List$foldr,
-					$elm$core$Basics$or,
-					false,
-					A2(
-						$elm$core$List$map,
-						function (p) {
-							return A3($author$project$Logic$isLegal, gs.board, p, i);
-						},
-						wpotential));
-			}
+			var plist = function () {
+				var _v2 = gs.turn;
+				if (_v2.$ === 'Black') {
+					return gs.blackPawns;
+				} else {
+					return gs.whitePawns;
+				}
+			}();
+			var checkPawn = function (sq) {
+				switch (sq) {
+					case 25:
+						return i === 5;
+					case 26:
+						return false;
+					case 27:
+						return i === 3;
+					case 28:
+						return i === 2;
+					case 29:
+						return true;
+					default:
+						return false;
+				}
+			};
+			return A3(
+				$elm$core$List$foldr,
+				$elm$core$Basics$or,
+				false,
+				A2(
+					$elm$core$List$map,
+					function (p) {
+						return checkPawn(p.square);
+					},
+					plist));
 		}
 	});
+var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
 var $elm$html$Html$h1 = _VirtualDom_node('h1');
 var $elm$html$Html$h2 = _VirtualDom_node('h2');
 var $elm$html$Html$h3 = _VirtualDom_node('h3');
@@ -7103,6 +7211,7 @@ var $author$project$Main$href = function (value) {
 };
 var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
 var $elm$svg$Svg$image = $elm$svg$Svg$trustedNode('image');
+var $elm$html$Html$Attributes$name = $elm$html$Html$Attributes$stringProperty('name');
 var $elm$html$Html$br = _VirtualDom_node('br');
 var $author$project$Main$newline = A2($elm$html$Html$br, _List_Nil, _List_Nil);
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
@@ -7128,16 +7237,68 @@ var $elm$svg$Svg$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
+var $elm$html$Html$option = _VirtualDom_node('option');
+var $author$project$Logic$promotablePawn = F2(
+	function (pSquare, roll) {
+		var _v0 = $author$project$Board$squareType(pSquare);
+		if (_v0.$ === 'Spec') {
+			switch (_v0.a.$) {
+				case 'Happy':
+					var _v1 = _v0.a;
+					return roll === 5;
+				case 'Water':
+					var _v2 = _v0.a;
+					return false;
+				case 'Truths':
+					var _v3 = _v0.a;
+					return roll === 3;
+				case 'Reatoum':
+					var _v4 = _v0.a;
+					return roll === 2;
+				default:
+					var _v5 = _v0.a;
+					return true;
+			}
+		} else {
+			return false;
+		}
+	});
+var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
+var $elm$svg$Svg$Attributes$rx = _VirtualDom_attribute('rx');
+var $elm$svg$Svg$Attributes$ry = _VirtualDom_attribute('ry');
 var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
 var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
 var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
-var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
 var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
 var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
 var $elm$core$Debug$toString = _Debug_toString;
+var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
+var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
+var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
+var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
 var $author$project$Main$scoreboard = F2(
 	function (n, color) {
+		var rlen = ((2 * 90) / 7) | 0;
+		var spacing = ((2 * rlen) / 3) | 0;
+		var width = ((($author$project$Board$initPawnCount - 1) * spacing) + (2 * rlen)) + 4;
+		var outline = A2(
+			$elm$svg$Svg$rect,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x('0'),
+					$elm$svg$Svg$Attributes$y('0'),
+					$elm$svg$Svg$Attributes$rx('10'),
+					$elm$svg$Svg$Attributes$ry('10'),
+					$elm$svg$Svg$Attributes$height('100'),
+					$elm$svg$Svg$Attributes$fill('antiquewhite'),
+					$elm$svg$Svg$Attributes$stroke('none'),
+					$elm$svg$Svg$Attributes$width(
+					$elm$core$Debug$toString(width)),
+					$elm$html$Html$Events$onClick(
+					$author$project$Main$Click(30))
+				]),
+			_List_Nil);
 		var makepiece = F2(
 			function (x, y) {
 				return _List_fromArray(
@@ -7147,11 +7308,11 @@ var $author$project$Main$scoreboard = F2(
 						_List_fromArray(
 							[
 								$elm$svg$Svg$Attributes$cx(
-								$elm$core$Debug$toString(x + ((90 / 2) | 0))),
+								$elm$core$Debug$toString(x + 1)),
 								$elm$svg$Svg$Attributes$cy(
-								$elm$core$Debug$toString(y + ((90 / 2) | 0))),
+								$elm$core$Debug$toString(y + 50)),
 								$elm$svg$Svg$Attributes$r(
-								$elm$core$Debug$toString(((2 * 90) / 7) | 0)),
+								$elm$core$Debug$toString(rlen)),
 								$elm$svg$Svg$Attributes$stroke('black'),
 								$elm$svg$Svg$Attributes$fill(
 								_Utils_eq(color, $author$project$Board$White) ? 'snow' : 'slategray')
@@ -7159,18 +7320,41 @@ var $author$project$Main$scoreboard = F2(
 						_List_Nil)
 					]);
 			});
-		var centers = (!A2($elm$core$Basics$modBy, 2, n)) ? A2($elm$core$List$range, 1, n) : A2($elm$core$List$range, 1, n);
+		var centers = (!A2($elm$core$Basics$modBy, 2, n)) ? A2(
+			$elm$core$List$map,
+			function (x) {
+				return ((width / 2) | 0) + ((x - ((n / 2) | 0)) * spacing);
+			},
+			A2($elm$core$List$range, 1, n)) : A2(
+			$elm$core$List$map,
+			function (x) {
+				return ((width / 2) | 0) + ((x - (((n + 1) / 2) | 0)) * spacing);
+			},
+			A2($elm$core$List$range, 1, n));
 		return A2(
 			$elm$svg$Svg$svg,
-			_List_Nil,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$width(
+					$elm$core$Debug$toString(width)),
+					$elm$svg$Svg$Attributes$height('100'),
+					$elm$svg$Svg$Attributes$viewBox(
+					'0 0 ' + ($elm$core$Debug$toString(width) + ' 100'))
+				]),
 			A2(
-				$elm$core$List$concatMap,
-				function (x) {
-					return A2(makepiece, x, 0);
-				},
-				centers));
+				$elm$core$List$cons,
+				outline,
+				A2(
+					$elm$core$List$concatMap,
+					function (x) {
+						return A2(makepiece, x, 0);
+					},
+					centers)));
 	});
-var $elm$svg$Svg$rect = $elm$svg$Svg$trustedNode('rect');
+var $elm$html$Html$select = _VirtualDom_node('select');
+var $elm$svg$Svg$Attributes$strokeWidth = _VirtualDom_attribute('stroke-width');
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $elm$core$List$any = F2(
 	function (isOkay, list) {
 		any:
@@ -7201,12 +7385,6 @@ var $elm$core$List$member = F2(
 			},
 			xs);
 	});
-var $elm$svg$Svg$Attributes$rx = _VirtualDom_attribute('rx');
-var $elm$svg$Svg$Attributes$ry = _VirtualDom_attribute('ry');
-var $elm$svg$Svg$Attributes$strokeWidth = _VirtualDom_attribute('stroke-width');
-var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
-var $elm$svg$Svg$Attributes$x = _VirtualDom_attribute('x');
-var $elm$svg$Svg$Attributes$y = _VirtualDom_attribute('y');
 var $author$project$Main$svgSquare = F5(
 	function (length, model, n, i, j) {
 		var rlen = (length / 10) | 0;
@@ -7372,7 +7550,6 @@ var $author$project$Main$svgSquare = F5(
 					sqImage,
 					piece(maybePawn))));
 	});
-var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
 var $author$project$Main$svgBoard = function (model) {
 	var ls = A2($elm$core$List$range, 0, 9);
 	var length = 100;
@@ -7409,7 +7586,7 @@ var $author$project$Main$svgBoard = function (model) {
 		$elm$svg$Svg$svg,
 		_List_fromArray(
 			[
-				$elm$svg$Svg$Attributes$viewBox('-50 -50 1100 500')
+				$elm$svg$Svg$Attributes$viewBox('-50 -20 1100 350')
 			]),
 		_Utils_ap(
 			_List_fromArray(
@@ -7418,8 +7595,11 @@ var $author$project$Main$svgBoard = function (model) {
 				line1,
 				_Utils_ap(line2, line3))));
 };
+var $elm$html$Html$table = _VirtualDom_node('table');
+var $elm$html$Html$td = _VirtualDom_node('td');
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $elm$html$Html$tr = _VirtualDom_node('tr');
 var $elm$core$String$fromList = _String_fromList;
 var $elm$core$List$intersperse = F2(
 	function (sep, xs) {
@@ -7510,8 +7690,6 @@ var $author$project$Board$boardToStrings = function (board) {
 		line(nums2),
 		line(nums3));
 };
-var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $author$project$Main$monospace = A2($elm$html$Html$Attributes$style, 'font-family', 'monospace');
 var $author$project$Main$txtBoard = function (model) {
 	var _v0 = $author$project$Board$boardToStrings(model.gs.board);
@@ -7537,6 +7715,7 @@ var $author$project$Main$txtBoard = function (model) {
 				$author$project$Main$newline
 			]));
 };
+var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$view = function (model) {
 	var wscoreboard = A2(
 		$elm$html$Html$h3,
@@ -7555,15 +7734,15 @@ var $author$project$Main$view = function (model) {
 			[
 				$elm$html$Html$text(
 				function () {
-					var _v2 = $author$project$Board$isOver(model.gs);
-					if (_v2.$ === 'NotDone') {
+					var _v3 = $author$project$Board$isOver(model.gs);
+					if (_v3.$ === 'NotDone') {
 						return _Utils_eq(model.gs.turn, $author$project$Board$White) ? 'White\'s turn' : 'Black\'s turn';
 					} else {
-						if (_v2.a.$ === 'White') {
-							var _v3 = _v2.a;
+						if (_v3.a.$ === 'White') {
+							var _v4 = _v3.a;
 							return 'White won!';
 						} else {
-							var _v4 = _v2.a;
+							var _v5 = _v3.a;
 							return 'Black won!';
 						}
 					}
@@ -7577,38 +7756,73 @@ var $author$project$Main$view = function (model) {
 			[
 				$elm$html$Html$text('Senet!')
 			]));
-	var bscoreboard = A2(
-		$elm$html$Html$h3,
-		_List_fromArray(
-			[$author$project$Main$centering]),
-		_List_fromArray(
-			[
-				$elm$html$Html$text(
-				((7 - model.gs.blackPawnCnt) === 7) ? 'Game Over. Black Wins!' : ('Black has promoted ' + ($elm$core$Debug$toString(7 - model.gs.blackPawnCnt) + ' pawn(s)! ')))
-			]));
-	var afterlifepic = A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[$author$project$Main$centering]),
-		_List_fromArray(
-			[
-				A2(
-				$elm$svg$Svg$image,
-				_List_fromArray(
-					[
-						$author$project$Main$href('images/rebirth.png'),
-						$elm$svg$Svg$Attributes$x(
-						$elm$core$Debug$toString(0)),
-						$elm$svg$Svg$Attributes$y(
-						$elm$core$Debug$toString(0)),
-						$elm$svg$Svg$Attributes$width('190'),
-						$elm$svg$Svg$Attributes$height('265'),
-						$elm$svg$Svg$Events$onClick(
-						$author$project$Main$Click(30))
-					]),
-				_List_Nil)
-			]));
-	return A2(
+	var selector = function (col) {
+		return A2(
+			$elm$html$Html$select,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$name(
+					function () {
+						if (col.$ === 'Black') {
+							return 'Player 1 (Black)';
+						} else {
+							return 'Player 2 (White)';
+						}
+					}())
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$option,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$value('Human'),
+							$elm$html$Html$Events$onClick(
+							A2($author$project$Main$ChangePlayer, col, $author$project$Main$Human))
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text('Human')
+						])),
+					A2(
+					$elm$html$Html$option,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$value('AIFast'),
+							$elm$html$Html$Events$onClick(
+							A2($author$project$Main$ChangePlayer, col, $author$project$Main$AIFast))
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text('AI (fast)')
+						])),
+					A2(
+					$elm$html$Html$option,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$value('AIMed'),
+							$elm$html$Html$Events$onClick(
+							A2($author$project$Main$ChangePlayer, col, $author$project$Main$AIMed))
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text('AI (medium)')
+						])),
+					A2(
+					$elm$html$Html$option,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$value('AISlow'),
+							$elm$html$Html$Events$onClick(
+							A2($author$project$Main$ChangePlayer, col, $author$project$Main$AISlow))
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text('AI (slow)')
+						]))
+				]));
+	};
+	var centerHeader = A2(
 		$elm$html$Html$div,
 		_List_Nil,
 		_List_fromArray(
@@ -7656,7 +7870,9 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$button,
 						_List_fromArray(
 							[
-								$elm$html$Html$Events$onClick($author$project$Main$Play)
+								$elm$html$Html$Events$onClick($author$project$Main$Play),
+								$elm$html$Html$Attributes$disabled(
+								_Utils_eq($elm$core$Maybe$Nothing, model.selected))
 							]),
 						_List_fromArray(
 							[
@@ -7665,13 +7881,236 @@ var $author$project$Main$view = function (model) {
 									var _v1 = model.selected;
 									if (_v1.$ === 'Just') {
 										var s = _v1.a;
-										return 'Play piece on square ' + $elm$core$Debug$toString(s + 1);
+										return (A2($author$project$Logic$existsPromotion, model.gs, model.roll) && (s >= 25)) ? ('Promote pawn on square ' + $elm$core$Debug$toString(s + 1)) : ('Play piece on square ' + $elm$core$Debug$toString(s + 1));
 									} else {
 										return 'Select a piece';
 									}
 								}())
+							])),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$Skip),
+								$elm$html$Html$Attributes$disabled(!model.skippedMove)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Skip turn')
 							]))
-					])),
+					]))
+			]));
+	var header = A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$table,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'width', '100%')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$tr,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$td,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'width', '20%')
+									]),
+								_List_Nil),
+								A2(
+								$elm$html$Html$td,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'width', '60%')
+									]),
+								_List_fromArray(
+									[centerHeader])),
+								A2(
+								$elm$html$Html$td,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'width', '20%')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Player 1 (Black): '),
+										selector($author$project$Board$Black),
+										$author$project$Main$newline,
+										$elm$html$Html$text('\tPlayer 2 (White): '),
+										selector($author$project$Board$White),
+										$author$project$Main$newline,
+										A2(
+										$elm$html$Html$button,
+										_List_fromArray(
+											[
+												$elm$html$Html$Events$onClick($author$project$Main$Skip),
+												$elm$html$Html$Attributes$disabled(
+												_Utils_eq(
+													$author$project$Board$NotDone,
+													$author$project$Board$isOver(model.gs)))
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('New game')
+											]))
+									]))
+							]))
+					]))
+			]));
+	var bscoreboard = A2(
+		$elm$html$Html$h3,
+		_List_fromArray(
+			[$author$project$Main$centering]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(
+				((7 - model.gs.blackPawnCnt) === 7) ? 'Game Over. Black Wins!' : ('Black has promoted ' + ($elm$core$Debug$toString(7 - model.gs.blackPawnCnt) + ' pawn(s)! ')))
+			]));
+	var pawnView = A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[$author$project$Main$centering]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$table,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'width', '80%')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$tr,
+						_List_fromArray(
+							[$author$project$Main$centering]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$td,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'width', '35%')
+									]),
+								_List_fromArray(
+									[
+										wscoreboard,
+										A2($author$project$Main$scoreboard, $author$project$Board$initPawnCount - model.gs.whitePawnCnt, $author$project$Board$White)
+									])),
+								A2(
+								$elm$html$Html$td,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'width', '30%')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										$elm$svg$Svg$svg,
+										_List_fromArray(
+											[
+												$elm$svg$Svg$Attributes$x('-10'),
+												$elm$svg$Svg$Attributes$y('-10'),
+												$elm$svg$Svg$Attributes$width('210'),
+												$elm$svg$Svg$Attributes$height('285'),
+												$elm$svg$Svg$Attributes$viewBox('-10 -10 210 285'),
+												$elm$svg$Svg$Events$onClick(
+												$author$project$Main$Click(30))
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$svg$Svg$image,
+												_List_fromArray(
+													[
+														$elm$svg$Svg$Attributes$x('0'),
+														$elm$svg$Svg$Attributes$y('0'),
+														$author$project$Main$href('images/afterlife.jfif'),
+														$elm$svg$Svg$Events$onClick(
+														$author$project$Main$Click(30))
+													]),
+												_List_Nil),
+												A2(
+												$elm$svg$Svg$rect,
+												_List_fromArray(
+													[
+														$elm$svg$Svg$Attributes$x('-10'),
+														$elm$svg$Svg$Attributes$y('-10'),
+														$elm$svg$Svg$Attributes$rx('10'),
+														$elm$svg$Svg$Attributes$ry('10'),
+														$elm$svg$Svg$Attributes$width('210'),
+														$elm$svg$Svg$Attributes$height('285'),
+														$elm$svg$Svg$Attributes$fill('none'),
+														$elm$svg$Svg$Attributes$strokeWidth('10'),
+														$elm$svg$Svg$Attributes$stroke(
+														A2(
+															$elm$core$Maybe$withDefault,
+															'none',
+															A2(
+																$elm$core$Maybe$andThen,
+																function (p) {
+																	return A2(
+																		$elm$core$Maybe$map,
+																		function (roll) {
+																			return A2($author$project$Logic$promotablePawn, p, roll) ? 'lightgreen' : 'none';
+																		},
+																		model.roll);
+																},
+																model.selected)))
+													]),
+												_List_Nil)
+											]))
+									])),
+								A2(
+								$elm$html$Html$td,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'width', '35%')
+									]),
+								_List_fromArray(
+									[
+										bscoreboard,
+										A2($author$project$Main$scoreboard, $author$project$Board$initPawnCount - model.gs.blackPawnCnt, $author$project$Board$Black)
+									]))
+							]))
+					]))
+			]));
+	var afterlifepic = A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[$author$project$Main$centering]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$svg$Svg$image,
+				_List_fromArray(
+					[
+						$author$project$Main$href('images/rebirth.png'),
+						$elm$svg$Svg$Attributes$x(
+						$elm$core$Debug$toString(0)),
+						$elm$svg$Svg$Attributes$y(
+						$elm$core$Debug$toString(0)),
+						$elm$svg$Svg$Attributes$width('190'),
+						$elm$svg$Svg$Attributes$height('265'),
+						$elm$svg$Svg$Events$onClick(
+						$author$project$Main$Click(30))
+					]),
+				_List_Nil)
+			]));
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				header,
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
@@ -7680,46 +8119,10 @@ var $author$project$Main$view = function (model) {
 					[
 						$author$project$Main$svgBoard(model)
 					])),
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[$author$project$Main$centering]),
-				_List_fromArray(
-					[
-						A2(
-						$elm$html$Html$button,
-						_List_fromArray(
-							[
-								$elm$html$Html$Events$onClick(
-								$author$project$Main$Click(30))
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text(
-								A2($author$project$Logic$existspromotion, model.gs, model.roll) ? 'Promote' : 'No Promotion Available')
-							]))
-					])),
 				afterlifepic,
+				pawnView,
 				$author$project$Main$txtBoard(model),
-				$author$project$Main$newline,
-				wscoreboard,
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[$author$project$Main$centering]),
-				_List_fromArray(
-					[
-						A2($author$project$Main$scoreboard, 7 - model.gs.whitePawnCnt, $author$project$Board$White)
-					])),
-				bscoreboard,
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[$author$project$Main$centering]),
-				_List_fromArray(
-					[
-						A2($author$project$Main$scoreboard, 7 - model.gs.blackPawnCnt, $author$project$Board$Black)
-					]))
+				$author$project$Main$newline
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(

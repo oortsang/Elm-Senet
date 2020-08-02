@@ -87,8 +87,11 @@ gsLeafVal col gs =
       (lastFreeBy 14 gs)
       |> Maybe.withDefault 0
 
+    -- extra reward for having promoted each pawn
+    pawnBounty = toFloat 20
+
     pawnAdv =
-      20 * toFloat (gs.whitePawnCnt - gs.blackPawnCnt)
+      pawnBounty * toFloat (gs.whitePawnCnt - gs.blackPawnCnt)
 
     -- Value Function
     -- Choose values based on distance from the end
@@ -96,18 +99,20 @@ gsLeafVal col gs =
     valf i sq =
       case squareType i of
         Spec Happy ->
-          (sign sq) * -3.0 -- want to provide an extra incentive to go heernat
+          (sign sq) * -3.0 -- want to provide an extra incentive to go here
         Spec Horus ->
           -- basically as good as having promoted it
-          (sign sq) * -12.0
+          (sign sq) * -pawnBounty
         Spec Reatoum ->
           -- 1/4 chance of success
           -- 3/4 chance of demotion
-          0.75 * (sign sq) * (toFloat (30 - rebirthSquare))
+          (sign sq) * ( 0.75 * (toFloat (30 - rebirthSquare))
+                      - 0.25 * pawnBounty)
         Spec Truths ->
-          -- 1/4 chance of success
-          -- 3/4 chance of demotion
-          0.75 * (sign sq) * (toFloat (30 - rebirthSquare))
+          -- 3/8 chance of success
+          -- 5/8 chance of demotion
+          (sign sq) * ( 0.625 * (toFloat (30 - rebirthSquare))
+                      - 0.375 * pawnBounty)
         _ ->
           (sign sq) * (toFloat (30-i))
   in
