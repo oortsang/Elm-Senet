@@ -13,6 +13,7 @@
 
 module Main exposing (..)
 
+
 -- From our project
 import BoardTree as BT exposing (..)
 import Board exposing (..)
@@ -44,7 +45,7 @@ href value =
 
 main : Program Flags Model Msg
 main =
-  Browser.element
+  Browser.document
     { init = init
     , subscriptions = subscriptions
     , update = update
@@ -391,6 +392,11 @@ newline = br [] []
 centering = HA.align "center"
 monospace = HA.style "font-family" "monospace"
 
+selectionColor = "palegreen"
+-- "darkseagreen"
+-- "#E65E5E"
+-- "limegreen"
+-- "lightgreen"
 
 svgSquare : Int -> Model -> Int -> Int -> Int -> Html.Html Msg
 svgSquare length model n i j =
@@ -412,7 +418,7 @@ svgSquare length model n i j =
         , SA.ry <| Debug.toString rlen
         -- pick colors
         , SA.stroke <|
-            if List.member n model.highlighted then "lightgreen"
+            if List.member n model.highlighted then selectionColor
             else "black"
         , SA.strokeWidth <|
             if List.member n model.highlighted then "5"
@@ -607,7 +613,7 @@ scoreboard n color =
     (outline :: (List.concatMap (\x -> makepiece x 0) centers))
     -- ((List.concatMap (\x -> makepiece x 0) centers) ++ [outline])
 
-view : Model -> Html Msg
+view : Model -> Browser.Document Msg
 view model =
   let
     title =
@@ -687,7 +693,7 @@ view model =
             , SA.strokeWidth "10"
             , SA.stroke <|
                 if   promotionImminent
-                then "lightgreen"
+                then selectionColor
                 else "none"
             ] []
           ]
@@ -791,49 +797,20 @@ view model =
           ]
         ]
   in
-    div
-      []
-      [ header
-      , Html.table
-        [ HA.style "width" "100%" ]
-        [ Html.tr []
-          [ Html.td [HA.style "width" "85%"]
-            [svgBoard model]
-          , Html.td [HA.style "width" "15%", centering]
-            [afterlifeRect]
-            -- [ -- text <|
-            -- --   if promotionImminent then
-            -- --     "Promotion available!"
-            -- --   else "No promotion available"
-            -- -- ,
-            -- Svg.svg
-            --   [ SA.x "-10"
-            --   , SA.y "-10"
-            --   , SA.width "210", SA.height "285"
-            --   , SA.viewBox "-10 -10 210 285"
-            --   , SE.onClick (Click 30)
-            --   ]
-            --   [ Svg.image
-            --     [ SA.x "0", SA.y "0"
-            --     , href "images/afterlife.jfif"
-            --     , SE.onClick (Click 30)
-            --     ] []
-            --   , Svg.rect
-            --     [ SA.x "-10"
-            --     , SA.y "-10"
-            --     , SA.rx "10"
-            --     , SA.ry "10"
-            --     , SA.width "210"
-            --     , SA.height "285"
-            --     , SA.fill "none"
-            --     , SA.strokeWidth "10"
-            --     , SA.stroke <|
-            --         if   promotionImminent
-            --         then "lightgreen"
-            --         else "none"
-            --     ] []
-            --   ]
-            -- ]
+    { title = "Senet"
+    , body =
+        [ div
+          []
+          [ header
+          , Html.table
+            [ HA.style "width" "100%" ]
+            [ Html.tr []
+              [ Html.td [HA.style "width" "85%"]
+                [svgBoard model]
+              , Html.td [HA.style "width" "15%", centering]
+                [afterlifeRect]
+              ]
+            ]
           ]
         ]
-      ]
+    }

@@ -5240,7 +5240,7 @@ var $elm$core$Task$perform = F2(
 			$elm$core$Task$Perform(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
-var $elm$browser$Browser$element = _Browser_element;
+var $elm$browser$Browser$document = _Browser_document;
 var $author$project$Main$Human = {$: 'Human'};
 var $author$project$Board$Black = {$: 'Black'};
 var $author$project$Board$White = {$: 'White'};
@@ -5435,7 +5435,7 @@ var $author$project$BoardTree$fromList = function (xs) {
 		$elm$core$List$length(xs),
 		xs);
 };
-var $author$project$Board$initPawnCount = 5;
+var $author$project$Board$initPawnCount = 7;
 var $elm$core$Basics$modBy = _Basics_modBy;
 var $elm$core$List$repeatHelp = F3(
 	function (result, n, value) {
@@ -7341,6 +7341,7 @@ var $author$project$Main$scoreboard = F2(
 					centers)));
 	});
 var $elm$html$Html$select = _VirtualDom_node('select');
+var $author$project$Main$selectionColor = 'palegreen';
 var $elm$svg$Svg$Attributes$strokeWidth = _VirtualDom_attribute('stroke-width');
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
@@ -7399,7 +7400,7 @@ var $author$project$Main$svgSquare = F5(
 						$elm$svg$Svg$Attributes$ry(
 						$elm$core$Debug$toString(rlen)),
 						$elm$svg$Svg$Attributes$stroke(
-						A2($elm$core$List$member, n, model.highlighted) ? 'lightgreen' : 'black'),
+						A2($elm$core$List$member, n, model.highlighted) ? $author$project$Main$selectionColor : 'black'),
 						$elm$svg$Svg$Attributes$strokeWidth(
 						A2($elm$core$List$member, n, model.highlighted) ? '5' : '1'),
 						$elm$svg$Svg$Attributes$fill(
@@ -7968,7 +7969,7 @@ var $author$project$Main$view = function (model) {
 								$elm$svg$Svg$Attributes$fill('none'),
 								$elm$svg$Svg$Attributes$strokeWidth('10'),
 								$elm$svg$Svg$Attributes$stroke(
-								promotionImminent ? 'lightgreen' : 'none')
+								promotionImminent ? $author$project$Main$selectionColor : 'none')
 							]),
 						_List_Nil)
 					]))
@@ -8026,49 +8027,55 @@ var $author$project$Main$view = function (model) {
 							]))
 					]))
 			]));
-	return A2(
-		$elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
+	return {
+		body: _List_fromArray(
 			[
-				header,
 				A2(
-				$elm$html$Html$table,
+				$elm$html$Html$div,
+				_List_Nil,
 				_List_fromArray(
 					[
-						A2($elm$html$Html$Attributes$style, 'width', '100%')
-					]),
-				_List_fromArray(
-					[
+						header,
 						A2(
-						$elm$html$Html$tr,
-						_List_Nil,
+						$elm$html$Html$table,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'width', '100%')
+							]),
 						_List_fromArray(
 							[
 								A2(
-								$elm$html$Html$td,
+								$elm$html$Html$tr,
+								_List_Nil,
 								_List_fromArray(
 									[
-										A2($elm$html$Html$Attributes$style, 'width', '85%')
-									]),
-								_List_fromArray(
-									[
-										$author$project$Main$svgBoard(model)
-									])),
-								A2(
-								$elm$html$Html$td,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'width', '15%'),
-										$author$project$Main$centering
-									]),
-								_List_fromArray(
-									[afterlifeRect]))
+										A2(
+										$elm$html$Html$td,
+										_List_fromArray(
+											[
+												A2($elm$html$Html$Attributes$style, 'width', '85%')
+											]),
+										_List_fromArray(
+											[
+												$author$project$Main$svgBoard(model)
+											])),
+										A2(
+										$elm$html$Html$td,
+										_List_fromArray(
+											[
+												A2($elm$html$Html$Attributes$style, 'width', '15%'),
+												$author$project$Main$centering
+											]),
+										_List_fromArray(
+											[afterlifeRect]))
+									]))
 							]))
 					]))
-			]));
+			]),
+		title: 'Senet'
+	};
 };
-var $author$project$Main$main = $elm$browser$Browser$element(
+var $author$project$Main$main = $elm$browser$Browser$document(
 	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
 	$elm$json$Json$Decode$succeed(_Utils_Tuple0))(0)}});}(this));
