@@ -6776,9 +6776,10 @@ var $author$project$Main$highlightPieces = function (model) {
 							A2($author$project$Logic$legalMoves, model.gs, roll));
 						if (!_v1.b) {
 							var newModel = $author$project$Main$pawnSendBack(model);
-							return _Utils_update(
+							var sm = _Utils_update(
 								newModel,
 								{skippedMove: true});
+							return _Utils_eq(newModel, model) ? sm : $author$project$Main$highlightPieces(sm);
 						} else {
 							var moves = _v1;
 							return _Utils_update(
@@ -7148,7 +7149,11 @@ var $author$project$Main$update = F2(
 				case 'Noop':
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				case 'Reset':
-					return _Utils_Tuple2($author$project$Main$initModel, $elm$core$Platform$Cmd$none);
+					return _Utils_Tuple2(
+						_Utils_update(
+							$author$project$Main$initModel,
+							{blackPlayer: model.blackPlayer, whitePlayer: model.whitePlayer}),
+						$elm$core$Platform$Cmd$none);
 				default:
 					return _Utils_Tuple2(
 						$author$project$Main$highlightPieces(
@@ -7164,6 +7169,7 @@ var $author$project$Main$ChangePlayer = F2(
 	function (a, b) {
 		return {$: 'ChangePlayer', a: a, b: b};
 	});
+var $author$project$Main$Reset = {$: 'Reset'};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
@@ -7643,7 +7649,7 @@ var $author$project$Main$view = function (model) {
 			[$author$project$Main$centering]),
 		_List_fromArray(
 			[
-				$elm$html$Html$text('Senet!')
+				$elm$html$Html$text('Senet')
 			]));
 	var selector = function (col) {
 		return A2(
@@ -7794,7 +7800,7 @@ var $author$project$Main$view = function (model) {
 									var _v1 = model.selected;
 									if (_v1.$ === 'Just') {
 										var s = _v1.a;
-										return promotionImminent ? ('Promote pawn on square ' + $elm$core$Debug$toString(s + 1)) : ('Play piece on square ' + $elm$core$Debug$toString(s + 1));
+										return promotionImminent ? ('Promote pawn on square ' + $elm$core$Debug$toString(s + 1)) : ('Play pawn on square ' + $elm$core$Debug$toString(s + 1));
 									} else {
 										return 'Select a piece';
 									}
@@ -7847,42 +7853,51 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								A2(
-								$elm$html$Html$td,
+								$elm$html$Html$table,
 								_List_fromArray(
 									[
-										A2($elm$html$Html$Attributes$style, 'width', '5%'),
-										$author$project$Main$centering
-									]),
-								_List_Nil),
-								A2(
-								$elm$html$Html$td,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'width', '15%'),
-										$author$project$Main$centering
+										A2($elm$html$Html$Attributes$style, 'width', '100%')
 									]),
 								_List_fromArray(
 									[
-										bscoreboard,
-										A2($author$project$Main$scoreboard, $author$project$Board$initPawnCount - model.gs.blackPawnCnt, $author$project$Board$Black)
+										A2(
+										$elm$html$Html$td,
+										_List_fromArray(
+											[
+												A2($elm$html$Html$Attributes$style, 'width', '10%'),
+												$author$project$Main$centering
+											]),
+										_List_Nil),
+										A2(
+										$elm$html$Html$td,
+										_List_fromArray(
+											[
+												A2($elm$html$Html$Attributes$style, 'width', '40%'),
+												$author$project$Main$centering
+											]),
+										_List_fromArray(
+											[
+												bscoreboard,
+												A2($author$project$Main$scoreboard, $author$project$Board$initPawnCount - model.gs.blackPawnCnt, $author$project$Board$Black)
+											])),
+										A2(
+										$elm$html$Html$td,
+										_List_fromArray(
+											[
+												A2($elm$html$Html$Attributes$style, 'width', '40%'),
+												$author$project$Main$centering
+											]),
+										_List_fromArray(
+											[
+												wscoreboard,
+												A2($author$project$Main$scoreboard, $author$project$Board$initPawnCount - model.gs.whitePawnCnt, $author$project$Board$White)
+											]))
 									])),
 								A2(
 								$elm$html$Html$td,
 								_List_fromArray(
 									[
-										A2($elm$html$Html$Attributes$style, 'width', '15%'),
-										$author$project$Main$centering
-									]),
-								_List_fromArray(
-									[
-										wscoreboard,
-										A2($author$project$Main$scoreboard, $author$project$Board$initPawnCount - model.gs.whitePawnCnt, $author$project$Board$White)
-									])),
-								A2(
-								$elm$html$Html$td,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$style, 'width', '30%')
+										A2($elm$html$Html$Attributes$style, 'width', '40%')
 									]),
 								_List_fromArray(
 									[centerHeader])),
@@ -7890,7 +7905,7 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$td,
 								_List_fromArray(
 									[
-										A2($elm$html$Html$Attributes$style, 'width', '15%')
+										A2($elm$html$Html$Attributes$style, 'width', '10%')
 									]),
 								_List_Nil),
 								A2(
@@ -7911,7 +7926,7 @@ var $author$project$Main$view = function (model) {
 										$elm$html$Html$button,
 										_List_fromArray(
 											[
-												$elm$html$Html$Events$onClick($author$project$Main$Skip),
+												$elm$html$Html$Events$onClick($author$project$Main$Reset),
 												$elm$html$Html$Attributes$disabled(
 												_Utils_eq(
 													$author$project$Board$NotDone,

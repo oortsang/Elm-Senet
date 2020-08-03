@@ -3,12 +3,9 @@
 -- Main.elm: makes the html page and handles interactions
 
 -- TODO:
---   0. Add a way to promote the pawns
---   1. Should there be a button to ask for the roll?
---   2. Skip moves that don't have legal moves
---   3. Check for game termination!
---   4. Save computation of thunkstates!
-
+--   0. Delay AI evaluation to improve responsiveness
+--   1. Save computation of thunkstates!
+--   2. Make it more obvious when the AI made a move that undoes your last move
 
 
 module Main exposing (..)
@@ -110,15 +107,6 @@ subscriptions model =
   Sub.none
 
 ------ UPDATE ------
--- To do:
---   - select/unselect:
---       - check for legality of the move?
---         (maybe do this in subscriptions...)
---       - if we check here rather than Play,
---         what's good error feedback?
---       - how to determine highlighting?
---   - play: how to give error feedback?
---       - may not be needed if we check at selection stage
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
@@ -255,7 +243,11 @@ update msg model =
     Noop ->
       (model, Cmd.none)
     Reset ->
-      (initModel, Cmd.none)
+      ( { initModel
+        | blackPlayer = model.blackPlayer
+        , whitePlayer = model.whitePlayer
+        }
+      , Cmd.none)
     Unselect ->
       (unselectPiece model |> highlightPieces, Cmd.none)
 
@@ -317,8 +309,7 @@ tryPlay n model =
   getPawn  n model.gs   |> Maybe.andThen (\p ->
   makeMove p r model.gs |> Maybe.map (\js ->
   clearRoll { model | gs = js }
-  ) -- perhaps catch the empty case
-  ))
+  )))
 
 
 pawnSendBack : Model -> Model
@@ -355,12 +346,14 @@ highlightPieces model =
             -- if there are no moves, switch to the next turn
             -- but also send back pieces in the end zone
             -- and leave an indicator
-            -- { model | skippedMove = True }
-            --   |> pawnSendBack
             let
               newModel = pawnSendBack model
+              sm = { newModel | skippedMove = True }
             in
-              { newModel | skippedMove = True }
+              if newModel == model then
+                sm
+              else
+                highlightPieces sm
           moves ->
             { model | highlighted = moves }
         )
@@ -512,7 +505,13 @@ svgBoard model =
       ls |> List.map (\i ->
       svgSquare length model (20+i) 2 i)
     background =
-      Svg.rect [SA.x "-10", SA.y "-10", SA.width "1020", SA.height "320", SA.fill "gray"] []
+      Svg.rect
+        [ SA.x "-10"
+        , SA.y "-10"
+        , SA.width "1020"
+        , SA.height "320"
+        , SA.fill "gray"
+        ] []
     afterlife =
       Svg.image
         [ SA.x "1050", SA.y "100"
@@ -618,7 +617,7 @@ view model =
   let
     title =
       Html.h1 [ centering ]
-        [ text "Senet!" ]
+        [ text "Senet" ]
     turn =
       Html.h2 [centering]
         [ text <|
@@ -726,25 +725,27 @@ view model =
         [ Html.table
           [ HA.style "width" "100%" ]
           [ Html.tr []
-            [ Html.td [HA.style "width" "5%", centering] []
-            , Html.td [HA.style "width" "15%", centering]
-              [ bscoreboard
-              , scoreboard (initPawnCount - model.gs.blackPawnCnt) Black
+            [ Html.table [HA.style "width" "100%"]
+              [ Html.td [HA.style "width" "10%", centering] []
+              , Html.td [HA.style "width" "40%", centering]
+                [ bscoreboard
+                , scoreboard (initPawnCount - model.gs.blackPawnCnt) Black
+                ]
+              , Html.td [HA.style "width" "40%", centering]
+                [ wscoreboard
+                , scoreboard (initPawnCount - model.gs.whitePawnCnt) White
+                ]
               ]
-            , Html.td [HA.style "width" "15%", centering]
-              [ wscoreboard
-              , scoreboard (initPawnCount - model.gs.whitePawnCnt) White
-              ]
-            , Html.td [HA.style "width" "30%"]
+            , Html.td [HA.style "width" "40%"]
               [ centerHeader ]
-            , Html.td [HA.style "width" "15%"] []
+            , Html.td [HA.style "width" "10%"] []
             , Html.td [HA.style "width" "20%"]
               [ text   "Player 1 (Black): ", selector Black
               , newline
               , text "\tPlayer 2 (White): ", selector White
               , newline
               , button
-                [ Html.Events.onClick Skip
+                [ Html.Events.onClick Reset
                 , HA.disabled
                     (NotDone == isOver model.gs)
                 ]
@@ -784,7 +785,7 @@ view model =
                   if promotionImminent then
                     "Promote pawn on square " ++ (Debug.toString (s+1))
                   else
-                    "Play piece on square " ++ (Debug.toString (s+1))
+                    "Play pawn on square " ++ (Debug.toString (s+1))
                 Nothing -> "Select a piece"
             ]
           , button
