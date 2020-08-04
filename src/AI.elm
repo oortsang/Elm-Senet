@@ -114,7 +114,10 @@ gsLeafVal col gs =
           (sign sq) * ( 0.625 * (toFloat (30 - rebirthSquare))
                       - 0.375 * pawnBounty)
         _ ->
-          (sign sq) * (toFloat (30-i))
+          if i /= 24 then
+            (sign sq) * (toFloat (30-i))
+          else
+            (sign sq) * 8.5 -- make it worse than square 22
   in
     (*) colCorrection <|
     case isOver gs of
@@ -418,7 +421,7 @@ evalRolledState col ply roll (N gs tmt) =
               preList
                 |> List.map Tuple.second
 
-            _ = Debug.log "Options" optionDescription
+            -- _ = Debug.log "Options" optionDescription
             optionDescription =
               preList |> List.map (\(v, (mp, newts)) ->
               (mp, v)

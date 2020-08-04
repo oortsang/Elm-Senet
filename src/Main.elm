@@ -30,8 +30,10 @@ import Svg.Attributes as SA
 import Svg.Events as SE exposing (on)
 
 import Bootstrap.Button as Button
-import Random exposing (Generator)
 
+import Time exposing (every)
+
+import Random exposing (Generator)
 
 -- apparently xlinkHref is deprecated
 import VirtualDom exposing (Attribute, attribute)
@@ -60,7 +62,7 @@ type alias Model =
   , skippedMove : Bool
   , whitePlayer : PlayerType
   , blackPlayer : PlayerType
-  -- maybe something else??
+  , queuedAI    : Bool
   }
 
 type PlayerType
@@ -68,6 +70,14 @@ type PlayerType
   | AIFast
   | AIMed
   | AISlow
+
+-- smol helper in case of later changes
+isPlayerAI : PlayerType -> Bool
+isPlayerAI player =
+  case player of
+    Human -> False
+    _     -> True
+
 
 initModel : Model
 initModel =
@@ -79,6 +89,7 @@ initModel =
   , skippedMove = False
   , blackPlayer = Human
   , whitePlayer = Human
+  , queuedAI    = False
   }
 
 type Msg
@@ -86,6 +97,7 @@ type Msg
   | QueryRoll   -- request random number
   | GetRoll Int -- receive random number
   | Click Int   -- select piece
+  | QueueAI     -- request an upcoming call of the AI
   | QueryAI     -- ask the AI to select and play piece
   | Play
   | Skip
@@ -102,9 +114,25 @@ init () =
 
 ------ SUBSCRIPTIONS ------
 -- Not actually using any at the moment
-subscriptions : Model -> Sub msg
+subscriptions : Model -> Sub Msg
 subscriptions model =
-  Sub.none
+  let
+    currPlayer =
+      case model.gs.turn of
+        White -> model.whitePlayer
+        Black -> model.blackPlayer
+  in
+    if model.queuedAI then
+      Time.every
+        ( case currPlayer of
+            Human  ->  10
+            AIFast -> 250
+            AIMed  -> 100
+            AISlow ->  50
+        )
+        (always QueryAI)
+    else
+      Sub.none
 
 ------ UPDATE ------
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -113,12 +141,15 @@ update msg model =
     NewTurn ->
       -- let _=Debug.log "NewTurn for color" model.gs.turn in
       -- let _=Debug.log "playertype" (getPlayerType model) in
-      case getPlayerType model of
-        Human ->
-          (model, Cmd.none)
-        _ ->
-          -- (model, Cmd.none)
-          update QueryRoll model
+      if isOver model.gs /= NotDone then
+        (model, Cmd.none)
+      else
+        case getPlayerType model of
+          Human ->
+            (model, Cmd.none)
+          _ ->
+            -- (model, Cmd.none)
+            update QueryRoll model
     QueryRoll ->
       -- make sure that there are legal moves available!!
       -- if not, the turn should be skipped
@@ -140,7 +171,7 @@ update msg model =
           Human ->
             (newModel, Cmd.none)
           _ ->
-            update QueryAI newModel
+            update QueueAI newModel
     Click n ->
       let
         play m =
@@ -185,8 +216,14 @@ update msg model =
           checkSquare m
         ) |> Maybe.withDefault (checkSquare m) -- no roll
         ) |> Maybe.withDefault (select ()) -- no selection
+    QueueAI ->
+      -- let _= Debug.log "Queueing..." () in
+      ( { model | queuedAI = True }
+      , Cmd.none)
     QueryAI ->
+      -- let _= Debug.log "Evaluating..." () in
       -- Selects then plays a piece given by the AI
+      let resetModel = { model | queuedAI = False } in
       model.roll |> Maybe.map (\roll ->
       let
         -- for now don't save results
@@ -200,8 +237,22 @@ update msg model =
             Human  -> 2 -- for now
             AIFast -> 2
             AISlow -> 4
-            AIMed  -> 3
-
+            AIMed  ->
+              let
+                hasPieceOn : Int -> Bool
+                hasPieceOn sq =
+                  BT.getElem sq model.gs.board |> Maybe.map (\s ->
+                  case s of
+                    Free  -> False
+                    Occ _ -> True
+                    -- Occ col -> model.gs.turn == col
+                  ) |> Maybe.withDefault False
+                occupancy =
+                  [21, 22, 23, 24]
+                    |> List.map (hasPieceOn)
+                    |> List.foldl (||) False
+              in
+                if occupancy then 4 else 2
         (mp, newTS) =
           aiChooseMove
             model.gs.turn
@@ -211,12 +262,12 @@ update msg model =
       in
         case mp of
           Just p ->
-            model |> update (Click p.square)
-                  |> opChain (update Play)
+            resetModel |> update (Click p.square)
+                       |> opChain (update Play)
           Nothing ->
-            model |> update Skip
-                  |> opChain (update NewTurn)
-      ) |> Maybe.withDefault (model, Cmd.none)
+            resetModel |> update Skip
+                       |> opChain (update NewTurn)
+      ) |> Maybe.withDefault (resetModel, Cmd.none)
     Play ->
       let
         newModel =
@@ -238,8 +289,13 @@ update msg model =
       , Cmd.none
       ) |> opChain (update NewTurn)
     ChangePlayer col ptype ->
-      (setPlayerType col ptype model
+      -- should this automatically send a query?
+      ( setPlayerType col ptype model
       , Cmd.none)
+        -- |> opChain
+        -- (if isPlayerAI ptype
+        -- then update QueueAI
+        -- else update Noop)
     Noop ->
       (model, Cmd.none)
     Reset ->
@@ -337,10 +393,18 @@ pawnSendBack model =
 
 highlightPieces : Model -> Model
 highlightPieces model =
-  Maybe.withDefault { model | highlighted = [] } <|
+  let
+    currPlayer =
+      case model.gs.turn of
+        White -> model.whitePlayer
+        Black -> model.blackPlayer
+  in
+    Maybe.withDefault { model | highlighted = [] } <|
     case model.selected of
       Nothing ->
         model.roll |> Maybe.map (\roll ->
+
+        if isPlayerAI currPlayer then model else
         case List.map (\p -> p.square) (legalMoves model.gs roll) of
           [] ->
             -- if there are no moves, switch to the next turn
@@ -770,8 +834,15 @@ view model =
           , text "\t"
           , button
             [ Html.Events.onClick (QueryAI)
-            , HA.disabled (NotDone /= isOver model.gs)]
-            [ text <| "Ask the AI!"]
+            , HA.disabled
+                  (NotDone /= isOver model.gs
+                  || model.queuedAI)
+            ]
+            [ text <|
+              if model.queuedAI
+              then "Thinking..."
+              else "Ask the AI!"
+            ]
           , text "\t"
           , button
             [ Html.Events.onClick (Play)
