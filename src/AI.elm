@@ -470,3 +470,20 @@ evalDepth (N gs tmt) =
           ) |> Maybe.withDefault n
   in
     edTail 0 tmt
+
+
+-- Alternate easier heuristic AI
+-- always plays the last piece
+lastPawnAI : Player -> Int -> ThunkState -> (Maybe Pawn, ThunkState)
+lastPawnAI col roll (N gs tmt) =
+  let
+    endOf xs =
+      case xs of
+        [] -> Nothing
+        x :: [] -> Just x
+        x :: ys -> endOf ys
+    ma = evalTMT tmt
+  in
+    BT.getElem (roll-1) ma |> Maybe.andThen (\moveList ->
+    endOf moveList -- in the form (mp, ts)
+    ) |> Maybe.withDefault (Nothing, newNode (skipTurn gs)) -- is this right...

@@ -67,6 +67,8 @@ type alias Model =
 
 type PlayerType
   = Human
+  | AIRand
+  | AILast
   | AIFast
   | AIMed
   | AISlow
@@ -99,6 +101,8 @@ type Msg
   | Click Int   -- select piece
   | QueueAI     -- request an upcoming call of the AI
   | QueryAI     -- ask the AI to select and play piece
+  | QueryRandMove    -- ask for a random move
+  | PlayRandMove Int -- play the random move
   | Play
   | Skip
   | ChangePlayer Player PlayerType -- choose who's playing
@@ -126,11 +130,15 @@ subscriptions model =
       Time.every
         ( case currPlayer of
             Human  ->  10
+            AIRand -> 250
+            AILast -> 250
             AIFast -> 250
             AIMed  -> 100
             AISlow ->  50
         )
-        (always QueryAI)
+        (if currPlayer == AIRand
+         then always QueryRandMove
+         else always QueryAI)
     else
       Sub.none
 
@@ -139,8 +147,6 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     NewTurn ->
-      -- let _=Debug.log "NewTurn for color" model.gs.turn in
-      -- let _=Debug.log "playertype" (getPlayerType model) in
       if isOver model.gs /= NotDone then
         (model, Cmd.none)
       else
@@ -148,14 +154,13 @@ update msg model =
           Human ->
             (model, Cmd.none)
           _ ->
-            -- (model, Cmd.none)
             update QueryRoll model
     QueryRoll ->
       -- make sure that there are legal moves available!!
       -- if not, the turn should be skipped
       case model.roll of
         Nothing ->
-          let _=Debug.log "Roll queried for color" model.gs.turn in
+          -- let _=Debug.log "Roll queried for color" model.gs.turn in
           ( { model | skippedMove = False}
           , Random.generate GetRoll rollGenerator
           )
@@ -164,12 +169,14 @@ update msg model =
           (model, Cmd.none)
     GetRoll i ->
       let
-        _ = Debug.log "Rolled" i
+        -- _ = Debug.log "Rolled" i
         newModel = model |> setRoll i |> highlightPieces
       in
         case getPlayerType newModel of
           Human ->
             (newModel, Cmd.none)
+          -- AIRand ->
+          --   update QueryRandMove newModel
           _ ->
             update QueueAI newModel
     Click n ->
@@ -228,19 +235,17 @@ update msg model =
       let
         -- for now don't save results
         ts = newNode model.gs
-        -- _ = Debug.log "Using ply" ply
 
         -- Or for medium it could evaluate
         -- with ply 4 if any piece is on square 25
         ply =
           case getPlayerType model of
-            Human  -> 2 -- for now
             AIFast -> 2
             AISlow -> 4
             AIMed  ->
               let
-                hasPieceOn : Int -> Bool
-                hasPieceOn sq =
+                isAPieceOn : Int -> Bool
+                isAPieceOn sq =
                   BT.getElem sq model.gs.board |> Maybe.map (\s ->
                   case s of
                     Free  -> False
@@ -249,25 +254,74 @@ update msg model =
                   ) |> Maybe.withDefault False
                 occupancy =
                   [21, 22, 23, 24]
-                    |> List.map (hasPieceOn)
+                    |> List.map isAPieceOn
                     |> List.foldl (||) False
               in
                 if occupancy then 4 else 2
+            _ -> 2
+
         (mp, newTS) =
-          aiChooseMove
-            model.gs.turn
-            ply
-            roll
-            ts
+          case getPlayerType model of
+            AILast ->
+              lastPawnAI (model.gs.turn) roll ts
+            _ ->
+              aiChooseMove (model.gs.turn) ply roll ts
       in
+        if getPlayerType model == Human then
+          -- don't want to make the play for the human
+          case mp of
+            Just p  -> resetModel |> update (Click p.square)
+            Nothing -> resetModel |> update Noop
+        else
+          -- make the play!
+          case mp of
+            Just p ->
+              resetModel |> update (Click p.square)
+                         |> opChain (update Play)
+            Nothing ->
+              resetModel |> update Skip
+                         |> opChain (update NewTurn)
+      ) |> Maybe.withDefault (resetModel, Cmd.none)
+
+    QueryRandMove ->
+      -- send a signal to request a random move
+      case model.roll of
+        Nothing -> (model, Cmd.none)
+        Just r  ->
+          let
+            numtot =
+              findMoves model.gs
+              |> BT.getElem r
+              |> Maybe.map List.length
+              |> Maybe.withDefault 0
+            moveGen = Random.int 0 (numtot-1)
+          in
+            if numtot == 0 then
+              { model | gs = skipTurn model.gs }
+                |> clearRoll
+                |> highlightPieces
+                |> update NewTurn
+            else
+              (model, Random.generate PlayRandMove moveGen)
+    PlayRandMove i ->
+      -- choose the ith legal pawn
+      model.roll |> Maybe.map (\r  ->
+        let
+          (mp, newTS) =
+            BT.getElem (r-1) (findMoves model.gs) |> Maybe.andThen (\mvs ->
+            List.drop i mvs |> List.head
+            ) |> Maybe.withDefault (Nothing, newNode (skipTurn model.gs))
+        in
         case mp of
           Just p ->
-            resetModel |> update (Click p.square)
-                       |> opChain (update Play)
+            model |> update (Click p.square)
+                  |> opChain (update Play)
           Nothing ->
-            resetModel |> update Skip
-                       |> opChain (update NewTurn)
-      ) |> Maybe.withDefault (resetModel, Cmd.none)
+            model |> update Skip
+                  |> opChain (update NewTurn)
+
+      ) |> Maybe.withDefault (model, Cmd.none)
+
     Play ->
       let
         newModel =
@@ -343,7 +397,7 @@ unselectPiece model =
 
 setPlayerType : Player -> PlayerType -> Model -> Model
 setPlayerType col ptype model =
-  let _=Debug.log "setPlayerType was called!" (col, ptype) in
+  -- let _=Debug.log "setPlayerType was called!" (col, ptype) in
   case col of
     White ->
       { model | whitePlayer = ptype}
@@ -715,6 +769,14 @@ view model =
           , Html.Events.onClick (ChangePlayer col Human)]
           [text "Human"]
         , Html.option
+          [HA.value "AILast"
+          , Html.Events.onClick (ChangePlayer col AIRand)]
+          [text "Random moves"]
+        , Html.option
+          [HA.value "AILast"
+          , Html.Events.onClick (ChangePlayer col AILast)]
+          [text "Last pawn"]
+        , Html.option
           [HA.value "AIFast"
           , Html.Events.onClick (ChangePlayer col AIFast)]
           [text "AI (fast)"]
@@ -818,6 +880,10 @@ view model =
             ]
           ]
         ]
+    currPlayer =
+      case model.gs.turn of
+        White -> model.whitePlayer
+        Black -> model.blackPlayer
     centerHeader =
       div []
         [ title
@@ -833,7 +899,10 @@ view model =
             ]
           , text "\t"
           , button
-            [ Html.Events.onClick (QueryAI)
+            [ if currPlayer == AIRand then
+                Html.Events.onClick (QueryRandMove)
+              else
+                Html.Events.onClick (QueryAI)
             , HA.disabled
                   (NotDone /= isOver model.gs
                   || model.queuedAI)

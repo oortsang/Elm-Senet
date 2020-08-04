@@ -298,6 +298,28 @@ switchTurn gs =
     Black ->
       { gs | turn = White }
 
+skipTurn : GameState -> GameState
+skipTurn gs =
+  let
+    dest = lastFreeBy 14 gs
+    trySendFrom sq js =
+      dest |> Maybe.andThen (\lf ->
+      case BT.getElem sq js.board of
+        Just (Occ col) ->
+          if col == js.turn then
+            pawnSwap sq lf js
+          else
+            Nothing
+        _ -> Nothing
+      ) |> Maybe.withDefault js
+  in
+    gs
+      |> trySendFrom 27
+      |> trySendFrom 28
+      |> trySendFrom 29
+      |> switchTurn
+
+
 -- for command-line purposes
 easyMove : Int -> Int -> Maybe GameState -> Maybe GameState
 easyMove n m mgs =
