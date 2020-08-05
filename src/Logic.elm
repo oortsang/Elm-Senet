@@ -83,23 +83,6 @@ isLegal board p roll =
           p.color /= destCol
 
 -- Find all moves that are legal for a given die roll
--- and maybe should compute the result of making that move
--- (-> List (Pawn, GameState) output in that case)
--- legalMoves : GameState -> Int -> List (Pawn)
-
--- legalMoves : GameState -> Int -> List (Pawn)
--- legalMoves gs roll =
---   let
---     (bvalid, binvalid) = List.partition (\p -> isLegal gs.board p roll) gs.blackPawns
---     (wvalid, winvalid) = List.partition (\p -> isLegal gs.board p roll) gs.whitePawns
---   in
---   case gs.turn of
---     Black ->
---       bvalid
---     White ->
---       wvalid
-
--- May be more efficient:
 legalMoves : GameState -> Int -> List Pawn
 legalMoves gs roll =
   let
@@ -156,14 +139,6 @@ existsPromotion gs roll =
         plist
           |> List.map (\p -> checkPawn p.square)
           |> List.foldr (||) False
-
-      -- let
-      --   bpotential = List.filter (\p -> p.square + i >= 30) gs.blackPawns
-      --   wpotential = List.filter (\p -> p.square + i >= 30) gs.whitePawns
-      -- in
-      -- case gs.turn of
-      --   Black -> List.foldr (||) False (List.map (\p -> isLegal gs.board p i) bpotential)
-      --   White -> List.foldr (||) False (List.map (\p -> isLegal gs.board p i) wpotential)
 
 promotablePawn : Int -> Int -> Bool
 promotablePawn pSquare roll =
@@ -396,7 +371,7 @@ playPawn p roll gs =
 
     -- Conditionals
     legalSqType =
-      legalBySquareType (squareType n) m
+     legalBySquareType (squareType n) m
     skippedHappiness =
       n < 25 && m > 25
     attemptedLeave =
@@ -457,7 +432,6 @@ playPawn p roll gs =
           -- decide whether to handle sliding back here or not...
           case squareType m of
             Spec Water ->
-              -- moveTo dest
               moveToRebirth ()
             _ ->
               moveTo dest

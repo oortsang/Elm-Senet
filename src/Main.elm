@@ -234,7 +234,15 @@ update msg model =
       model.roll |> Maybe.map (\roll ->
       let
         -- for now don't save results
-        ts = newNode model.gs
+        ts =
+          let
+            (N gs tmt) = model.ts
+            _ = Debug.log "stored ts's gs == current gs?" (gs == model.gs)
+          in
+            if gs == model.gs then
+              model.ts
+            else
+              newNode model.gs
 
         -- Or for medium it could evaluate
         -- with ply 4 if any piece is on square 25
@@ -276,10 +284,12 @@ update msg model =
           -- make the play!
           case mp of
             Just p ->
-              resetModel |> update (Click p.square)
+              resetModel |> setTS newTS
+                         |> update (Click p.square)
                          |> opChain (update Play)
             Nothing ->
-              resetModel |> update Skip
+              resetModel |> setTS newTS
+                         |> update Skip
                          |> opChain (update NewTurn)
       ) |> Maybe.withDefault (resetModel, Cmd.none)
 
@@ -314,10 +324,12 @@ update msg model =
         in
         case mp of
           Just p ->
-            model |> update (Click p.square)
+            model |> setTS newTS
+                  |> update (Click p.square)
                   |> opChain (update Play)
           Nothing ->
-            model |> update Skip
+            model |> setTS newTS
+                  |> update Skip
                   |> opChain (update NewTurn)
 
       ) |> Maybe.withDefault (model, Cmd.none)
@@ -395,6 +407,10 @@ unselectPiece : Model -> Model
 unselectPiece model =
   { model | selected = Nothing }
 
+setTS : ThunkState -> Model -> Model
+setTS ts model =
+  { model | ts = ts }
+
 setPlayerType : Player -> PlayerType -> Model -> Model
 setPlayerType col ptype model =
   -- let _=Debug.log "setPlayerType was called!" (col, ptype) in
@@ -420,7 +436,6 @@ tryPlay n model =
   makeMove p r model.gs |> Maybe.map (\js ->
   clearRoll { model | gs = js }
   )))
-
 
 pawnSendBack : Model -> Model
 pawnSendBack model =

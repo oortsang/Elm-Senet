@@ -7497,6 +7497,12 @@ var $author$project$Main$setRoll = F2(
 				roll: $elm$core$Maybe$Just(i)
 			});
 	});
+var $author$project$Main$setTS = F2(
+	function (ts, model) {
+		return _Utils_update(
+			model,
+			{ts: ts});
+	});
 var $author$project$Main$tryPlay = F2(
 	function (n, model) {
 		return A2(
@@ -7645,7 +7651,16 @@ var $author$project$Main$update = F2(
 						A2(
 							$elm$core$Maybe$map,
 							function (roll) {
-								var ts = $author$project$AI$newNode(model.gs);
+								var ts = function () {
+									var _v13 = model.ts;
+									var gs = _v13.a;
+									var tmt = _v13.b;
+									var _v14 = A2(
+										$elm$core$Debug$log,
+										'stored ts\'s gs == current gs?',
+										_Utils_eq(gs, model.gs));
+									return _Utils_eq(gs, model.gs) ? model.ts : $author$project$AI$newNode(model.gs);
+								}();
 								var ply = function () {
 									var _v11 = $author$project$Main$getPlayerType(model);
 									switch (_v11.$) {
@@ -7714,22 +7729,25 @@ var $author$project$Main$update = F2(
 											A2(
 												$author$project$Main$update,
 												$author$project$Main$Click(p.square),
-												resetModel));
+												A2($author$project$Main$setTS, newTS, resetModel)));
 									} else {
 										return A2(
 											$author$project$Main$opChain,
 											$author$project$Main$update($author$project$Main$NewTurn),
-											A2($author$project$Main$update, $author$project$Main$Skip, resetModel));
+											A2(
+												$author$project$Main$update,
+												$author$project$Main$Skip,
+												A2($author$project$Main$setTS, newTS, resetModel)));
 									}
 								}
 							},
 							model.roll));
 				case 'QueryRandMove':
-					var _v13 = model.roll;
-					if (_v13.$ === 'Nothing') {
+					var _v15 = model.roll;
+					if (_v15.$ === 'Nothing') {
 						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 					} else {
-						var r = _v13.a;
+						var r = _v15.a;
 						var numtot = A2(
 							$elm$core$Maybe$withDefault,
 							0,
@@ -7762,7 +7780,7 @@ var $author$project$Main$update = F2(
 						A2(
 							$elm$core$Maybe$map,
 							function (r) {
-								var _v14 = A2(
+								var _v16 = A2(
 									$elm$core$Maybe$withDefault,
 									_Utils_Tuple2(
 										$elm$core$Maybe$Nothing,
@@ -7778,8 +7796,8 @@ var $author$project$Main$update = F2(
 											$author$project$BoardTree$getElem,
 											r - 1,
 											$author$project$AI$findMoves(model.gs))));
-								var mp = _v14.a;
-								var newTS = _v14.b;
+								var mp = _v16.a;
+								var newTS = _v16.b;
 								if (mp.$ === 'Just') {
 									var p = mp.a;
 									return A2(
@@ -7788,12 +7806,15 @@ var $author$project$Main$update = F2(
 										A2(
 											$author$project$Main$update,
 											$author$project$Main$Click(p.square),
-											model));
+											A2($author$project$Main$setTS, newTS, model)));
 								} else {
 									return A2(
 										$author$project$Main$opChain,
 										$author$project$Main$update($author$project$Main$NewTurn),
-										A2($author$project$Main$update, $author$project$Main$Skip, model));
+										A2(
+											$author$project$Main$update,
+											$author$project$Main$Skip,
+											A2($author$project$Main$setTS, newTS, model)));
 								}
 							},
 							model.roll));
