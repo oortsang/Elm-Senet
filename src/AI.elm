@@ -477,13 +477,40 @@ evalDepth (N gs tmt) =
 lastPawnAI : Player -> Int -> ThunkState -> (Maybe Pawn, ThunkState)
 lastPawnAI col roll (N gs tmt) =
   let
-    endOf xs =
+    mgt : Maybe Pawn -> Maybe Pawn -> Bool
+    mgt mx my =
+      case (mx, my) of
+        (Just x, Just y) ->
+          x.square > y.square
+        (Just x, Nothing) ->
+          True
+        (Nothing, Just y) ->
+          False
+        (Nothing, Nothing) ->
+          -- this case won't come up anyway...
+          False
+    lastPawnHelper (max, maxTS) xs =
       case xs of
-        [] -> Nothing
-        x :: [] -> Just x
-        x :: ys -> endOf ys
+        (mx, xTS) :: rest ->
+          if mgt mx max then
+            lastPawnHelper (mx, xTS) rest
+          else
+            lastPawnHelper (max, maxTS) rest
+        _ ->
+          (max, maxTS)
+
+    lastPawn : List (Maybe Pawn, ThunkState) -> Maybe (Maybe Pawn, ThunkState)
+    lastPawn xs =
+      case xs of
+        (mx, newTS) :: [] ->
+          Just (mx, newTS)
+        (mx, newTS) :: rest ->
+          Just <| lastPawnHelper (mx, newTS) rest
+        _ ->
+          Nothing
     ma = evalTMT tmt
   in
     BT.getElem (roll-1) ma |> Maybe.andThen (\moveList ->
-    endOf moveList -- in the form (mp, ts)
+    lastPawn moveList
+    -- endOf moveList -- in the form (mp, ts)
     ) |> Maybe.withDefault (Nothing, newNode (skipTurn gs)) -- is this right...

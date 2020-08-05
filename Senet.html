@@ -7350,24 +7350,83 @@ var $author$project$AI$lastPawnAI = F3(
 	function (col, roll, _v0) {
 		var gs = _v0.a;
 		var tmt = _v0.b;
-		var ma = $author$project$AI$evalTMT(tmt);
-		var endOf = function (xs) {
-			endOf:
-			while (true) {
-				if (!xs.b) {
-					return $elm$core$Maybe$Nothing;
-				} else {
-					if (!xs.b.b) {
-						var x = xs.a;
-						return $elm$core$Maybe$Just(x);
+		var mgt = F2(
+			function (mx, my) {
+				var _v8 = _Utils_Tuple2(mx, my);
+				if (_v8.a.$ === 'Just') {
+					if (_v8.b.$ === 'Just') {
+						var x = _v8.a.a;
+						var y = _v8.b.a;
+						return _Utils_cmp(x.square, y.square) > 0;
 					} else {
-						var x = xs.a;
-						var ys = xs.b;
-						var $temp$xs = ys;
-						xs = $temp$xs;
-						continue endOf;
+						var x = _v8.a.a;
+						var _v9 = _v8.b;
+						return true;
+					}
+				} else {
+					if (_v8.b.$ === 'Just') {
+						var _v10 = _v8.a;
+						var y = _v8.b.a;
+						return false;
+					} else {
+						var _v11 = _v8.a;
+						var _v12 = _v8.b;
+						return false;
 					}
 				}
+			});
+		var ma = $author$project$AI$evalTMT(tmt);
+		var lastPawnHelper = F2(
+			function (_v1, xs) {
+				lastPawnHelper:
+				while (true) {
+					var max = _v1.a;
+					var maxTS = _v1.b;
+					if (xs.b) {
+						var _v3 = xs.a;
+						var mx = _v3.a;
+						var xTS = _v3.b;
+						var rest = xs.b;
+						if (A2(mgt, mx, max)) {
+							var $temp$_v1 = _Utils_Tuple2(mx, xTS),
+								$temp$xs = rest;
+							_v1 = $temp$_v1;
+							xs = $temp$xs;
+							continue lastPawnHelper;
+						} else {
+							var $temp$_v1 = _Utils_Tuple2(max, maxTS),
+								$temp$xs = rest;
+							_v1 = $temp$_v1;
+							xs = $temp$xs;
+							continue lastPawnHelper;
+						}
+					} else {
+						var _v4 = A2($elm$core$Debug$log, 'using', max);
+						return _Utils_Tuple2(max, maxTS);
+					}
+				}
+			});
+		var lastPawn = function (xs) {
+			if (xs.b) {
+				if (!xs.b.b) {
+					var _v6 = xs.a;
+					var mx = _v6.a;
+					var newTS = _v6.b;
+					return $elm$core$Maybe$Just(
+						_Utils_Tuple2(mx, newTS));
+				} else {
+					var _v7 = xs.a;
+					var mx = _v7.a;
+					var newTS = _v7.b;
+					var rest = xs.b;
+					return $elm$core$Maybe$Just(
+						A2(
+							lastPawnHelper,
+							_Utils_Tuple2(mx, newTS),
+							rest));
+				}
+			} else {
+				return $elm$core$Maybe$Nothing;
 			}
 		};
 		return A2(
@@ -7379,7 +7438,7 @@ var $author$project$AI$lastPawnAI = F3(
 			A2(
 				$elm$core$Maybe$andThen,
 				function (moveList) {
-					return endOf(moveList);
+					return lastPawn(moveList);
 				},
 				A2($author$project$BoardTree$getElem, roll - 1, ma)));
 	});
