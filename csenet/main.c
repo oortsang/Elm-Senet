@@ -32,7 +32,14 @@ int main (int argc, char **argv) {
         printState(gs);
         printf("Move %d. Roll: ", 1+(int)moveNum/2);
         scanf("%d", &roll);
-        printf("Pawn on square: ");
+
+        printf("Legal moves:\n");
+        int mc;
+        Pawn *moves = legalMoves(gs, roll, &mc);
+        printPawnList(moves, mc);
+        free(moves);
+
+        printf("\nPawn on square: ");
         scanf("%d", &pawnSquare);
 
         int leg = makeMove(gs, pawnSquare, roll);

@@ -33,7 +33,15 @@ void skipTurn(GameState *gs);
 
 // p==-1 to skip turn
 // returns whether it worked
+int isLegal(GameState *gs, int p, int roll);
 int makeMove(GameState *gs, int p, int roll);
+
+// return a list of all legal moves
+// len is an outparameter to indicate the length
+Pawn *legalMoves(GameState *gs, int roll, int *len);
+
+// to help the AI later on
+int cmpState(GameState *gs, GameState *js);
 
 
 #endif

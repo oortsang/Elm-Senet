@@ -42,6 +42,8 @@ typedef int Player;
 
 typedef char Pawn;
 
+void printPawnList(Pawn *list, int len);
+
 #define InitPawnCount 7
 
 /* Game State definitions */

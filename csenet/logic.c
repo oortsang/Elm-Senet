@@ -3,6 +3,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "board.h"
 
 
@@ -51,6 +53,7 @@ int findPawn(Pawn *plist, int pcount, int sq) {
 int removePawn(GameState *gs, int pn) {
     SquareState sq = gs->board[pn];
     int i;
+    int pcount;
     Pawn *plist;
     if (sq == 0) {
         return 0;
@@ -58,12 +61,20 @@ int removePawn(GameState *gs, int pn) {
         // black
         plist = gs->blackPawnList;
         i = findPawn(plist, gs->blackPawnCount--, pn);
+        pcount = gs->blackPawnCount;
     } else {
         plist = gs->whitePawnList;
         i = findPawn(plist, gs->whitePawnCount--, pn);
+        pcount = gs->whitePawnCount;
     }
     if (i == -1)
         return 0;
+
+    // now swap the pawn to the end of the list
+    int tmp;
+    tmp = plist[pcount];
+    plist[pcount] = plist[i];
+    plist[i] = tmp;
 
     clearSquare(gs, plist[i]);
     return 1;
@@ -127,7 +138,48 @@ int legalBySquareType(SquareType sq, int m) {
     return 1;
 }
 
+/* check whether the proposed move is legal */
+/* basically the same as makeMove but without any modifications to gs */
+int isLegal(GameState *gs, int n, int roll) {
+    int m = n + roll;
+    int skip = n == -1;
+    int legalSqType = legalBySquareType(squareType(n), m);
+    int skippedHappiness = n < 25 && m > 25;
+    int attemptedLeave = m >= 30;
+    int pawnCol = gs->board[n];
 
+    int legal;
+
+    if (skip) {
+        legal = 1; // don't actually check...
+    } else if (pawnCol != gs->turn) {
+        legal = 0;
+    } else if (!legalSqType) {
+        // legal = 0;
+        // act like a skipped turn
+        legal = 1; // allow people to try but to get sent back immediately
+    } else if (skippedHappiness) {
+        legal = 0;
+    } else if (attemptedLeave) {
+        legal = 1;
+    } else {
+        int waterSendBack = squareType(m) == Water;
+        int sameColor = gs->board[m] == gs->turn;
+
+        if (waterSendBack) {
+            legal = 1;
+        } else {
+            if (!sameColor) {
+                legal = 1;
+            } else {
+                legal = 0;
+            }
+        }
+    }
+    return legal;
+}
+
+/* perform the move; return whether it was successful */
 int makeMove(GameState *gs, int n, int roll) {
     /* GameState *backup = copyGame(gs); */
     int m = n + roll;
@@ -180,4 +232,53 @@ int makeMove(GameState *gs, int n, int roll) {
 
     /* freeGame(backup); */
     return legal;
+}
+
+
+// return a list of all legal moves
+// len is an outparameter to indicate the length
+// *guaranteed to return a nonempty list with 1<=len<=InitPawnCount
+Pawn *legalMoves(GameState *gs, int roll, int *len) {
+    Pawn *pawns =
+        gs->turn > 0
+        ? gs->blackPawnList
+        : gs->whitePawnList;
+    int pcount =
+        gs->turn > 0
+        ? gs->blackPawnCount
+        : gs->whitePawnCount;
+
+    Pawn locMoves[InitPawnCount];
+    int mc = 0; // moveCount
+
+    int i;
+    for (i = 0; i < pcount; i++) {
+        if (isLegal(gs, pawns[i], roll)) {
+            locMoves[mc++] = pawns[i];
+        }
+    }
+
+    Pawn *moveList;
+    if (mc) {
+        moveList = malloc(mc * sizeof(Pawn));
+        memcpy(moveList, locMoves, mc*sizeof(Pawn));
+        *len = mc;
+    } else {
+        moveList = malloc(sizeof(Pawn));
+        moveList[0] = (Pawn) -1; //ie, no move available
+        *len = 1;
+    }
+    return moveList;
+}
+
+
+
+// check whether two states are the same
+int cmpState(GameState *gs, GameState *js) {
+    int turn   = gs->turn == js->turn;
+    int wpawns = gs->whitePawnCount == js->whitePawnCount;
+    int bpawns = gs->blackPawnCount == js->blackPawnCount;
+    int board  = !memcmp(gs->board, js->board, 30*sizeof(SquareState));
+
+    return turn && wpawns && bpawns && board;
 }

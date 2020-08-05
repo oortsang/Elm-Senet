@@ -9,8 +9,18 @@
 #include <string.h>
 #include "board.h"
 
+/* Pawn functions */
+void printPawnList(Pawn *list, int len) {
+    int i;
+    printf("[");
+    for (i = 0; i < len; i++) {
+        printf("%d%s", list[i], i<len-1 ? ", " : "");
+    }
+    printf("]\n");
+}
+
+
 /* Square and Board functions */
-// initPawnCount
 SquareState *initBoard(int ipc) {
     /* SquareState board[30]; */
     SquareState *board = malloc(30*sizeof(SquareState));
@@ -131,8 +141,10 @@ char *boardToString(GameState *gs) {
 void printState(GameState *gs) {
     printf("~~~ Game State Summary ~~~\n");
     printf("Turn: %s\n", gs->turn == 1 ? "Black" : "White");
-    printf("Black pawn count: %d\n", gs->blackPawnCount);
-    printf("White pawn count: %d\n", gs->whitePawnCount);
+    printf("Black pawn count: %d\nBlack Pawns: ", gs->blackPawnCount);
+    printPawnList(gs->blackPawnList, gs->blackPawnCount);
+    printf("White pawn count: %d\nWhite Pawns: ", gs->whitePawnCount);
+    printPawnList(gs->whitePawnList, gs->whitePawnCount);
     printf("Board:\n");
     char c;
     int i, j, k;
