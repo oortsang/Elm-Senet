@@ -40,6 +40,8 @@ int makeMove(GameState *gs, int p, int roll);
 // len is an outparameter to indicate the length
 Pawn *legalMoves(GameState *gs, int roll, int *len);
 
+void printLegalMoves(GameState *gs, int roll);
+
 // to help the AI later on
 int cmpState(GameState *gs, GameState *js);
 

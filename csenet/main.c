@@ -14,6 +14,18 @@
 #include "main.h"
 #include "board.h"
 #include "logic.h"
+#include "movesearch.h"
+
+int human(GameState *gs, Move lastMove, int roll) {
+    printf("Legal moves:\n");
+    printLegalMoves(gs, roll);
+
+    int pawnSquare;
+    printf("\nPawn on square: ");
+    scanf("%d", &pawnSquare);
+
+    return pawnSquare;
+}
 
 
 int main (int argc, char **argv) {
@@ -21,29 +33,33 @@ int main (int argc, char **argv) {
     int moveNum = 0;
     int roll;
     int pawnSquare;
+    Move lastMove = {0, -1};
 
     GameState *gs = initGame();
 
 
-    char *str = boardToString(gs);
-    printf(str);
+    /* char *str = boardToString(gs); */
+    /* printf(str); */
+
+    MoveState *ms = newMS(gs);
 
     while (!isDone) {
-        printState(gs);
+        /* printState(gs); */
+        evalMS(ms);
+        printMS(ms);
+
+
         printf("Move %d. Roll: ", 1+(int)moveNum/2);
         scanf("%d", &roll);
 
-        printf("Legal moves:\n");
-        int mc;
-        Pawn *moves = legalMoves(gs, roll, &mc);
-        printPawnList(moves, mc);
-        free(moves);
-
-        printf("\nPawn on square: ");
-        scanf("%d", &pawnSquare);
+        pawnSquare = human(gs, lastMove, roll);
 
         int leg = makeMove(gs, pawnSquare, roll);
         printf("\nThat was%s legal\n", leg ? "" : " not");
+
+        // update...
+        lastMove = (Move) {roll, pawnSquare};
+        ms = stepForward(ms, pawnSquare, roll);
 
 
         isDone = isOver(gs);

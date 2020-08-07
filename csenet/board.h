@@ -9,6 +9,9 @@
 
 /* Square and Board definitions */
 
+#define BLACK (1)
+#define WHITE (-1)
+#define NEITHER (0)
 
 /* Convention: +1 is Black; -1 is White */
 typedef char SquareState;
@@ -35,11 +38,6 @@ typedef int Player;
 
 /* Pawn definitions */
 
-/* typedef struct { */
-/*     char square; */
-/*     Player col; */
-/* } Pawn; */
-
 typedef char Pawn;
 
 void printPawnList(Pawn *list, int len);
@@ -50,10 +48,10 @@ void printPawnList(Pawn *list, int len);
 typedef struct {
     SquareState board[30];
     Player turn;
-    int whitePawnCount;
     int blackPawnCount;
-    Pawn whitePawnList[InitPawnCount];
+    int whitePawnCount;
     Pawn blackPawnList[InitPawnCount];
+    Pawn whitePawnList[InitPawnCount];
 } GameState;
 
 GameState *initGame();
@@ -68,13 +66,15 @@ char *boardToString(GameState *gs);
 // print directly
 void printState(GameState *gs);
 
-/* Game outcome definitions */
-typedef enum {
-    NotDone,
-    WhiteWon,
-    BlackWon
-} Outcome;
+// 1  if black won
+// -1 if white won
+// 0 or false if the game is still going
+Player isOver(GameState *gs);
 
-Outcome isOver(GameState *gs);
+// for compact passing of play information
+typedef struct {
+    int  roll;
+    Pawn pawn;
+} Move;
 
 #endif

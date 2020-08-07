@@ -272,6 +272,13 @@ Pawn *legalMoves(GameState *gs, int roll, int *len) {
 }
 
 
+void printLegalMoves(GameState *gs, int roll) {
+    int mc;
+    Pawn *moves = legalMoves(gs, roll, &mc);
+    printPawnList(moves, mc);
+    free(moves);
+}
+
 
 // check whether two states are the same
 int cmpState(GameState *gs, GameState *js) {

@@ -25,13 +25,10 @@ SquareState *initBoard(int ipc) {
     /* SquareState board[30]; */
     SquareState *board = malloc(30*sizeof(SquareState));
     int i;
-    for (i = 0; i < 30; i++) {
-        if (i < 2*ipc) {
-            board[i] = (i%2) ? 1 : -1;
-        } else {
-            board[i] = 0;
-        }
+    for (i = 0; i < 2*ipc; i++) {
+        board[i] = (i%2) ? BLACK : WHITE;
     }
+    memset(board+2*ipc, 0, 30-2*ipc);
     return board;
 }
 
@@ -46,7 +43,7 @@ GameState *initGame() {
     }
 
     GameState *gs = malloc(sizeof(GameState));
-    gs->turn = 1;
+    gs->turn = BLACK;
     memcpy(gs->board, board, 30*sizeof(SquareState));
     memcpy(gs->whitePawnList, whitePawns, InitPawnCount*sizeof(Pawn));
     memcpy(gs->blackPawnList, blackPawns, InitPawnCount*sizeof(Pawn));
@@ -140,10 +137,10 @@ char *boardToString(GameState *gs) {
 
 void printState(GameState *gs) {
     printf("~~~ Game State Summary ~~~\n");
-    printf("Turn: %s\n", gs->turn == 1 ? "Black" : "White");
-    printf("Black pawn count: %d\nBlack Pawns: ", gs->blackPawnCount);
+    printf("Turn: %s\n", gs->turn == BLACK ? "Black" : "White");
+    printf("Black pawns (%d): ", gs->blackPawnCount);
     printPawnList(gs->blackPawnList, gs->blackPawnCount);
-    printf("White pawn count: %d\nWhite Pawns: ", gs->whitePawnCount);
+    printf("White pawns (%d): ", gs->whitePawnCount);
     printPawnList(gs->whitePawnList, gs->whitePawnCount);
     printf("Board:\n");
     char c;
@@ -168,11 +165,11 @@ void printState(GameState *gs) {
 }
 
 
-Outcome isOver(GameState *gs) {
+Player isOver(GameState *gs) {
     if (!gs->whitePawnCount) {
-        return WhiteWon;
+        return WHITE;
     } else if (!gs->blackPawnCount) {
-        return BlackWon;
+        return BLACK;
     }
-    return NotDone;
+    return NEITHER;
 }

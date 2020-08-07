@@ -7352,25 +7352,25 @@ var $author$project$AI$lastPawnAI = F3(
 		var tmt = _v0.b;
 		var mgt = F2(
 			function (mx, my) {
-				var _v8 = _Utils_Tuple2(mx, my);
-				if (_v8.a.$ === 'Just') {
-					if (_v8.b.$ === 'Just') {
-						var x = _v8.a.a;
-						var y = _v8.b.a;
+				var _v7 = _Utils_Tuple2(mx, my);
+				if (_v7.a.$ === 'Just') {
+					if (_v7.b.$ === 'Just') {
+						var x = _v7.a.a;
+						var y = _v7.b.a;
 						return _Utils_cmp(x.square, y.square) > 0;
 					} else {
-						var x = _v8.a.a;
-						var _v9 = _v8.b;
+						var x = _v7.a.a;
+						var _v8 = _v7.b;
 						return true;
 					}
 				} else {
-					if (_v8.b.$ === 'Just') {
-						var _v10 = _v8.a;
-						var y = _v8.b.a;
+					if (_v7.b.$ === 'Just') {
+						var _v9 = _v7.a;
+						var y = _v7.b.a;
 						return false;
 					} else {
-						var _v11 = _v8.a;
-						var _v12 = _v8.b;
+						var _v10 = _v7.a;
+						var _v11 = _v7.b;
 						return false;
 					}
 				}
@@ -7401,7 +7401,6 @@ var $author$project$AI$lastPawnAI = F3(
 							continue lastPawnHelper;
 						}
 					} else {
-						var _v4 = A2($elm$core$Debug$log, 'using', max);
 						return _Utils_Tuple2(max, maxTS);
 					}
 				}
@@ -7409,15 +7408,15 @@ var $author$project$AI$lastPawnAI = F3(
 		var lastPawn = function (xs) {
 			if (xs.b) {
 				if (!xs.b.b) {
-					var _v6 = xs.a;
-					var mx = _v6.a;
-					var newTS = _v6.b;
+					var _v5 = xs.a;
+					var mx = _v5.a;
+					var newTS = _v5.b;
 					return $elm$core$Maybe$Just(
 						_Utils_Tuple2(mx, newTS));
 				} else {
-					var _v7 = xs.a;
-					var mx = _v7.a;
-					var newTS = _v7.b;
+					var _v6 = xs.a;
+					var mx = _v6.a;
+					var newTS = _v6.b;
 					var rest = xs.b;
 					return $elm$core$Maybe$Just(
 						A2(
