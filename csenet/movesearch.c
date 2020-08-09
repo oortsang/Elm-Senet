@@ -276,16 +276,16 @@ int emmChoose(MoveState *ms, int roll, Player col, int ply, double *val) {
     double vals[InitPawnCount];
     int r = roll-1;
 
-    printf("EMM is considering...\n");
+    /* printf("EMM is considering...\n"); */
     evalMS(ms);
     int i;
     for (i = 0; i < ms->lmc[r]; i++) {
         MoveState *next = getChild(ms, ms->moves[r][i], roll);
         vals[i] = evalState(next, col, ply-1);
-        printf("Pawn %d with val %.2f\n", ms->moves[r][i], vals[i]);
+        /* printf("Pawn %d with val %.2f\n", ms->moves[r][i], vals[i]); */
     }
     int k = idxMM(vals, ms->lmc[r], isMax);
-    printf("I've decided to choose option %d of %d (i.e., pawn %d)\n\n", k, ms->lmc[r], ms->moves[r][k]);
+    /* printf("I've decided to choose option %d of %d (i.e., pawn %d)\n\n", k, ms->lmc[r], ms->moves[r][k]); */
     if (val) *val = vals[k];
     return (int) ms->moves[r][k];
 }
