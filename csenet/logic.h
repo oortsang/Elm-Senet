@@ -19,7 +19,7 @@
 /* int removePawn(GameState *gs, int pn); */
 
 // finds the last square open by square 14
-/* int rebirthSquare(GameState *gs); */
+int rebirthSquare(GameState *gs);
 
 // send back pawns of player col
 /* int sendBack(GameState *gs, Player col); */

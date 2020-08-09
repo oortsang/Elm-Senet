@@ -9,9 +9,9 @@
 
 /* Square and Board definitions */
 
-#define BLACK (1)
-#define WHITE (-1)
-#define NEITHER (0)
+#define Black (1)
+#define White (-1)
+#define Neither (0)
 
 /* Convention: +1 is Black; -1 is White */
 typedef char SquareState;

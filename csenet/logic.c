@@ -34,7 +34,7 @@ void pawnSwapper(GameState *gs, int pn, int qn) {
 
 /* sets square to 0 */
 void clearSquare(GameState *gs, int square) {
-    printf("Clearing square %d\n", square);
+    /* printf("Clearing square %d\n", square); */
     gs->board[square] = 0;
 }
 
@@ -76,7 +76,7 @@ int removePawn(GameState *gs, int pn) {
     plist[pcount] = plist[i];
     plist[i] = tmp;
 
-    clearSquare(gs, plist[i]);
+    clearSquare(gs, plist[pcount]);
     return 1;
 }
 

@@ -49,4 +49,15 @@ MoveState *stepForward(MoveState *ms, int p, int roll);
 void printMS(MoveState *ms);
 
 
+// heuristic value function for use with expectiminimax
+double gsLeafVal(GameState *gs, Player col);
+
+// evaluate the state with ply ``ply''
+double evalState(MoveState *ms, Player col, int ply);
+
+// do the same but for a specified roll (save some computation)
+// but returns the value as an outparameter
+// and returns the chosen pawn
+int emmChoose(MoveState *ms, int roll, Player col, int ply, double *val);
+
 #endif
