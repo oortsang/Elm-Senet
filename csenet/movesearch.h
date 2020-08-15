@@ -60,4 +60,8 @@ double evalState(MoveState *ms, Player col, int ply);
 // and returns the chosen pawn
 int emmChoose(MoveState *ms, int roll, Player col, int ply, double *val);
 
+int lastPawn(MoveState *ms, int roll);
+
+int randPawn(MoveState *ms, int roll);
+
 #endif

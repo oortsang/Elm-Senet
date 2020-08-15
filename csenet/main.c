@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-
+#include <unistd.h>
 
 #include "main.h"
 #include "board.h"
@@ -92,8 +92,10 @@ int main (int argc, char **argv) {
     time_t start, end, t;
 
     // seed the random number generator
-    srand((unsigned) time(&t));
-
+    // uses nanoseconds for randomness within a second
+    struct timespec spec;
+    clock_gettime(CLOCK_REALTIME, &spec);
+    srand((unsigned) time(&t) * spec.tv_nsec);
 
     GameState *gs = initGame();
     MoveState *ms = newMS(gs);
@@ -106,6 +108,8 @@ int main (int argc, char **argv) {
 
 
     // read in arguments
+    // usage: senet -v0 --pb human --pw emm2
+    // for verbosity level 0, human for black, and emm2 for white
     int j;
     for (j = 0; j < argc; j++) {
         if (!strcmp(argv[j], "-v0")) {
@@ -124,6 +128,10 @@ int main (int argc, char **argv) {
                 pBlack = emm2;
             } else if (!strcmp(ptype, "emm4")) {
                 pBlack = emm4;
+            } else if (!strcmp(ptype, "last")) {
+                pBlack = lastPawn;
+            } else if (!strcmp(ptype, "rand")) {
+                pBlack = randPawn;
             }
         } else if (!strcmp(argv[j], "--pw") && j+1 < argc) {
             char *ptype = argv[j+1];
@@ -133,6 +141,10 @@ int main (int argc, char **argv) {
                 pWhite = emm2;
             } else if (!strcmp(ptype, "emm4")) {
                 pWhite = emm4;
+            } else if (!strcmp(ptype, "last")) {
+                pWhite = lastPawn;
+            } else if (!strcmp(ptype, "rand")) {
+                pWhite = randPawn;
             }
 
         }
@@ -140,8 +152,6 @@ int main (int argc, char **argv) {
 
 
     // Start the game!
-
-
     while (!isDone) {
         evalMS(ms);
 

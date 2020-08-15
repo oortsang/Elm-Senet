@@ -13,9 +13,10 @@ module Main exposing (..)
 
 -- From our project
 import BoardTree as BT exposing (..)
-import Board exposing (..)
-import Logic exposing (..)
-import AI    exposing (..)
+import Board  exposing (..)
+import Logic  exposing (..)
+import AI     exposing (..)
+import Sticks exposing (..)
 
 -- For html-side
 import Browser
@@ -719,8 +720,6 @@ scoreboard n color =
         ] []
       ]
     centers =
-      -- List.range 1 n
-      --   |> List.map ((*) 25)
       if 0 == modBy 2 n then
         List.map (\x -> width//2 + (x - n//2) * spacing) (List.range 1 n)
       else
@@ -743,7 +742,6 @@ scoreboard n color =
     , SA.viewBox ("0 0 " ++ Debug.toString width ++ " 100")
     ]
     (outline :: (List.concatMap (\x -> makepiece x 0) centers))
-    -- ((List.concatMap (\x -> makepiece x 0) centers) ++ [outline])
 
 view : Model -> Browser.Document Msg
 view model =
@@ -866,21 +864,31 @@ view model =
         [ Html.table
           [ HA.style "width" "100%" ]
           [ Html.tr []
-            [ Html.table [HA.style "width" "100%"]
-              [ Html.td [HA.style "width" "10%", centering] []
-              , Html.td [HA.style "width" "40%", centering]
-                [ bscoreboard
-                , scoreboard (initPawnCount - model.gs.blackPawnCnt) Black
-                ]
-              , Html.td [HA.style "width" "40%", centering]
-                [ wscoreboard
-                , scoreboard (initPawnCount - model.gs.whitePawnCnt) White
+            [ Html.td [HA.style "width" "30%"]
+              [ Html.table [HA.style "width" "100%"]
+                [ Html.td [HA.style "width" "10%", centering] []
+                , Html.td [HA.style "width" "40%", centering]
+                  [ bscoreboard
+                  , scoreboard (initPawnCount - model.gs.blackPawnCnt) Black
+                  ]
+                , Html.td [HA.style "width" "40%", centering]
+                  [ wscoreboard
+                  , scoreboard (initPawnCount - model.gs.whitePawnCnt) White
+                  ]
                 ]
               ]
             , Html.td [HA.style "width" "40%"]
               [ centerHeader ]
-            , Html.td [HA.style "width" "10%"] []
-            , Html.td [HA.style "width" "20%"]
+            , Html.td [HA.style "width" "10%"]
+              [ Html.h3 [centering]
+                [ text <|
+                    case model.roll of
+                      Nothing -> "Throw sticks!"
+                      Just r  -> ("Threw a " ++ String.fromInt(r))
+                ]
+              , svgSticks model.roll QueryRoll
+              ]
+            , Html.td [HA.style "width" "20%", centering]
               [ text   "Player 1 (Black): ", selector Black
               , newline
               , text "\tPlayer 2 (White): ", selector White

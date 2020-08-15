@@ -291,3 +291,24 @@ int emmChoose(MoveState *ms, int roll, Player col, int ply, double *val) {
 }
 
 
+int lastPawn(MoveState *ms, int roll) {
+    evalMS(ms);
+    int r = roll - 1;
+    Pawn *moves = ms->moves[r];
+    Pawn lp = moves[0];
+    int i;
+    for (i = 0; i < ms->lmc[r]; i++) {
+        if (moves[i] > lp)
+            lp = moves[i];
+    }
+    return (int) lp;
+}
+
+int randPawn(MoveState *ms, int roll) {
+    evalMS(ms);
+    int r = roll - 1;
+    Pawn *moves = ms->moves[r];
+    int lmc = ms->lmc[r];
+    int k = rand() % lmc; // random!
+    return (int) moves[k];
+}

@@ -8371,6 +8371,208 @@ var $author$project$Main$svgBoard = function (model) {
 				line1,
 				_Utils_ap(line2, line3))));
 };
+var $author$project$Sticks$Light = {$: 'Light'};
+var $author$project$Sticks$Dark = {$: 'Dark'};
+var $author$project$Sticks$retLight = function (b) {
+	if (b) {
+		return $author$project$Sticks$Light;
+	} else {
+		return $author$project$Sticks$Dark;
+	}
+};
+var $elm$svg$Svg$animate = $elm$svg$Svg$trustedNode('animate');
+var $elm$svg$Svg$Attributes$attributeName = _VirtualDom_attribute('attributeName');
+var $elm$svg$Svg$Attributes$calcMode = _VirtualDom_attribute('calcMode');
+var $elm$svg$Svg$Attributes$dur = _VirtualDom_attribute('dur');
+var $author$project$Sticks$getStr = function (side) {
+	if (side.$ === 'Light') {
+		return 'floralwhite';
+	} else {
+		return 'rosybrown';
+	}
+};
+var $elm$svg$Svg$Attributes$keySplines = _VirtualDom_attribute('keySplines');
+var $elm$svg$Svg$Attributes$keyTimes = _VirtualDom_attribute('keyTimes');
+var $author$project$Sticks$oppCol = function (side) {
+	if (side.$ === 'Light') {
+		return $author$project$Sticks$Dark;
+	} else {
+		return $author$project$Sticks$Light;
+	}
+};
+var $elm$svg$Svg$Attributes$repeatCount = _VirtualDom_attribute('repeatCount');
+var $elm$svg$Svg$Attributes$values = function (value) {
+	return A2(
+		_VirtualDom_attribute,
+		'values',
+		_VirtualDom_noJavaScriptUri(value));
+};
+var $author$project$Sticks$singleStick = F2(
+	function (side, num) {
+		var xInit = 15 + (30 * num);
+		var xInitStr = $elm$core$Debug$toString(xInit);
+		var xMid = xInit + 7;
+		var xMidStr = $elm$core$Debug$toString(xMid);
+		var xVals = xInitStr + (';' + (xMidStr + (';' + (xInitStr + (';' + (xMidStr + (';' + xInitStr)))))));
+		var spline1 = '0 0 0.55 1;';
+		var spline0 = '0 0 0.55 0;';
+		var sideStr = $author$project$Sticks$getStr(side) + ';';
+		var rc = '3';
+		var keyTimes = '0; 0.24;0.25; 0.74;0.75; 1';
+		var keySplines = _Utils_ap(
+			spline0,
+			_Utils_ap(
+				spline1,
+				_Utils_ap(spline0, spline1)));
+		var flipStr = $author$project$Sticks$getStr(
+			$author$project$Sticks$oppCol(side)) + ';';
+		var dur = $elm$core$Debug$toString(1 + (num / 12)) + 's';
+		return A2(
+			$elm$svg$Svg$rect,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill(
+					$author$project$Sticks$getStr(side)),
+					$elm$svg$Svg$Attributes$y('15'),
+					$elm$svg$Svg$Attributes$x(xInitStr),
+					$elm$svg$Svg$Attributes$width('15'),
+					$elm$svg$Svg$Attributes$height('70')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$svg$Svg$animate,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$attributeName('fill'),
+							$elm$svg$Svg$Attributes$dur(dur),
+							$elm$svg$Svg$Attributes$repeatCount(rc),
+							$elm$svg$Svg$Attributes$values(
+							_Utils_ap(
+								sideStr,
+								_Utils_ap(
+									sideStr,
+									_Utils_ap(
+										flipStr,
+										_Utils_ap(
+											flipStr,
+											_Utils_ap(sideStr, sideStr)))))),
+							$elm$svg$Svg$Attributes$keyTimes(keyTimes)
+						]),
+					_List_Nil),
+					A2(
+					$elm$svg$Svg$animate,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$attributeName('x'),
+							$elm$svg$Svg$Attributes$dur(dur),
+							$elm$svg$Svg$Attributes$repeatCount(rc),
+							$elm$svg$Svg$Attributes$values(xVals),
+							$elm$svg$Svg$Attributes$calcMode('spline'),
+							$elm$svg$Svg$Attributes$keySplines(keySplines)
+						]),
+					_List_Nil),
+					A2(
+					$elm$svg$Svg$animate,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$attributeName('width'),
+							$elm$svg$Svg$Attributes$dur(dur),
+							$elm$svg$Svg$Attributes$repeatCount(rc),
+							$elm$svg$Svg$Attributes$values('15; 1; 15; 1; 15'),
+							$elm$svg$Svg$Attributes$calcMode('spline'),
+							$elm$svg$Svg$Attributes$keySplines(keySplines)
+						]),
+					_List_Nil)
+				]));
+	});
+var $author$project$Sticks$singleStickStatic = F2(
+	function (side, num) {
+		var xInit = 15 + (30 * num);
+		var xInitStr = $elm$core$Debug$toString(xInit);
+		var sideStr = $author$project$Sticks$getStr(side);
+		var rc = '3';
+		return A2(
+			$elm$svg$Svg$rect,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$fill(sideStr),
+					$elm$svg$Svg$Attributes$y('15'),
+					$elm$svg$Svg$Attributes$x(xInitStr),
+					$elm$svg$Svg$Attributes$width('15'),
+					$elm$svg$Svg$Attributes$height('70')
+				]),
+			_List_Nil);
+	});
+var $author$project$Sticks$svgSticks = F2(
+	function (roll, op) {
+		var clickable = A2(
+			$elm$svg$Svg$rect,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x('0'),
+					$elm$svg$Svg$Attributes$y('0'),
+					$elm$svg$Svg$Attributes$rx('10'),
+					$elm$svg$Svg$Attributes$ry('10'),
+					$elm$svg$Svg$Attributes$height('100'),
+					$elm$svg$Svg$Attributes$width('135'),
+					$elm$svg$Svg$Attributes$fill('transparent'),
+					$elm$svg$Svg$Attributes$stroke('none'),
+					$elm$html$Html$Events$onClick(op)
+				]),
+			_List_Nil);
+		var background = A2(
+			$elm$svg$Svg$rect,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$x('0'),
+					$elm$svg$Svg$Attributes$y('0'),
+					$elm$svg$Svg$Attributes$rx('10'),
+					$elm$svg$Svg$Attributes$ry('10'),
+					$elm$svg$Svg$Attributes$height('100'),
+					$elm$svg$Svg$Attributes$width('135'),
+					$elm$svg$Svg$Attributes$fill('antiquewhite'),
+					$elm$svg$Svg$Attributes$stroke('none')
+				]),
+			_List_Nil);
+		var contents = function () {
+			if (roll.$ === 'Just') {
+				var r = roll.a;
+				var r0 = A2($elm$core$Basics$modBy, 5, r);
+				var side0 = $author$project$Sticks$retLight(r0 > 0);
+				var side1 = $author$project$Sticks$retLight(r0 > 1);
+				var side2 = $author$project$Sticks$retLight(r0 > 2);
+				var side3 = $author$project$Sticks$retLight(r0 > 3);
+				var _v1 = A2($elm$core$Debug$log, 'r0', r0);
+				return _List_fromArray(
+					[
+						background,
+						A2($author$project$Sticks$singleStick, side0, 0),
+						A2($author$project$Sticks$singleStick, side1, 1),
+						A2($author$project$Sticks$singleStick, side2, 2),
+						A2($author$project$Sticks$singleStick, side3, 3),
+						clickable
+					]);
+			} else {
+				return _List_fromArray(
+					[
+						background,
+						A2($author$project$Sticks$singleStickStatic, $author$project$Sticks$Light, 0),
+						A2($author$project$Sticks$singleStickStatic, $author$project$Sticks$Light, 1),
+						A2($author$project$Sticks$singleStickStatic, $author$project$Sticks$Light, 2),
+						A2($author$project$Sticks$singleStickStatic, $author$project$Sticks$Light, 3),
+						clickable
+					]);
+			}
+		}();
+		return A2(
+			$elm$svg$Svg$svg,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$viewBox('0 0 135 100')
+				]),
+			contents);
+	});
 var $elm$html$Html$table = _VirtualDom_node('table');
 var $elm$html$Html$td = _VirtualDom_node('td');
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
@@ -8398,15 +8600,15 @@ var $author$project$Main$view = function (model) {
 			[
 				$elm$html$Html$text(
 				function () {
-					var _v4 = $author$project$Board$isOver(model.gs);
-					if (_v4.$ === 'NotDone') {
+					var _v5 = $author$project$Board$isOver(model.gs);
+					if (_v5.$ === 'NotDone') {
 						return _Utils_eq(model.gs.turn, $author$project$Board$White) ? 'White\'s turn' : 'Black\'s turn';
 					} else {
-						if (_v4.a.$ === 'White') {
-							var _v5 = _v4.a;
+						if (_v5.a.$ === 'White') {
+							var _v6 = _v5.a;
 							return 'White won!';
 						} else {
-							var _v6 = _v4.a;
+							var _v7 = _v5.a;
 							return 'Black won!';
 						}
 					}
@@ -8525,8 +8727,8 @@ var $author$project$Main$view = function (model) {
 			},
 			model.selected));
 	var currPlayer = function () {
-		var _v2 = model.gs.turn;
-		if (_v2.$ === 'White') {
+		var _v3 = model.gs.turn;
+		if (_v3.$ === 'White') {
 			return model.whitePlayer;
 		} else {
 			return model.blackPlayer;
@@ -8559,9 +8761,9 @@ var $author$project$Main$view = function (model) {
 							[
 								$elm$html$Html$text(
 								function () {
-									var _v0 = model.roll;
-									if (_v0.$ === 'Just') {
-										var r = _v0.a;
+									var _v1 = model.roll;
+									if (_v1.$ === 'Just') {
+										var r = _v1.a;
 										return 'Roll: ' + $elm$core$Debug$toString(r);
 									} else {
 										return 'Roll!';
@@ -8599,9 +8801,9 @@ var $author$project$Main$view = function (model) {
 							[
 								$elm$html$Html$text(
 								function () {
-									var _v1 = model.selected;
-									if (_v1.$ === 'Just') {
-										var s = _v1.a;
+									var _v2 = model.selected;
+									if (_v2.$ === 'Just') {
+										var s = _v2.a;
 										return promotionImminent ? ('Promote pawn on square ' + $elm$core$Debug$toString(s + 1)) : ('Play pawn on square ' + $elm$core$Debug$toString(s + 1));
 									} else {
 										return 'Select a piece';
@@ -8655,44 +8857,53 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								A2(
-								$elm$html$Html$table,
+								$elm$html$Html$td,
 								_List_fromArray(
 									[
-										A2($elm$html$Html$Attributes$style, 'width', '100%')
+										A2($elm$html$Html$Attributes$style, 'width', '30%')
 									]),
 								_List_fromArray(
 									[
 										A2(
-										$elm$html$Html$td,
+										$elm$html$Html$table,
 										_List_fromArray(
 											[
-												A2($elm$html$Html$Attributes$style, 'width', '10%'),
-												$author$project$Main$centering
-											]),
-										_List_Nil),
-										A2(
-										$elm$html$Html$td,
-										_List_fromArray(
-											[
-												A2($elm$html$Html$Attributes$style, 'width', '40%'),
-												$author$project$Main$centering
+												A2($elm$html$Html$Attributes$style, 'width', '100%')
 											]),
 										_List_fromArray(
 											[
-												bscoreboard,
-												A2($author$project$Main$scoreboard, $author$project$Board$initPawnCount - model.gs.blackPawnCnt, $author$project$Board$Black)
-											])),
-										A2(
-										$elm$html$Html$td,
-										_List_fromArray(
-											[
-												A2($elm$html$Html$Attributes$style, 'width', '40%'),
-												$author$project$Main$centering
-											]),
-										_List_fromArray(
-											[
-												wscoreboard,
-												A2($author$project$Main$scoreboard, $author$project$Board$initPawnCount - model.gs.whitePawnCnt, $author$project$Board$White)
+												A2(
+												$elm$html$Html$td,
+												_List_fromArray(
+													[
+														A2($elm$html$Html$Attributes$style, 'width', '10%'),
+														$author$project$Main$centering
+													]),
+												_List_Nil),
+												A2(
+												$elm$html$Html$td,
+												_List_fromArray(
+													[
+														A2($elm$html$Html$Attributes$style, 'width', '40%'),
+														$author$project$Main$centering
+													]),
+												_List_fromArray(
+													[
+														bscoreboard,
+														A2($author$project$Main$scoreboard, $author$project$Board$initPawnCount - model.gs.blackPawnCnt, $author$project$Board$Black)
+													])),
+												A2(
+												$elm$html$Html$td,
+												_List_fromArray(
+													[
+														A2($elm$html$Html$Attributes$style, 'width', '40%'),
+														$author$project$Main$centering
+													]),
+												_List_fromArray(
+													[
+														wscoreboard,
+														A2($author$project$Main$scoreboard, $author$project$Board$initPawnCount - model.gs.whitePawnCnt, $author$project$Board$White)
+													]))
 											]))
 									])),
 								A2(
@@ -8709,12 +8920,33 @@ var $author$project$Main$view = function (model) {
 									[
 										A2($elm$html$Html$Attributes$style, 'width', '10%')
 									]),
-								_List_Nil),
+								_List_fromArray(
+									[
+										A2(
+										$elm$html$Html$h3,
+										_List_fromArray(
+											[$author$project$Main$centering]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text(
+												function () {
+													var _v0 = model.roll;
+													if (_v0.$ === 'Nothing') {
+														return 'Throw sticks!';
+													} else {
+														var r = _v0.a;
+														return 'Threw a ' + $elm$core$String$fromInt(r);
+													}
+												}())
+											])),
+										A2($author$project$Sticks$svgSticks, model.roll, $author$project$Main$QueryRoll)
+									])),
 								A2(
 								$elm$html$Html$td,
 								_List_fromArray(
 									[
-										A2($elm$html$Html$Attributes$style, 'width', '20%')
+										A2($elm$html$Html$Attributes$style, 'width', '20%'),
+										$author$project$Main$centering
 									]),
 								_List_fromArray(
 									[
