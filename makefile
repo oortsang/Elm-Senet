@@ -1,6 +1,6 @@
 CC = elm make
 FILE = src/Main.elm
-OUTPUT = Senet.html
+OUTPUT = Senet.js
 
 elmake:
 	$(CC) $(FILE) --output=$(OUTPUT)

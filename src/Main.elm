@@ -3,9 +3,7 @@
 -- Main.elm: makes the html page and handles interactions
 
 -- TODO:
---   0. Delay AI evaluation to improve responsiveness
 --   1. Save computation of thunkstates!
---   2. Make it more obvious when the AI made a move that undoes your last move
 
 
 module Main exposing (..)
@@ -24,7 +22,7 @@ import Browser.Events
 
 import Html exposing (Html, text, button, div, br, h3)
 import Html.Attributes as HA
-import Html.Events
+import Html.Events as HE
 
 import Svg
 import Svg.Attributes as SA
@@ -170,14 +168,11 @@ update msg model =
           (model, Cmd.none)
     GetRoll i ->
       let
-        -- _ = Debug.log "Rolled" i
         newModel = model |> setRoll i |> highlightPieces
       in
         case getPlayerType newModel of
           Human ->
             (newModel, Cmd.none)
-          -- AIRand ->
-          --   update QueryRandMove newModel
           _ ->
             update QueueAI newModel
     Click n ->
@@ -642,15 +637,11 @@ svgBoard model =
       Svg.rect
         [ SA.x "-10"
         , SA.y "-10"
+        , SA.rx "10"
+        , SA.ry "10"
         , SA.width "1020"
         , SA.height "320"
         , SA.fill "gray"
-        ] []
-    afterlife =
-      Svg.image
-        [ SA.x "1050", SA.y "100"
-        , href "images/afterlife.jfif"
-        , SE.onClick (Click 30)
         ] []
   in
     Svg.svg [ SA.viewBox "-50 -20 1060 350"]
@@ -683,7 +674,7 @@ buttonBoard : Model -> Html Msg
 buttonBoard model =
   let
     makeButton i =
-      button [ Html.Events.onClick (Click i), monospace ]
+      button [ HE.onClick (Click i), monospace ]
         [ text
             <| String.fromList
             <| (\c -> [c])
@@ -734,7 +725,7 @@ scoreboard n color =
         , SA.fill "antiquewhite"
         , SA.stroke "none"
         , SA.width <| Debug.toString width
-        , Html.Events.onClick (Click 30)
+        , HE.onClick (Click 30)
         ] []
   in
   Svg.svg
@@ -779,27 +770,27 @@ view model =
         ]
         [ Html.option
           [HA.value "Human"
-          , Html.Events.onClick (ChangePlayer col Human)]
+          , HE.onClick (ChangePlayer col Human)]
           [text "Human"]
         , Html.option
           [HA.value "AILast"
-          , Html.Events.onClick (ChangePlayer col AIRand)]
+          , HE.onClick (ChangePlayer col AIRand)]
           [text "Random moves"]
         , Html.option
           [HA.value "AILast"
-          , Html.Events.onClick (ChangePlayer col AILast)]
+          , HE.onClick (ChangePlayer col AILast)]
           [text "Last pawn"]
         , Html.option
           [HA.value "AIFast"
-          , Html.Events.onClick (ChangePlayer col AIFast)]
+          , HE.onClick (ChangePlayer col AIFast)]
           [text "AI (fast)"]
         , Html.option
           [HA.value "AIMed"
-          , Html.Events.onClick (ChangePlayer col AIMed)]
+          , HE.onClick (ChangePlayer col AIMed)]
           [text "AI (medium)"]
         , Html.option
           [HA.value "AISlow"
-          , Html.Events.onClick (ChangePlayer col AISlow)]
+          , HE.onClick (ChangePlayer col AISlow)]
           [text "AI (slow)"]
         ]
     afterlifeRect =
@@ -809,10 +800,12 @@ view model =
             "Promotion available!"
           else "No promotion available"
         , Svg.svg
-          [ SA.x "-10"
-          , SA.y "-10"
+          [ SA.x "0"
+          , SA.y "0"
+          , SA.rx "10"
+          , SA.ry "10"
           , SA.width "100%"
-          , SA.viewBox "-10 -10 210 285"
+          , SA.viewBox "-10 -10 220 295"
           , SE.onClick (Click 30)
           ]
           [ Svg.image
@@ -821,14 +814,14 @@ view model =
             , SE.onClick (Click 30)
             ] []
           , Svg.rect
-            [ SA.x "-10"
-            , SA.y "-10"
+            [ SA.x "0"
+            , SA.y "0"
             , SA.rx "10"
             , SA.ry "10"
-            , SA.width "210"
-            , SA.height "285"
+            , SA.width "190"
+            , SA.height "265"
             , SA.fill "none"
-            , SA.strokeWidth "10"
+            , SA.strokeWidth "5"
             , SA.stroke <|
                 if   promotionImminent
                 then selectionColor
@@ -886,7 +879,10 @@ view model =
                       Nothing -> "Throw sticks!"
                       Just r  -> ("Threw a " ++ String.fromInt(r))
                 ]
-              , svgSticks model.roll QueryRoll
+              , svgSticks
+                (not <| isPlayerAI currPlayer)
+                model.roll
+                QueryRoll
               ]
             , Html.td [HA.style "width" "20%", centering]
               [ text   "Player 1 (Black): ", selector Black
@@ -894,7 +890,7 @@ view model =
               , text "\tPlayer 2 (White): ", selector White
               , newline
               , button
-                [ Html.Events.onClick Reset
+                [ HE.onClick Reset
                 , HA.disabled
                     (NotDone == isOver model.gs)
                 ]
@@ -913,8 +909,11 @@ view model =
         , turn
         , div [centering]
           [ button
-            [ Html.Events.onClick (QueryRoll)
-            , HA.disabled (NotDone /= isOver model.gs)]
+            [ HE.onClick (QueryRoll)
+            , HA.disabled
+              (NotDone /= isOver model.gs
+              || model.roll /= Nothing)
+            ]
             [ text <|
               case model.roll of
                 Just r  -> "Roll: " ++ (Debug.toString r)
@@ -923,9 +922,9 @@ view model =
           , text "\t"
           , button
             [ if currPlayer == AIRand then
-                Html.Events.onClick (QueryRandMove)
+                HE.onClick (QueryRandMove)
               else
-                Html.Events.onClick (QueryAI)
+                HE.onClick (QueryAI)
             , HA.disabled
                   (NotDone /= isOver model.gs
                   || model.queuedAI)
@@ -937,7 +936,7 @@ view model =
             ]
           , text "\t"
           , button
-            [ Html.Events.onClick (Play)
+            [ HE.onClick (Play)
             , HA.disabled
                 (Nothing == model.selected
                 || NotDone /= isOver model.gs)
@@ -952,7 +951,7 @@ view model =
                 Nothing -> "Select a piece"
             ]
           , button
-            [ Html.Events.onClick Skip
+            [ HE.onClick Skip
             , HA.disabled
                 (not model.skippedMove
                 || NotDone /= isOver model.gs)
