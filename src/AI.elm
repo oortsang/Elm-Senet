@@ -49,9 +49,9 @@ printTSBoard =
   Maybe.map (\(N g _) ->
     let
       (l1, l2, l3) = boardToStrings g.board
-      _ = Debug.log "Row 1" l1
-      _ = Debug.log "Row 2" l2
-      _ = Debug.log "Row 3" l3
+      -- _ = Debug.log "Row 1" l1
+      -- _ = Debug.log "Row 2" l2
+      -- _ = Debug.log "Row 3" l3
     in
       l1 ++ "\n" ++ l2 ++ "\n" ++ l3
   )
@@ -229,7 +229,6 @@ childCount (N _ tmt) =
       (Just p, newma)  -> 1
     ) |> List.sum
     ) |> List.sum
-    -- Debug.todo "count up the number of legal states..."
 
 -- like playing a move
 -- but the play may not be valid (or the game may end...)
@@ -246,10 +245,8 @@ getChild mp roll (N gs tmt) =
     getpawn xs =
       case xs of
         [] ->
-          let _=Debug.log "alas" () in
           Nothing
         (xp, ts) :: rest ->
-          let _=Debug.log "(mp, xp)" (mp, xp) in
           if mp == xp
           then Just ts
           else getpawn rest
@@ -309,7 +306,7 @@ evalState col ply (N gs tmt) =
               ([], []) ->
                 Just acc
               _ ->
-                let _ = Debug.log "Problem taking expectation..." in
+                -- let _ = Debug.log "Problem taking expectation..." in
                 Nothing
         in
           expHelper 0 [1/16, 1/4, 3/8, 1/4, 1/16]
@@ -403,8 +400,6 @@ evalRolledState col ply roll (N gs tmt) =
         NotDone ->
           BT.getElem (roll-1) ma |> Maybe.andThen (\list ->
           let
-            -- _ = Debug.log "" (mmArgColFirst preList)
-            -- _ = Debug.log "number of moves" (List.length list)
             preList =
               list                     |> List.filterMap (\(mp, ts) ->
               evalState col (ply-1) ts |> Maybe.map (\(val, newTS) ->
@@ -421,7 +416,7 @@ evalRolledState col ply roll (N gs tmt) =
               preList
                 |> List.map Tuple.second
 
-            -- _ = Debug.log "Options" optionDescription
+
             optionDescription =
               preList |> List.map (\(v, (mp, newts)) ->
               (mp, v)

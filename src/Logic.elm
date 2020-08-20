@@ -74,7 +74,7 @@ isLegal board p roll =
       -- check the destination square
       case BT.getElem m board of
         Nothing ->
-          let _ = Debug.log "Yikes, out-of-bounds m not handled..." m in
+          -- let _ = Debug.log "Yikes, out-of-bounds m not handled..." m in
           False
         Just (Free) ->
           True
@@ -213,7 +213,7 @@ pawnSwap pn qn gs =
             Just col ->
               updateList col (replace pn qn) gs
             Nothing ->
-              let _ = Debug.log "Oops, invalid pawnSwap?" () in
+              -- let _ = Debug.log "Oops, invalid pawnSwap?" () in
               gs
         hs = Maybe.map (\b -> { js | board = b }) maybeBoard
         -- _ = Debug.log "New Board" (BT.toList js.board)
@@ -403,11 +403,11 @@ playPawn p roll gs =
   in
     -- Check if it's your turn
     if p.color /= gs.turn then
-      let
-        _ = Debug.log
-          "Getting lost in the moves... (pawn vs. turn)"
-          (p, gs.turn)
-      in
+      -- let
+      --   _ = Debug.log
+      --     "Getting lost in the moves... (pawn vs. turn)"
+      --     (p, gs.turn)
+      -- in
       Nothing
     -- If destination is illegal just by square type
     -- meant for checking the last few squares
@@ -426,7 +426,7 @@ playPawn p roll gs =
     else
       case (BT.getElem m gs.board) of
         Nothing ->
-          let _ = Debug.log "Yikes, out-of-bounds m not handled..." m in
+          -- let _ = Debug.log "Yikes, out-of-bounds m not handled..." m in
           Nothing
         Just dest ->
           -- decide whether to handle sliding back here or not...

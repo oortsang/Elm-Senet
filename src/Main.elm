@@ -6,7 +6,7 @@
 --   1. Save computation of thunkstates!
 
 
-module Main exposing (..)
+port module Main exposing (..)
 
 
 -- From our project
@@ -40,6 +40,7 @@ href : String -> Attribute msg
 href value =
   VirtualDom.attribute "href" value
 
+port resetSticks: () -> Cmd msg
 
 main : Program Flags Model Msg
 main =
@@ -159,7 +160,6 @@ update msg model =
       -- if not, the turn should be skipped
       case model.roll of
         Nothing ->
-          -- let _=Debug.log "Roll queried for color" model.gs.turn in
           ( { model | skippedMove = False}
           , Random.generate GetRoll rollGenerator
           )
@@ -172,7 +172,8 @@ update msg model =
       in
         case getPlayerType newModel of
           Human ->
-            (newModel, Cmd.none)
+            -- (newModel, Cmd.none)
+            (newModel, resetSticks ())
           _ ->
             update QueueAI newModel
     Click n ->
@@ -220,11 +221,9 @@ update msg model =
         ) |> Maybe.withDefault (checkSquare m) -- no roll
         ) |> Maybe.withDefault (select ()) -- no selection
     QueueAI ->
-      -- let _= Debug.log "Queueing..." () in
       ( { model | queuedAI = True }
       , Cmd.none)
     QueryAI ->
-      -- let _= Debug.log "Evaluating..." () in
       -- Selects then plays a piece given by the AI
       let resetModel = { model | queuedAI = False } in
       model.roll |> Maybe.map (\roll ->
@@ -233,7 +232,6 @@ update msg model =
         ts =
           let
             (N gs tmt) = model.ts
-            _ = Debug.log "stored ts's gs == current gs?" (gs == model.gs)
           in
             if gs == model.gs then
               model.ts
@@ -409,7 +407,6 @@ setTS ts model =
 
 setPlayerType : Player -> PlayerType -> Model -> Model
 setPlayerType col ptype model =
-  -- let _=Debug.log "setPlayerType was called!" (col, ptype) in
   case col of
     White ->
       { model | whitePlayer = ptype}
@@ -531,13 +528,13 @@ svgSquare length model n i j =
     y = i*length + rlen//2
     sqRect =
       [ Svg.rect
-        [ SA.x      <| Debug.toString x
-        , SA.y      <| Debug.toString y
-        , SA.width  <| Debug.toString slen
-        , SA.height <| Debug.toString slen
+        [ SA.x      <| String.fromInt x
+        , SA.y      <| String.fromInt y
+        , SA.width  <| String.fromInt slen
+        , SA.height <| String.fromInt slen
         -- make it rounded
-        , SA.rx <| Debug.toString rlen
-        , SA.ry <| Debug.toString rlen
+        , SA.rx <| String.fromInt rlen
+        , SA.ry <| String.fromInt rlen
         -- pick colors
         , SA.stroke <|
             if List.member n model.highlighted then selectionColor
@@ -557,9 +554,9 @@ svgSquare length model n i j =
       case mp of
         Just p ->
           [ Svg.circle
-            [ SA.cx <| Debug.toString (x+slen//2)
-            , SA.cy <| Debug.toString (y+slen//2)
-            , SA.r  <| Debug.toString (2*slen//7)
+            [ SA.cx <| String.fromInt (x+slen//2)
+            , SA.cy <| String.fromInt (y+slen//2)
+            , SA.r  <| String.fromInt (2*slen//7)
             , SA.stroke "black"
             , SA.fill <|
                 if p.color == White
@@ -575,10 +572,10 @@ svgSquare length model n i j =
     sqImage =
       let
         attrList =
-          [ SA.x <| Debug.toString x
-            , SA.y <| Debug.toString y
-            , SA.width picSize, SA.height picSize
-            , SE.onClick (Click n)
+          [ SA.x <| String.fromInt x
+          , SA.y <| String.fromInt y
+          , SA.width picSize, SA.height picSize
+          , SE.onClick (Click n)
           ]
       in
         case squareType n of
@@ -700,9 +697,9 @@ scoreboard n color =
     width = (initPawnCount-1+2) * spacing + 2*rlen + 4
     makepiece x y =
       [ Svg.circle
-        [ SA.cx <| Debug.toString (x + 1)
-        , SA.cy <| Debug.toString (y + 50)
-        , SA.r  <| Debug.toString rlen
+        [ SA.cx <| String.fromInt (x + 1)
+        , SA.cy <| String.fromInt (y + 50)
+        , SA.r  <| String.fromInt rlen
         , SA.stroke "black"
         , SA.fill <|
             if color == White
@@ -724,13 +721,13 @@ scoreboard n color =
         , SA.height "100"
         , SA.fill "antiquewhite"
         , SA.stroke "none"
-        , SA.width <| Debug.toString width
+        , SA.width <| String.fromInt width
         , HE.onClick (Click 30)
         ] []
   in
   Svg.svg
     [ SA.width "80%"
-    , SA.viewBox ("0 0 " ++ Debug.toString width ++ " 100")
+    , SA.viewBox ("0 0 " ++ String.fromInt width ++ " 100")
     ]
     (outline :: (List.concatMap (\x -> makepiece x 0) centers))
 
@@ -756,11 +753,11 @@ view model =
     wscoreboard =
       let wpawn = (initPawnCount - model.gs.whitePawnCnt) in
       Html.h3 [centering]
-        [ text <| "White: " ++ (Debug.toString wpawn) ]
+        [ text <| "White: " ++ (String.fromInt wpawn) ]
     bscoreboard =
       let bpawn = (initPawnCount - model.gs.blackPawnCnt) in
       Html.h3 [centering]
-        [ text <| "Black: " ++ (Debug.toString bpawn) ]
+        [ text <| "Black: " ++ (String.fromInt bpawn) ]
     selector col =
       Html.select
         [ HA.name <|
@@ -916,7 +913,7 @@ view model =
             ]
             [ text <|
               case model.roll of
-                Just r  -> "Roll: " ++ (Debug.toString r)
+                Just r  -> "Roll: " ++ (String.fromInt r)
                 Nothing -> "Roll!"
             ]
           , text "\t"
@@ -945,9 +942,9 @@ view model =
               case model.selected of
                 Just s ->
                   if promotionImminent then
-                    "Promote pawn on square " ++ (Debug.toString (s+1))
+                    "Promote pawn on square " ++ (String.fromInt (s+1))
                   else
-                    "Play pawn on square " ++ (Debug.toString (s+1))
+                    "Play pawn on square " ++ (String.fromInt (s+1))
                 Nothing -> "Select a piece"
             ]
           , button

@@ -60,8 +60,7 @@ singleStick : Side -> Int -> Html.Html msg
 singleStick side num =
   let
     rc = "2"
-    dur = (String.fromFloat (0.75+(toFloat num)/8)) ++ "s"
-    -- dur = "1s"
+    dur = (String.fromFloat (0.5+(toFloat num)/6)) ++ "s"
 
     flipStr = (getStr (oppCol side)) ++ ";"
     sideStr = (getStr side) ++ ";"
@@ -211,17 +210,7 @@ svgSticks anim roll op =
           , clickable
           ]
   in
-    Html.div
-      []
-      [ Svg.svg
-        [ SA.viewBox "-5 -5 145 110"
-        , SA.id "sticks"]
-        contents
-      -- , Html.node "script"
-      --   []
-      --   [ Html.text <|
-      --   """function resetSticks() {
-      --       document.getElementById(\"sticks\").setCurrentTime(0);
-      --   }"""
-      --   ]
-      ]
+    Svg.svg
+      [ SA.viewBox "-5 -5 145 110"
+      , SA.id "sticks"]
+      contents
