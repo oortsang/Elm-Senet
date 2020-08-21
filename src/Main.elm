@@ -15,6 +15,7 @@ import Board  exposing (..)
 import Logic  exposing (..)
 import AI     exposing (..)
 import Sticks exposing (..)
+import Docs   exposing (..)
 
 -- For html-side
 import Browser
@@ -44,7 +45,7 @@ port resetSticks: () -> Cmd msg
 
 main : Program Flags Model Msg
 main =
-  Browser.document
+  Browser.element
     { init = init
     , subscriptions = subscriptions
     , update = update
@@ -130,9 +131,9 @@ subscriptions model =
       Time.every
         ( case currPlayer of
             Human  ->  10
-            AIRand -> 250
-            AILast -> 250
-            AIFast -> 250
+            AIRand -> 150
+            AILast -> 150
+            AIFast -> 150
             AIMed  -> 100
             AISlow ->  50
         )
@@ -474,7 +475,7 @@ highlightPieces model =
             -- and leave an indicator
             let
               newModel = pawnSendBack model
-              sm = { newModel | skippedMove = True }
+              sm = { newModel | skippedMove = True, highlighted = [] }
             in
               if newModel == model then
                 sm
@@ -547,8 +548,7 @@ svgSquare length model n i j =
             then "beige"
             else "burlywood"
         , SE.onClick (Click n)
-        ]
-        []
+        ] []
       ]
     piece mp =
       case mp of
@@ -731,7 +731,7 @@ scoreboard n color =
     ]
     (outline :: (List.concatMap (\x -> makepiece x 0) centers))
 
-view : Model -> Browser.Document Msg
+view : Model -> Html Msg
 view model =
   let
     title =
@@ -772,7 +772,7 @@ view model =
         , Html.option
           [HA.value "AILast"
           , HE.onClick (ChangePlayer col AIRand)]
-          [text "Random moves"]
+          [text "Random pawn"]
         , Html.option
           [HA.value "AILast"
           , HE.onClick (ChangePlayer col AILast)]
@@ -867,19 +867,21 @@ view model =
                   ]
                 ]
               ]
-            , Html.td [HA.style "width" "40%"]
+            , Html.td [HA.style "width" "10%"] []
+            , Html.td [HA.style "width" "20%"]
               [ centerHeader ]
-            , Html.td [HA.style "width" "10%"]
-              [ Html.h3 [centering]
-                [ text <|
-                    case model.roll of
-                      Nothing -> "Throw sticks!"
-                      Just r  -> ("Threw a " ++ String.fromInt(r))
-                ]
-              , svgSticks
+            , Html.td [HA.style "width" "100", centering]
+              [ svgSticks
                 (not <| isPlayerAI currPlayer)
                 model.roll
                 QueryRoll
+                [ SA.width "200"]
+              , Html.h3 [centering]
+                [ text <|
+                    case model.roll of
+                      Nothing -> "Toss sticks!"
+                      Just r  -> ("Tossed a " ++ String.fromInt(r))
+                ]
               ]
             , Html.td [HA.style "width" "20%", centering]
               [ text   "Player 1 (Black): ", selector Black
@@ -913,8 +915,8 @@ view model =
             ]
             [ text <|
               case model.roll of
-                Just r  -> "Roll: " ++ (String.fromInt r)
-                Nothing -> "Roll!"
+                Just r  -> "Toss: " ++ (String.fromInt r)
+                Nothing -> "Toss!"
             ]
           , text "\t"
           , button
@@ -931,7 +933,7 @@ view model =
               then "Thinking..."
               else "Ask the AI!"
             ]
-          , text "\t"
+          , newline
           , button
             [ HE.onClick (Play)
             , HA.disabled
@@ -947,6 +949,7 @@ view model =
                     "Play pawn on square " ++ (String.fromInt (s+1))
                 Nothing -> "Select a piece"
             ]
+          , text "\t"
           , button
             [ HE.onClick Skip
             , HA.disabled
@@ -957,20 +960,29 @@ view model =
           ]
         ]
   in
-    { title = "Senet"
-    , body =
-        [ div
-          []
-          [ header
-          , Html.table
-            [ HA.style "width" "100%" ]
-            [ Html.tr []
-              [ Html.td [HA.style "width" "85%"]
-                [svgBoard model]
-              , Html.td [HA.style "width" "15%", centering]
-                [afterlifeRect]
-              ]
-            ]
+    div
+      []
+      [ header
+      , Html.table
+        [ HA.style "width" "100%" ]
+        [ Html.tr []
+          [ Html.td [HA.style "width" "85%"]
+            [svgBoard model]
+          , Html.td [HA.style "width" "15%", centering]
+            [afterlifeRect]
           ]
         ]
-    }
+      , Html.table
+        [ HA.style "width" "100%" ]
+        [ Html.tr []
+          [ Html.td [HA.style "width" "20%"] []
+          , Html.td [HA.style "width" "60%"]
+            [ about
+            , rules Noop
+            , notes
+            ]
+          , Html.td [HA.style "width" "20%"] []
+          ]
+        ]
+      , credits
+      ]

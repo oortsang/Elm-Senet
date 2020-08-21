@@ -18,11 +18,11 @@ import VirtualDom exposing (node, attribute, property)
 
 type Side = Light | Dark
 
-retLight : Bool -> Side
-retLight b =
+retDark : Bool -> Side
+retDark b =
   case b of
-    True  -> Light
-    False -> Dark
+    True  -> Dark
+    False -> Light
 
 getStr : Side -> String
 getStr side =
@@ -128,8 +128,8 @@ singleStick side num =
     ]
 
 
-svgSticks : Bool -> Maybe Int -> msg -> Html.Html msg
-svgSticks anim roll op =
+svgSticks : Bool -> Maybe Int -> msg -> List (Html.Attribute msg) -> Html.Html msg
+svgSticks anim roll op attrs =
   let
     clickable =
       Svg.rect
@@ -180,10 +180,10 @@ svgSticks anim roll op =
         Just r ->
           let
             r0 = modBy 5 r
-            side0 = retLight (r0 > 0)
-            side1 = retLight (r0 > 1)
-            side2 = retLight (r0 > 2)
-            side3 = retLight (r0 > 3)
+            side0 = retDark (r0 > 0)
+            side1 = retDark (r0 > 1)
+            side2 = retDark (r0 > 2)
+            side3 = retDark (r0 > 3)
           in
             if anim then
               [ backgroundStatic
@@ -211,6 +211,7 @@ svgSticks anim roll op =
           ]
   in
     Svg.svg
-      [ SA.viewBox "-5 -5 145 110"
-      , SA.id "sticks"]
+      ([ SA.viewBox "-5 -5 145 110"
+      , SA.id "sticks"
+      ] ++ attrs)
       contents
