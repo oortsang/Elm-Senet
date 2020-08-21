@@ -148,9 +148,6 @@ boardDir =
               , "L"
               , String.fromFloat <| Tuple.first  pt3
               , String.fromFloat <| Tuple.second pt3
-              , "F"
-              , String.fromFloat (0.02*(mag vec))
-              , String.fromFloat (0.95*len)
               ]
             ] []
         ]
@@ -467,7 +464,7 @@ about =
       until it faded from use around the time Egypt came under Roman control
       (30 BC).
       For a game that existed for such a long time, it is not so surprising that
-      we have found so many variants of boards. Check some out 
+      we have found so many variants of boards. Check some out
       """
     , a
       [ href "https://journals.sagepub.com/doi/full/10.1177/0307513319896288"
