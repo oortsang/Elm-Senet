@@ -35,6 +35,8 @@ import Time exposing (every)
 
 import Random exposing (Generator)
 
+import Json.Decode as Decode
+
 -- apparently xlinkHref is deprecated
 import VirtualDom exposing (Attribute, attribute)
 href : String -> Attribute msg
@@ -758,38 +760,42 @@ view model =
       let bpawn = (initPawnCount - model.gs.blackPawnCnt) in
       Html.h3 [centering]
         [ text <| "Black: " ++ (String.fromInt bpawn) ]
+    stringToMessage col str =
+      case str of
+        "Human"  -> ChangePlayer col Human
+        "AILast" -> ChangePlayer col AILast
+        "AIRand" -> ChangePlayer col AIRand
+        "AIFast" -> ChangePlayer col AIFast
+        "AIMed"  -> ChangePlayer col AIMed
+        "AISlow" -> ChangePlayer col AISlow
+        _        -> ChangePlayer col Human
+    onChange col =
+      HE.on "change" <|
+      Decode.map (stringToMessage col) (
+        Decode.field "srcElement" <|
+        Decode.field "value" Decode.string
+      )
+
     selector col =
       Html.select
         [ HA.name <|
-            case col of
-              Black -> "Player 1 (Black)"
-              White -> "Player 2 (White)"
+          case col of
+            Black -> "Player 1 (Black)"
+            White -> "Player 2 (White)"
+        , HA.id <|
+          case col of
+            Black -> "bselect"
+            White -> "wselect"
+        , onChange col
         ]
-        [ Html.option
-          [HA.value "Human"
-          , HE.onClick (ChangePlayer col Human)]
-          [text "Human"]
-        , Html.option
-          [HA.value "AILast"
-          , HE.onClick (ChangePlayer col AIRand)]
-          [text "Random pawn"]
-        , Html.option
-          [HA.value "AILast"
-          , HE.onClick (ChangePlayer col AILast)]
-          [text "Last pawn"]
-        , Html.option
-          [HA.value "AIFast"
-          , HE.onClick (ChangePlayer col AIFast)]
-          [text "AI (fast)"]
-        , Html.option
-          [HA.value "AIMed"
-          , HE.onClick (ChangePlayer col AIMed)]
-          [text "AI (medium)"]
-        , Html.option
-          [HA.value "AISlow"
-          , HE.onClick (ChangePlayer col AISlow)]
-          [text "AI (slow)"]
+        [ Html.option [ HA.value "Human" ]  [ text "Human" ]
+        , Html.option [ HA.value "AIRand" ] [ text "Random pawn" ]
+        , Html.option [ HA.value "AILast" ] [ text "Last pawn" ]
+        , Html.option [ HA.value "AIFast" ] [ text "AI (fast)" ]
+        , Html.option [ HA.value "AIMed" ]  [ text "AI (medium)" ]
+        , Html.option [ HA.value "AISlow" ] [ text "AI (slow)" ]
         ]
+
     afterlifeRect =
       div []
         [ text <|
