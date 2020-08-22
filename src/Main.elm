@@ -813,7 +813,7 @@ view model =
           ]
           [ Svg.image
             [ SA.x "0", SA.y "0"
-            , href "images/afterlife.jfif"
+            , href "images/afterlife.png"
             , SE.onClick (Click 30)
             ] []
           , Svg.rect
