@@ -643,7 +643,8 @@ svgBoard model =
         , SA.fill "gray"
         ] []
   in
-    Svg.svg [ SA.viewBox "-50 -20 1060 350"]
+    Svg.svg
+      [ SA.viewBox "-50 -20 1060 350"]
       ( [background]
       ++ line1 ++ line2 ++ line3
       )
@@ -970,7 +971,7 @@ view model =
       []
       [ header
       , Html.table
-        [ HA.style "width" "100%" ]
+        [ HA.style "width" "100%", centering ]
         [ Html.tr []
           [ Html.td [HA.style "width" "85%"]
             [svgBoard model]
@@ -990,5 +991,6 @@ view model =
           , Html.td [HA.style "width" "20%"] []
           ]
         ]
+      , div [centering] [ treePic ]
       , credits
       ]

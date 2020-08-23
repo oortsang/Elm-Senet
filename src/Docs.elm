@@ -2,9 +2,10 @@
 -- Senet in Elm (Course Project) for CS 223, Functional Programming
 -- Docs.elm: Store the documentation that has no reliance on the game state
 
-module Docs exposing (rules, about, notes, credits, myTab)
+module Docs exposing (rules, about, notes, treePic, credits, myTab)
 
 import Sticks exposing (..)
+import Board  exposing (..)
 
 import Html exposing (..)
 import Html.Attributes as HA
@@ -23,6 +24,276 @@ centering = HA.align "center"
 monospace = HA.style "font-family" "monospace"
 
 myTab = text "\u{00A0}\u{00A0}\u{00A0}\u{00A0}\u{00A0}\u{00A0}"
+
+cr = 35
+crs = "35"
+
+-- helper functions for vector arithmetic
+floatify (px, py) =
+  (toFloat px, toFloat py)
+vAdd (px, py) (qx, qy) =
+  (px+qx, py+qy)
+sMul a (px, py) = (a*px, a*py)
+convComb a p q =
+  vAdd
+    (sMul a     p)
+    (sMul (1-a) q)
+mag (px, py) = sqrt (px*px + py*py)
+norm (px, py) =
+  let
+    mag_ = mag (px, py)
+  in
+    (-py/mag_, px/mag_)
+
+arrow : (Int, Int) -> (Int, Int) -> List (Html msg)
+arrow (x, y) (w, z) =
+  let
+    vec = floatify (x-w, y-z)
+    len = mag vec
+    setback = sMul (25.0/len) vec
+    pt1 = vAdd (floatify (w, z)) setback
+    nvec = sMul 10 (norm vec)
+    pt2 = vAdd pt1 nvec
+    pt3 = vAdd pt1 (sMul -1.0 nvec)
+  in
+    [ Svg.path
+        [ SA.stroke "orange"
+        , SA.strokeWidth "3"
+        , SA.fill "orange"
+        , SA.d <| svgPathParse <|
+          [ "M"
+          , String.fromInt x
+          , String.fromInt y
+          , "L"
+          , String.fromInt w
+          , String.fromInt z
+          ]
+        ] []
+    , Svg.path
+        [ SA.stroke "orange"
+        , SA.strokeWidth "2"
+        , SA.fill "orange"
+        , SA.d <| svgPathParse <|
+          [ "M"
+          , String.fromInt w
+          , String.fromInt z
+          , "L"
+          , String.fromFloat <| Tuple.first  pt2
+          , String.fromFloat <| Tuple.second pt2
+          , "L"
+          , String.fromFloat <| Tuple.first  pt3
+          , String.fromFloat <| Tuple.second pt3
+          ]
+        ] []
+    ]
+
+treeNode : (Int, Int) -> String -> String -> List (Html msg)
+treeNode (x, y) color str =
+  let
+    xc = String.fromInt x
+    yc = String.fromInt y
+    circ =
+      Svg.circle
+        [ SA.fill color
+        , SA.strokeWidth "1.5"
+        , SA.stroke "black"
+        , SA.r crs
+        , SA.cx xc
+        , SA.cy yc
+        , SA.opacity "45%"
+        ] []
+    lab =
+      if String.isEmpty str then
+        []
+      else
+        [ Svg.text_
+          [ SA.strokeWidth "0"
+          , SA.x xc
+          , SA.y <| String.fromInt (y+4)
+          , SA.textAnchor "middle"
+          , SA.fontFamily "sans-serif"
+          ] [ Svg.text str ]
+        ]
+  in
+    circ :: lab
+
+-- draws a line from the higher node to the lower node
+drawEdge : (Int, Int) -> (Int, Int) -> List (Html msg)
+drawEdge (x, y) (w, z) =
+  let
+    -- points above/below the circles
+    -- ordered so pt1 is above pt2 (unless y,z are very close)
+    off = cr -- +1 (doesn't look so good)
+    ((x1, y1), (x2, y2)) =
+      if (y < z) then
+        ((x, y+off), (w, z-off))
+      else
+        ((w, z+off), (x, y-off))
+  in
+    [ Svg.line
+        [ SA.x1 <| String.fromInt x1
+        , SA.y1 <| String.fromInt y1
+        , SA.x2 <| String.fromInt x2
+        , SA.y2 <| String.fromInt y2
+        , SA.strokeWidth "1"
+        , SA.stroke "black"
+        ] []
+    ]
+
+
+dotsFrom : (Int, Int) -> (Int, Int) -> List (Html msg)
+dotsFrom (x, y) (w, z) =
+  let
+    off = cr+5
+    vec = floatify (w-x, z-y)
+    u = sMul (1/(mag vec)) vec
+    lp = vAdd (floatify (x, y)) <| sMul off    u
+    rp = vAdd (floatify (w, z)) <| sMul (-off) u
+    pt1 = convComb 0.3 lp rp
+    pt2 = convComb 0.5 lp rp
+    pt3 = convComb 0.7 lp rp
+    circler (px, py) =
+      Svg.circle
+        [ SA.cx <| String.fromFloat px
+        , SA.cy <| String.fromFloat py
+        , SA.r "1.5"
+        , SA.fill "black"
+        , SA.stroke "none"
+        ] []
+  in
+    [ circler pt1
+    , circler pt2
+    , circler pt3
+    ]
+
+rcaption : (Int, Int) -> String -> List (Html msg)
+rcaption = caption False
+
+lcaption : (Int, Int) -> String -> List (Html msg)
+lcaption = caption True
+
+caption : Bool -> (Int, Int) -> String -> List (Html msg)
+caption isLeft (x, y) str =
+  [ Svg.text_
+    [ SA.strokeWidth "0"
+    , SA.x <| String.fromInt x
+    , SA.y <| String.fromInt (y+4)
+    , SA.textAnchor <| if isLeft then "start" else "end"
+    , SA.fontFamily "serif"
+    , SA.fontSize "18pt"
+    ] [ Svg.text str ]
+  ]
+
+treePic : Html msg
+treePic =
+  let
+    width  = 1600
+    height = 500
+    outline =
+      Svg.rect
+        [ SA.fill "none"
+        , SA.stroke "black"
+        , SA.strokeWidth "1"
+        , SA.x "0"
+        , SA.y "0"
+        , SA.width  <| String.fromInt (width-1)
+        , SA.height <| String.fromInt (height-1)
+        ] []
+    cenx = width//2
+    root = (cenx, 50)
+    c1 = (cenx-220, 150)
+    ce = (cenx+220, 150)
+    row0 =
+      [ [ outline ]
+      , treeNode root "slategray" "s"
+      ]
+    row1 =
+      [ drawEdge root c1
+      , drawEdge root ce
+      , treeNode c1 "slategray" "Pawn 1"
+      , dotsFrom c1 ce
+      , treeNode ce "slategray" "Pawn n"
+      ]
+    d1 = (cenx-340, 250)
+    d2 = (cenx-100, 250)
+    dd = (cenx+100, 250)
+    de = (cenx+340, 250)
+    row2 =
+      [ drawEdge c1 d1
+      , drawEdge c1 d2
+      , drawEdge ce dd
+      , drawEdge ce de
+      , dotsFrom d1 d2
+      , dotsFrom d2 dd
+      , dotsFrom dd de
+      , treeNode d1 "mediumpurple" "1"
+      , treeNode d2 "mediumpurple" "5"
+      , treeNode dd "mediumpurple" "1"
+      , treeNode de "mediumpurple" "5"
+      ]
+    e1 = (cenx-340-150, 350)
+    e2 = (cenx-340-50,  350)
+    e5 = (cenx-340+150, 350)
+    ea = (cenx+340-150, 350)
+    eb = (cenx+340-50,  350)
+    ee = (cenx+340+150, 350)
+    row3 =
+      [ drawEdge d1 e1
+      , drawEdge d1 e2
+      , dotsFrom e2 e5
+      , drawEdge d1 e5
+      , treeNode e1 "snow" "Pawn 1"
+      , treeNode e2 "snow" "Pawn 2"
+      , treeNode e5 "snow" "Pawn m"
+      , dotsFrom e5 ea
+      , drawEdge de ea
+      , drawEdge de eb
+      , drawEdge de ee
+      , dotsFrom eb ee
+      , treeNode ea "snow" "Pawn 1"
+      , treeNode eb "snow" "Pawn 2"
+      , treeNode ee "snow" "Pawn m'"
+      ]
+    dropRow (x, y) = (x, y+100)
+    row4 =
+      [ drawEdge e1 <| dropRow e1
+      , drawEdge e2 <| dropRow e2
+      , drawEdge e5 <| dropRow e5
+      , drawEdge ea <| dropRow ea
+      , drawEdge eb <| dropRow eb
+      , drawEdge ee <| dropRow ee
+      , dotsFrom (dropRow e2) (dropRow e5)
+      , dotsFrom (dropRow e5) (dropRow ea)
+      , dotsFrom (dropRow eb) (dropRow ee)
+      , treeNode (dropRow e1) "mediumturquoise" "val(\u{22C5})"
+      , treeNode (dropRow e2) "mediumturquoise" "val(\u{22C5})"
+      , treeNode (dropRow e5) "mediumturquoise" "val(\u{22C5})"
+      , treeNode (dropRow ea) "mediumturquoise" "val(\u{22C5})"
+      , treeNode (dropRow eb) "mediumturquoise" "val(\u{22C5})"
+      , treeNode (dropRow ee) "mediumturquoise" "val(\u{22C5})"
+      ]
+    comments =
+      [ rcaption (cenx-560, 50)  "Current State"
+      , rcaption (cenx-560, 150) "My pawn choice"
+      , rcaption (cenx-560, 250) "Stick toss"
+      , rcaption (cenx-560, 350) "Their pawn choice"
+      , rcaption (cenx-560, 450) "State evaluation"
+      , lcaption (cenx+560, 450) "State evaluation"
+      , lcaption (cenx+500, 300) "Minimum"
+      , lcaption (cenx+400, 200) "Expectation"
+      , lcaption (cenx+270, 100) "Maximum"
+      , arrow (cenx+620, 430) (cenx+550, 320)
+      , arrow (cenx+530, 280) (cenx+470, 220)
+      , arrow (cenx+450, 180) (cenx+350, 120)
+      , arrow (cenx+260, 90)  (cenx+40, 50)
+      ]
+    objs =
+      comments ++ row0 ++ row1 ++ row2 ++ row3 ++ row4
+  in
+  Svg.svg
+    [ SA.viewBox <| "0 0 "++ (String.fromInt width) ++ " " ++ (String.fromInt height)
+    , SA.width "100%" ]
+    (List.concat objs)
 
 
 plantPic : String -> Html msg
@@ -44,6 +315,7 @@ plantPic imgName =
 svgPathParse : List (String) -> String
 svgPathParse =
   (List.intersperse " ") >> String.concat
+
 
 boardDir : Html msg
 boardDir =
@@ -87,24 +359,9 @@ boardDir =
       (List.range 0 29) |> List.map sqnum
     squares =
       squareNums |> List.map minisquare
-
-    -- helper functions for vector arithmetic
-    vAdd (px, py) (qx, qy) =
-      (px+qx, py+qy)
-    sMul a (px, py) = (a*px, a*py)
-    mag (px, py) = sqrt (px*px + py*py)
-    norm (px, py) =
-      let
-        mag_ = mag (px, py)
-      in
-        (-py/mag_, px/mag_)
-
     centerer (c, d) =
       (c + slen//2, d + slen//2)
-    floatify (px, py) =
-      (toFloat px, toFloat py)
-
-    arrow (i, j) (k, l) =
+    indArrow (i, j) (k, l) =
       let
         (x, y) =
           getCornerPos (i, j)
@@ -112,57 +369,20 @@ boardDir =
         (w, z) =
           getCornerPos (k, l)
             |> centerer
-        vec = floatify (x-w, y-z)
-        len = mag vec
-        setback = sMul (25.0/len) vec
-        pt1 = vAdd (floatify (w, z)) setback
-        -- pt1 = convComb 0.95 (w, z) (x, y)
-        nvec = sMul 10 (norm vec)
-        pt2 = vAdd pt1 nvec
-        pt3 = vAdd pt1 (sMul -1.0 nvec)
       in
-        [ Svg.path
-            [ SA.stroke "orange"
-            , SA.strokeWidth "3"
-            , SA.fill "orange"
-            , SA.d <| svgPathParse <|
-              [ "M"
-              , String.fromInt x
-              , String.fromInt y
-              , "L"
-              , String.fromInt w
-              , String.fromInt z
-              ]
-            ] []
-        , Svg.path
-            [ SA.stroke "orange"
-            , SA.strokeWidth "2"
-            , SA.fill "orange"
-            , SA.d <| svgPathParse <|
-              [ "M"
-              , String.fromInt w
-              , String.fromInt z
-              , "L"
-              , String.fromFloat <| Tuple.first  pt2
-              , String.fromFloat <| Tuple.second pt2
-              , "L"
-              , String.fromFloat <| Tuple.first  pt3
-              , String.fromFloat <| Tuple.second pt3
-              ]
-            ] []
-        ]
+        arrow (x, y) (w, z)
   in
     Svg.svg [SA.viewBox "-50 -20 1060 350", SA.width "30%"]
       (  background
       :: squares
-      ++ arrow (0, 0) (0, 5)
-      ++ arrow (0, 4) (0, 9)
-      ++ arrow (0, 9) (1, 9)
-      ++ arrow (1, 9) (1, 4)
-      ++ arrow (1, 5) (1, 0)
-      ++ arrow (1, 0) (2, 0)
-      ++ arrow (2, 0) (2, 5)
-      ++ arrow (2, 4) (2, 9)
+      ++ indArrow (0, 0) (0, 5)
+      ++ indArrow (0, 4) (0, 9)
+      ++ indArrow (0, 9) (1, 9)
+      ++ indArrow (1, 9) (1, 4)
+      ++ indArrow (1, 5) (1, 0)
+      ++ indArrow (1, 0) (2, 0)
+      ++ indArrow (2, 0) (2, 5)
+      ++ indArrow (2, 4) (2, 9)
       )
 
 
@@ -308,7 +528,60 @@ rules op =
 notes : Html msg
 notes =
   div []
-    [ h2 [] [ text "Additional notes on gameplay" ]
+    [ h4 [] [ text "Strategic tips" ]
+    , text """
+      1. Try to keep a pawn on the House of Happiness as long as you can!
+      If no pawns are nearby, wait until you toss a 4 or 5 to move this
+      pawn for a guaranteed promotion."""
+    , newline, newline
+    , text """
+      2. Each of the sticks has a 50/50 chance of landing light or dark.
+      The four collectively follow a """
+    , a
+      [ href "https://www.mathsisfun.com/data/binomial-distribution.html"
+      , HA.attribute "target" "_blank" ]
+      [ text "binomial distribution" ]
+    , text """,
+      which means that not all stick tosses are equally likely.
+      Here's a table of the probabilities:
+      """
+    , newline, newline
+    , table [centering, HA.attribute "border" "1"]
+      [ tr []
+        [ th [centering] [text "Stick toss"]
+        , th [centering ] [text "Probability"]
+        ]
+      , tr []
+        [ td [centering] [text "5"]
+        , td [centering] (frac 1 16)
+        ]
+      , tr []
+        [ td [centering] [text "1"]
+        , td [centering] (frac 4 16)
+        ]
+      , tr []
+        [ td [centering] [text "2"]
+        , td [centering] (frac 6 16)
+        ]
+      , tr []
+        [ td [centering] [text "3"]
+        , td [centering] (frac 4 16)
+        ]
+      , tr []
+        [ td [centering] [text "4"]
+        , td [centering] (frac 1 16)
+        ]
+      ]
+    , newline
+    , text """
+      Throwing a 2 is the single most likely option. This means
+      that the House of Three Truths is something like 50% better than
+      the House of Re-Atoum! You can also take advantage of this
+      probability distribution to place your pawns strategically
+      to increase your chances of landing on the House of Happiness
+      (and avoid landing just 1 square before it).
+      """
+    , h2 [] [ text "Additional notes on gameplay" ]
     , h4 [] [ text "Computer players" ]
     , text """
       There are several computer players available which can be selected
@@ -385,61 +658,6 @@ notes =
       visualize the process:"""
     , newline
     , newline
-    , div [centering] [text "<picture>"]
-    , newline
-    , h4 [] [ text "Strategic tips" ]
-    , text """
-      1. Try to keep a pawn on the House of Happiness as long as you can!
-      If no pawns are nearby, wait until you toss a 4 or 5 to move this
-      pawn for a guaranteed promotion."""
-    , newline, newline
-    , text """
-      2. Each of the sticks has a 50/50 chance of landing light or dark.
-      The four collectively follow a """
-    , a
-      [ href "https://www.mathsisfun.com/data/binomial-distribution.html"
-      , HA.attribute "target" "_blank" ]
-      [ text "binomial distribution" ]
-    , text """,
-      which means that not all stick tosses are equally likely.
-      Here's a table of the probabilities:
-      """
-    , newline, newline
-    , table [centering, HA.attribute "border" "1"]
-      [ tr []
-        [ th [centering] [text "Stick toss"]
-        , th [centering ] [text "Probability"]
-        ]
-      , tr []
-        [ td [centering] [text "5"]
-        , td [centering] (frac 1 16)
-        ]
-      , tr []
-        [ td [centering] [text "1"]
-        , td [centering] (frac 4 16)
-        ]
-      , tr []
-        [ td [centering] [text "2"]
-        , td [centering] (frac 6 16)
-        ]
-      , tr []
-        [ td [centering] [text "3"]
-        , td [centering] (frac 4 16)
-        ]
-      , tr []
-        [ td [centering] [text "4"]
-        , td [centering] (frac 1 16)
-        ]
-      ]
-    , newline
-    , text """
-      Throwing a 2 is the single most likely option. This means
-      that the House of Three Truths is something like 50% better than
-      the House of Re-Atoum! You can also take advantage of this
-      probability distribution to place your pawns strategically
-      to land on the House of Happiness (and avoid landing just 1 square
-      before it).
-      """
     ]
 frac : Int -> Int -> List (Html msg)
 frac n d =
