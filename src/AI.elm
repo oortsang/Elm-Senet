@@ -1,7 +1,7 @@
 -- Jeffrey Huang and Oliver Tsang, Spring 2020
 -- Senet in Elm (Course Project) for CS 223, Functional Programming
 -- AI.elm: an artificial intelligence player
--- currently based on minimax and alpha-beta pruning
+-- currently based on minimax
 
 
 
@@ -49,9 +49,6 @@ printTSBoard =
   Maybe.map (\(N g _) ->
     let
       (l1, l2, l3) = boardToStrings g.board
-      -- _ = Debug.log "Row 1" l1
-      -- _ = Debug.log "Row 2" l2
-      -- _ = Debug.log "Row 3" l3
     in
       l1 ++ "\n" ++ l2 ++ "\n" ++ l3
   )
@@ -235,8 +232,6 @@ childCount (N _ tmt) =
 getChild : Maybe Pawn -> Int -> ThunkState -> Maybe ThunkState
 getChild mp roll (N gs tmt) =
   let
-    -- _ = Debug.log "getChild called with (mp, roll)" (mp, roll)
-    -- _ = Debug.log "current turn:" gs.turn
     ma =
       case tmt of
         Lazy tma -> force tma
