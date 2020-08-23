@@ -204,8 +204,7 @@ treePic =
     c1 = (cenx-220, 150)
     ce = (cenx+220, 150)
     row0 =
-      [ [ outline ]
-      , treeNode root "slategray" "s"
+      [ treeNode root "slategray" "s"
       ]
     row1 =
       [ drawEdge root c1
