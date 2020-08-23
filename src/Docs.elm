@@ -371,7 +371,7 @@ boardDir =
       in
         arrow (x, y) (w, z)
   in
-    Svg.svg [SA.viewBox "-50 -20 1060 350", SA.width "30%"]
+    Svg.svg [SA.viewBox "-20 -20 1040 340", SA.width "70%"]
       (  background
       :: squares
       ++ indArrow (0, 0) (0, 5)
