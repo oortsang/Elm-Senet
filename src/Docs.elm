@@ -1,4 +1,4 @@
--- Jeffrey Huang and Oliver Tsang, Spring 2020
+-- Jeffrey Huang and Olivia Tsang, Spring 2020
 -- Senet in Elm (Course Project) for CS 223, Functional Programming
 -- Docs.elm: Store the documentation that has no reliance on the game state
 
@@ -700,7 +700,7 @@ credits : Html msg
 credits =
   div []
     [ newline, newline, newline
-    , text """Developed by Oliver Tsang and Jeffrey Huang
+    , text """Developed by Olivia Tsang and Jeffrey Huang
       in """
     , a [ href "https://elm-lang.org/"
         , attribute "target" "_blank"
