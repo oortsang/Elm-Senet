@@ -1,6 +1,6 @@
--- Jeffrey Huang and Oliver Tsang, Spring 2020
+-- Jeffrey Huang and Olivia Tsang, Spring 2020
 -- Senet in Elm (Course Project) for CS 223, Functional Programming
--- Board.elm: store the main game logic
+-- Logic.elm: store the main game logic
 
 -- Kendall's Rules:
 --   https://www.startwithabook.org/content/pdfs/EgyptianSenetGame.pdf

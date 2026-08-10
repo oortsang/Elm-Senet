@@ -1,10 +1,6 @@
--- Jeffrey Huang and Oliver Tsang, Spring 2020
+-- Jeffrey Huang and Olivia Tsang, Spring 2020
 -- Senet in Elm (Course Project) for CS 223, Functional Programming
 -- Main.elm: makes the html page and handles interactions
-
--- TODO:
---   1. Save computation of thunkstates!
-
 
 port module Main exposing (..)
 

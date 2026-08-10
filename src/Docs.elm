@@ -707,8 +707,8 @@ credits =
         ] [text "Elm"]
     , text """ for UChicago's CMSC 22300 Functional Programming class.
       Special thanks to the """
-    , a [ href "https://oi.uchicago.edu/"
+    , a [ href "https://isac.uchicago.edu/"
         , attribute "target" "_blank"
-        ] [text "Oriental Institute"]
+        ] [text "Institute for the Study of Ancient Cultures (ISAC)"]
     , text " for their support!"
     ]

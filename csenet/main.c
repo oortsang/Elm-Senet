@@ -1,4 +1,4 @@
-/* main.c for CSenet by Oliver Tsang, Summer 2020
+/* main.c for CSenet by Olivia Tsang, Summer 2020
  *
  * C implementation of Senet following Kendall's rules
  * meant for more extensive AI testing

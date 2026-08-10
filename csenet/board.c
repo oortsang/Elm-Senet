@@ -1,4 +1,4 @@
-/* board.c for CSenet by Oliver Tsang, Summer 2020
+/* board.c for CSenet by Olivia Tsang, Summer 2020
  *
  * C representation of the board
  *
