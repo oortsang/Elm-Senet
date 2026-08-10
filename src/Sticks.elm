@@ -1,4 +1,4 @@
--- Jeffrey Huang and Oliver Tsang, Spring/Summer 2020
+-- Jeffrey Huang and Olivia Tsang, Spring/Summer 2020
 -- Senet in Elm (Course Project) for CS 223, Functional Programming
 -- Sticks.elm: help handle the stick animations (in svg)
 

@@ -1,4 +1,4 @@
--- Jeffrey Huang and Oliver Tsang, Spring 2020
+-- Jeffrey Huang and Olivia Tsang, Spring 2020
 -- Senet in Elm (Course Project) for CS 223, Functional Programming
 -- BoardTree.elm: define a helper data structure to hold the board efficiently
 --
